@@ -1,0 +1,139 @@
+name: telerady-dev
+
+# Local development stack for Telerady.
+# Brings up Postgres, Redis, MinIO, Orthanc and Vault on isolated network
+# `telerady-dev` so backend/frontend can run on the host with hot-reload.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: telerady-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: telerady
+      POSTGRES_PASSWORD: telerady
+      POSTGRES_DB: telerady
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    command:
+      - "postgres"
+      - "-c"
+      - "ssl=off"
+      - "-c"
+      - "log_statement=ddl"
+      - "-c"
+      - "log_min_duration_statement=200"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ../apps/back/db-seed.sql:/docker-entrypoint-initdb.d/00-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U telerady -d telerady"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: telerady-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "telerady"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "telerady", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: telerady-minio
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: teleradyminio
+      MINIO_ROOT_PASSWORD: teleradyminio
+      MINIO_REGION: eu-south-2
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    container_name: telerady-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 teleradyminio teleradyminio &&
+      mc mb -p local/telerady-reports || true &&
+      mc mb -p local/telerady-documents || true &&
+      mc anonymous set none local/telerady-reports &&
+      mc anonymous set none local/telerady-documents &&
+      mc encrypt set sse-s3 dummy-key-not-used local/telerady-reports || true &&
+      echo 'MinIO buckets ready.'
+      "
+
+  orthanc:
+    image: orthancteam/orthanc:25.4.0
+    container_name: telerady-orthanc
+    restart: unless-stopped
+    environment:
+      ORTHANC__NAME: telerady-dev
+      ORTHANC__REGISTERED_USERS: |
+        {"telerady": "telerady"}
+      ORTHANC__AUTHENTICATION_ENABLED: "true"
+      ORTHANC__REMOTE_ACCESS_ALLOWED: "true"
+      ORTHANC__DICOM_WEB__ENABLE: "true"
+      ORTHANC__DICOM_WEB__ROOT: "/dicom-web/"
+      ORTHANC__STABLE_AGE: "10"
+    ports:
+      - "8042:8042"
+      - "4242:4242"
+    volumes:
+      - orthanc-data:/var/lib/orthanc/db
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8042/system"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  vault:
+    image: hashicorp/vault:1.18
+    container_name: telerady-vault
+    restart: unless-stopped
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: telerady-dev-root
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+      VAULT_ADDR: http://0.0.0.0:8200
+    ports:
+      - "8200:8200"
+    command: ["server", "-dev"]
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8200/v1/sys/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:
+  orthanc-data:
+
+networks:
+  default:
+    name: telerady-dev
