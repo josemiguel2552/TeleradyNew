@@ -5,9 +5,10 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { DialogAlertComponent } from 'src/app/layout/components/modals/dialog-alert/dialog-alert.component';
 import { UserRoutingModule } from '../pages/user/user-routing.module';
+import { OhifViewerComponent } from './components/ohif-viewer/ohif-viewer.component';
 
 @NgModule({
-  declarations: [DialogAlertComponent],
+  declarations: [DialogAlertComponent, OhifViewerComponent],
   imports: [
     CommonModule,
     UserRoutingModule,
@@ -16,6 +17,6 @@ import { UserRoutingModule } from '../pages/user/user-routing.module';
     ReactiveFormsModule,
     OverlayModule,
   ],
-  exports: [],
+  exports: [OhifViewerComponent],
 })
 export class SharedModule {}

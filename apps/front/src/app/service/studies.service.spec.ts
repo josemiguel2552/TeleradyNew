@@ -2,60 +2,56 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { StudiesService } from './studies.service';
 import { TokenService } from './token.service';
-import { StudyResponse } from '../models/service/study.model';
 import { environment } from '../../environments/environment';
 
 describe('StudiesService', () => {
   let service: StudiesService;
   let httpMock: HttpTestingController;
 
-  const mockTokenService = {
-    getToken: jest.fn().mockReturnValue('mock-token')
-  };
-
-  const mockStudyResponse: StudyResponse = {
-    studies: [
-      {
-        pat_id: '12345',
-        study_desc: 'CT^Brain',
-        last_serie_datetime: '2024-04-10T10:00:00Z',
-        modalities: ['CT'],
-        study_datetime: '',
-        study_iuid: ''
-      }
-    ],
-    total: 1
-  };
-
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [
         StudiesService,
-        { provide: TokenService, useValue: mockTokenService }
-      ]
+        { provide: TokenService, useValue: { getToken: jest.fn() } },
+      ],
     });
     service = TestBed.inject(StudiesService);
     httpMock = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => {
-    httpMock.verify();
-  });
+  afterEach(() => httpMock.verify());
 
-  it('should be created', () => {
-    expect(service).toBeTruthy();
-  });
-
-  it('should make POST request to get studies and return expected data', () => {
-    const mockParams = { page: 1, number: 25 };
-    service.getStudies(mockParams).subscribe(response => {
-      expect(response).toEqual(mockStudyResponse);
+  it('POSTs to the PACS proxy and shapes the response into the legacy Study model', (done) => {
+    service.getStudies({ modality: 'CT' }).subscribe((response) => {
+      expect(response.total).toBe(1);
+      expect(response.studies[0].study_iuid).toBe('1.2.3');
+      expect(response.studies[0].study_desc).toBe('CT Brain');
+      expect(response.studies[0].modalities).toEqual(['CT']);
+      done();
     });
 
-    const req = httpMock.expectOne(`${environment.apiPacs}/studies/search`);
+    const req = httpMock.expectOne(`${environment.apiTelerady}/pacs/studies/search`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual(mockParams);
-    req.flush(mockStudyResponse);
+    expect(req.request.body).toEqual({ modality: 'CT' });
+    req.flush([
+      {
+        studyInstanceUid: '1.2.3',
+        studyDescription: 'CT Brain',
+        studyDate: '20250101',
+        modalities: ['CT'],
+        accessionNumber: null,
+        institution: 'Hospital X',
+      },
+    ]);
+  });
+
+  it('fetches the viewer URL from the backend', async () => {
+    const promise = service.getViewerUrl('1.2.3');
+    const req = httpMock.expectOne(`${environment.apiTelerady}/pacs/viewer/1.2.3`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ url: 'https://ohif/viewer?StudyInstanceUIDs=1.2.3' });
+
+    expect(await promise).toBe('https://ohif/viewer?StudyInstanceUIDs=1.2.3');
   });
 });

@@ -31,20 +31,39 @@ cuando los criterios de aceptación están verdes, no por calendario.
 - [x] CLI `npm run seed:admin` para bootstrap del primer admin.
 - [ ] Postgres RLS — diferido a Sprint 2 (ver `docs/RLS-PLAN.md`).
 
-## Sprint 2 — Orthanc + OHIF
+## Sprint 2 — Orthanc + OHIF + S3 (en curso)
 
-- `infra/docker-compose.dev.yml` con Orthanc configurado.
-- Proxy DICOMweb autenticado en NestJS (`/v1/pacs/*`).
-- Upload web: STOW-RS desde Angular.
-- OHIF embebido en iframe con configuración por tenant.
-- Migración del bucket de documentos profesionales de Drive a S3.
+- [x] Proxy DICOMweb autenticado en NestJS (`/v1/pacs/dicom-web/*`)
+  con stream pass-through y JWT + roles.
+- [x] `PacsController`: `/v1/pacs/studies/search` (QIDO-RS normalizado) y
+  `/v1/pacs/viewer/:uid` (URL OHIF construida por el back).
+- [x] Front: `StudiesService` apunta al proxy del back; nuevo
+  `OhifViewerComponent` que embebe OHIF en iframe sandboxed.
+- [x] `StorageService` (AWS SDK v3 contra MinIO/S3) con SSE-S3, signed
+  URLs (5 min) y buckets separados para informes y documentos.
+- [x] Migración Drive → S3 para `professional_document`. Borrado del
+  módulo `integrations/google`, sus deps y vars de entorno.
+- [ ] STOW-RS post-hook que persiste `report_study` con `hospital_id` y
+  campos cifrados (queda Sprint 3).
+- [ ] TenantScope aplicado en todos los repos clínicos (queda Sprint 3
+  cuando el contexto de usuario fluya por los handlers).
+- [ ] Postgres RLS — sigue diferido (ver `docs/RLS-PLAN.md`).
 
-## Sprint 3 — Agente local del hospital
+## Sprint 3 — Ingesta + tenant context + agente local
 
-- App Node/Electron empaquetada.
-- Watcher de carpeta DICOM con cifrado local antes de subir.
-- Auth por mTLS contra el backend.
-- Gestión de reintentos y modo offline.
+- Pipeline STOW-RS → ingesta a `report_study` con `hospital_id` derivado
+  del usuario que sube y `pat_*` cifrados.
+- `RequestContext` con `AuthenticatedUser` propagado a los handlers vía
+  `@CurrentUser()`, abriendo paso al uso real de `TenantScope` en cada
+  repositorio clínico y al middleware que setea `app.current_*` para RLS.
+- Activación de las policies RLS sobre `report_study`, `audit_log` y
+  tablas con `hospital_id`. Split de roles BD: `telerady_app` (sin
+  BYPASSRLS) y `telerady_migrator` (con BYPASSRLS).
+- Tests E2E de aislamiento entre tenants.
+- App Node/Electron empaquetada (agente local):
+  - Watcher de carpeta DICOM con cifrado local antes de subir.
+  - Auth por mTLS contra el backend.
+  - Gestión de reintentos y modo offline.
 
 ## Sprint 4 — Portal radiólogo (refactor)
 
