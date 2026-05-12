@@ -5,6 +5,11 @@ están resueltas en código; otras requieren acción operativa fuera del repo.
 
 ## 1. Tokens productivos hardcodeados en el front (CRÍTICO)
 
+> **Decisión de producto (post-Sprint 0):** ActualPacs queda **fuera de la
+> arquitectura**. La plataforma será autónoma sobre Orthanc + OHIF propios.
+> El token de ActualPacs debe revocarse de todas formas para cerrar la
+> exposición del secreto, aunque la integración ya no se vaya a usar.
+
 Al inspeccionar `apps/front/src` encontramos secretos productivos commiteados
 al repositorio legacy:
 

@@ -103,11 +103,6 @@ export class TokenService {
     return '';
   }
 
-  getTokenForActualPacs(): string {
-    const token = this.getToken();
-    return token.replace(/^Bearer\s/, ''); // ✅ Quita el prefijo si existe
-  }
-  
   decodeRefreshToken(): any {
     const token = this.getRefreshToken();
     if (token && token != '')

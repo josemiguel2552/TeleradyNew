@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { t } from '../../../shared/i18n/i18n';
 import { StudiesService } from '../../../service/studies.service';
 import { Router } from '@angular/router';
-import { Study } from '../../../models/service/study-ap.model';
+import { Study } from '../../../models/service/study.model';
 
 @Component({
   selector: 'app-report-pages',

@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { StudiesService } from './studies.service';
 import { TokenService } from './token.service';
-import { StudyResponse } from '../models/service/study-ap.model';
+import { StudyResponse } from '../models/service/study.model';
 import { environment } from '../../environments/environment';
 
 describe('StudiesService', () => {
