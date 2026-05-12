@@ -117,6 +117,7 @@ export class ReportV2Service {
     // Best-effort SR push to the PACS so the report lives next to the
     // images. Never blocks the response.
     void this.srPusher.pushFor(signed).catch(() => undefined);
+    this.metrics.reportSigned.inc();
 
     await this.audit.append({
       actorId: user.id,
@@ -158,6 +159,7 @@ export class ReportV2Service {
       targetId: sent.id,
       payload: { reportStudyId },
     });
+    this.metrics.reportSent.inc();
     void this.notifyHospitalOnSent(sent).catch((err) => {
       // Best-effort; the audit row stays as the source of truth.
       // eslint-disable-next-line no-console

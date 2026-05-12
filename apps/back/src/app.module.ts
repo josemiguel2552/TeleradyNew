@@ -12,6 +12,7 @@ import { CryptoModule } from './common/crypto/crypto.module';
 import { I18nModule } from './i18n/i18n.module';
 import { JobsModule } from './jobs/jobs.module';
 import { MeModule } from './me/me.module';
+import { MetricsModule } from './metrics/metrics.module';
 import { FhirModule } from './integrations/fhir/fhir.module';
 import { Hl7v2Module } from './integrations/hl7v2/hl7v2.module';
 import { NotificationsModule } from './integrations/notifications/notifications.module';
@@ -91,6 +92,7 @@ const REDACT_PATHS = [
       ],
     }),
     CryptoModule,
+    MetricsModule,
     AuditLogModule,
     AuthModule,
     I18nModule,
