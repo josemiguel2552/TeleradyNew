@@ -20,19 +20,26 @@ Política de reporte de vulnerabilidades: [`SECURITY.md`](SECURITY.md).
 
 ## Arranque rápido (desarrollo)
 
+¿Sólo quieres probar la plataforma sin leer código? Sigue
+[`docs/QUICKSTART.md`](docs/QUICKSTART.md) paso a paso.
+
+Si ya tienes Docker + Node 22 listos:
+
 ```bash
-# 1. Variables
 cp .env.example .env
-
-# 2. Servicios base (Postgres, Redis, MinIO, Orthanc, Vault)
-docker compose -f infra/docker-compose.dev.yml up -d
-
-# 3. Backend
-cd apps/back && npm install && npm run start:dev
-
-# 4. Frontend (en otra terminal)
-cd apps/front && npm install && npm start
+make demo          # arranca infra, instala y siembra datos demo
+# en dos terminales nuevas:
+make back          # API en http://localhost:3000
+make front         # SPA en http://localhost:4200
 ```
+
+Credenciales tras `make seed` (o `npm run seed:demo` desde `apps/back`):
+
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| `admin@telerady.test` | `AdminDemo!2026` | admin |
+| `pepa@telerady.test` | `RadDemo!2026` | radiologist |
+| `hospital@telerady.test` | `HospitalDemo!2026` | hospital_admin |
 
 ## Stack
 

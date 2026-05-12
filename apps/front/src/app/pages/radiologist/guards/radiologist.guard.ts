@@ -14,13 +14,13 @@ export const radiologistGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   if (!tokenService.isAuthorized()) {
-    router.navigateByUrl('/user/login');
+    router.navigateByUrl('/login');
     return false;
   }
   const decoded: any = tokenService.decodeToken();
   const roles: string[] = decoded?.roles ?? [];
   if (!roles.includes('radiologist') && !roles.includes('admin') && !roles.includes('coordinator')) {
-    router.navigateByUrl('/user/login');
+    router.navigateByUrl('/login');
     return false;
   }
   return true;

@@ -9,13 +9,13 @@ export const adminGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   if (!tokenService.isAuthorized()) {
-    router.navigateByUrl('/user/login');
+    router.navigateByUrl('/login');
     return false;
   }
   const decoded: any = tokenService.decodeToken();
   const roles: string[] = decoded?.roles ?? [];
   if (!roles.some((r) => ADMIN_LIKE_ROLES.includes(r))) {
-    router.navigateByUrl('/user/login');
+    router.navigateByUrl('/login');
     return false;
   }
   return true;
