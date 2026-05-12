@@ -18,6 +18,7 @@ import { Role } from '../../auth/roles';
 import { PdfService } from './pdf.service';
 import { ReportRow, ReportV2Repository, ReportStudyContext } from './report-v2.repository';
 import { SignatureService } from './signature.service';
+import { SrPusherService } from './sr-pusher.service';
 import { eq as eq2 } from 'drizzle-orm';
 import type { ReportContentsDto } from './dto/save-report-v2.dto';
 import type { SignReportDto } from './dto/sign-report.dto';
@@ -35,6 +36,7 @@ export class ReportV2Service {
     private readonly audit: AuditLogService,
     private readonly enc: ColumnEncryptionService,
     private readonly notifications: NotificationsService,
+    private readonly srPusher: SrPusherService,
   ) {}
 
   async get(reportStudyId: string, user: AuthenticatedUser): Promise<ReportResponseDto> {
@@ -111,6 +113,10 @@ export class ReportV2Service {
     const enriched: ReportRow = { ...finalized, signatureData };
     const pdf = await this.pdf.render(enriched, study_);
     const signed = await this.repo.sign(report.id, signatureData, pdf);
+
+    // Best-effort SR push to the PACS so the report lives next to the
+    // images. Never blocks the response.
+    void this.srPusher.pushFor(signed).catch(() => undefined);
 
     await this.audit.append({
       actorId: user.id,

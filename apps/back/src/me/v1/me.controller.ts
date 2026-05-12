@@ -13,6 +13,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swa
 import { Response } from 'express';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../auth/jwt.strategy';
+import { DicomExportService } from './dicom-export.service';
 import { MeService } from './me.service';
 import { ProcessingRestrictionDto } from './dto/restriction.dto';
 
@@ -21,7 +22,16 @@ import { ProcessingRestrictionDto } from './dto/restriction.dto';
 @UseGuards(AuthGuard('jwt'))
 @Controller({ path: 'me', version: '1' })
 export class MeController {
-  constructor(private readonly me: MeService) {}
+  constructor(
+    private readonly me: MeService,
+    private readonly dicom: DicomExportService,
+  ) {}
+
+  @Get('dicom-export')
+  @ApiOperation({ summary: 'RGPD art. 20 — download a ZIP with your DICOM studies' })
+  dicomExport(@CurrentUser() user: AuthenticatedUser, @Res() res: Response) {
+    return this.dicom.streamForCurrentUser(user, res);
+  }
 
   @Get('data-export')
   @ApiOperation({ summary: 'RGPD art. 15 — download a copy of your personal data' })
