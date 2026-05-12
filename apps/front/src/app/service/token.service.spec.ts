@@ -5,113 +5,70 @@ import jwt_decode from 'jwt-decode';
 
 jest.mock('jwt-decode', () => jest.fn());
 
-const oAuthServiceMock = {
-  signOut: jest.fn().mockResolvedValue(true)
-};
+const oAuthServiceMock = { signOut: jest.fn().mockResolvedValue(true) };
 
-describe('TokenService', () => {
+describe('TokenService (in-memory)', () => {
   let service: TokenService;
 
   beforeEach(() => {
-    localStorage.clear();
     jest.clearAllMocks();
-
     TestBed.configureTestingModule({
-      providers: [
-        { provide: SocialAuthService, useValue: oAuthServiceMock }
-      ]
+      providers: [{ provide: SocialAuthService, useValue: oAuthServiceMock }],
     });
-
     service = TestBed.inject(TokenService);
   });
 
-  it('should be created', () => {
+  it('creates the service', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should emit true after saving tokens', () => {
-    const loggedSpy = jest.spyOn(service['loggedIn'], 'next');
-    service.saveTokens('token123', 'refresh456');
-    expect(localStorage.getItem('TokenBH')).toContain('Bearer');
-    expect(localStorage.getItem('RefreshTokenBH')).toBe('refresh456');
-    expect(loggedSpy).toHaveBeenCalledWith(true);
-  });
+  it('keeps the access token only in memory', () => {
+    const future = Math.floor(Date.now() / 1000) + 3600;
+    (jwt_decode as jest.Mock).mockReturnValue({ exp: future, email: 'u@example.com' });
 
-  it('should get token and refresh token from localStorage', () => {
-    localStorage.setItem('TokenBH', 'Bearer token');
-    localStorage.setItem('RefreshTokenBH', 'refresh');
+    service.setSession('the.access.token', 'u@example.com');
 
-    expect(service.getToken()).toBe('Bearer token');
-    expect(service.getRefreshToken()).toBe('refresh');
-  });
-
-  it('should decode token if available', () => {
-    (jwt_decode as jest.Mock).mockReturnValue({ userId: 'abc' });
-    localStorage.setItem('TokenBH', 'Bearer test-token');
-
-    const decoded = service.decodeToken();
-    expect(decoded).toEqual({ userId: 'abc' });
-  });
-
-  it('should return null if no token for decodeToken', () => {
-    const result = service.decodeToken();
-    expect(result).toBeNull();
-  });
-
-  it('should return false if no token or expired in isAuthorized', () => {
-    localStorage.removeItem('TokenBH');
-    expect(service.isAuthorized()).toBe(false);
-  });
-
-  it('should return true in isAuthorized if token is valid', () => {
-    const futureTime = Math.floor(Date.now() / 1000) + 3600; // +1h
-    (jwt_decode as jest.Mock).mockReturnValue({ exp: futureTime });
-    localStorage.setItem('TokenBH', 'Bearer valid-token');
-
+    expect(service.getRawToken()).toBe('the.access.token');
     expect(service.isAuthorized()).toBe(true);
+    expect(service.getUserEmail()).toBe('u@example.com');
   });
 
-  it('should return false in isAuthorized if token expired', () => {
-    const pastTime = Math.floor(Date.now() / 1000) - 3600; // -1h
-    (jwt_decode as jest.Mock).mockReturnValue({ exp: pastTime });
-    localStorage.setItem('TokenBH', 'Bearer expired-token');
-
-    expect(service.isAuthorized()).toBe(false);
-    expect(localStorage.getItem('TokenBH')).toBeNull(); // Token eliminado
-  });
-
-  it('should return true if refresh token is expired', () => {
-    (jwt_decode as jest.Mock).mockReturnValue({ exp: 1000 }); // tiempo pasado
-    localStorage.setItem('RefreshTokenBH', 'expired-refresh');
-    expect(service.isRefreshTokenExpired()).toBe(true);
-  });
-
-  it('should return false if refresh token is still valid', () => {
-    const future = Math.floor(Date.now() / 1000) + 10000;
+  it('saveTokens accepts only the access token; refresh is ignored', () => {
+    const future = Math.floor(Date.now() / 1000) + 3600;
     (jwt_decode as jest.Mock).mockReturnValue({ exp: future });
-    localStorage.setItem('RefreshTokenBH', 'valid-refresh');
-    expect(service.isRefreshTokenExpired()).toBe(false);
+
+    service.saveTokens('t', 'ignored-refresh');
+
+    expect(service.getRawToken()).toBe('t');
+    expect(service.getRefreshToken()).toBe('');
   });
 
-  it('should clear storage and emit logout state on logout()', async () => {
-    localStorage.setItem('TokenBH', 'Bearer token');
-    const loggedSpy = jest.spyOn(service['loggedIn'], 'next');
+  it('returns false on isAuthorized when no session is set', () => {
+    expect(service.isAuthorized()).toBe(false);
+  });
 
-    await service.logout();
+  it('returns false on isAuthorized when the access token is expired', () => {
+    const past = Math.floor(Date.now() / 1000) - 60;
+    (jwt_decode as jest.Mock).mockReturnValue({ exp: past });
+    service.setSession('expired-token');
+    expect(service.isAuthorized()).toBe(false);
+  });
 
-    expect(localStorage.getItem('TokenBH')).toBeNull();
-    expect(loggedSpy).toHaveBeenCalledWith(false);
+  it('clears the session on logout and signs out from OAuth', async () => {
+    (jwt_decode as jest.Mock).mockReturnValue({ exp: Math.floor(Date.now() / 1000) + 60 });
+    service.setSession('t');
+    expect(service.isAuthorized()).toBe(true);
+
+    service.logout();
+
+    expect(service.getRawToken()).toBe('');
+    expect(service.isAuthorized()).toBe(false);
     expect(oAuthServiceMock.signOut).toHaveBeenCalled();
   });
 
-  it('should decode refresh token', () => {
-    (jwt_decode as jest.Mock).mockReturnValue({ exp: 9999 });
-    localStorage.setItem('RefreshTokenBH', 'refresh');
-    const result = service.decodeRefreshToken();
-    expect(result).toEqual({ exp: 9999 });
-  });
-
-  it('should return null from decodeRefreshToken if no token', () => {
+  it('returns empty strings for the deprecated refresh-token API', () => {
+    expect(service.getRefreshToken()).toBe('');
     expect(service.decodeRefreshToken()).toBeNull();
+    expect(service.isRefreshTokenExpired()).toBe(true);
   });
 });

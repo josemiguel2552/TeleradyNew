@@ -1,112 +1,118 @@
 import { Injectable } from '@angular/core';
 import jwt_decode from 'jwt-decode';
-import * as dayjs from 'dayjs';
 import { BehaviorSubject } from 'rxjs';
 import { SocialAuthService } from '@abacritt/angularx-social-login';
 
-@Injectable({
-  providedIn: 'root'
-})
+interface SessionState {
+  accessToken: string | null;
+  expiresAtMs: number | null;
+  userEmail: string | null;
+}
+
+/**
+ * In-memory session store.
+ *
+ * The refresh token lives in an httpOnly cookie set by the backend. The
+ * SPA only ever holds the access token (in memory) and the expiry derived
+ * from its `exp` claim. localStorage is no longer used — closing the
+ * XSS exfiltration window.
+ */
+@Injectable({ providedIn: 'root' })
 export class TokenService {
+  private state: SessionState = {
+    accessToken: null,
+    expiresAtMs: null,
+    userEmail: null,
+  };
+  private readonly loggedIn = new BehaviorSubject<boolean>(false);
 
-  private loggedIn = new BehaviorSubject<boolean>(this.hasToken());
-
-  constructor(private oAuthService: SocialAuthService) { }
+  constructor(private oAuthService: SocialAuthService) {}
 
   get isLoggedIn$() {
     return this.loggedIn.asObservable();
   }
 
-  private hasToken(): boolean {
-    return !!localStorage.getItem('TokenBH');
+  nextLogged(value: boolean): void {
+    this.loggedIn.next(value);
   }
 
-  nextLogged(vale: boolean) {
-    this.loggedIn.next(vale);
+  setSession(accessToken: string, userEmail?: string | null): void {
+    let expiresAtMs: number | null = null;
+    try {
+      const decoded: any = jwt_decode(accessToken);
+      if (decoded?.exp) expiresAtMs = decoded.exp * 1000;
+    } catch {
+      expiresAtMs = null;
+    }
+    this.state = { accessToken, expiresAtMs, userEmail: userEmail ?? null };
+    this.loggedIn.next(true);
+  }
+
+  clearSession(): void {
+    this.state = { accessToken: null, expiresAtMs: null, userEmail: null };
+    this.loggedIn.next(false);
+  }
+
+  /**
+   * Backwards-compatible alias used by legacy callers. Refresh tokens are no
+   * longer handled by the SPA, so the second argument is ignored.
+   */
+  saveTokens(token?: string, _refreshToken?: string): void {
+    if (token) this.setSession(token);
   }
 
   logout(): void {
-    localStorage.removeItem('TokenBH');
-    localStorage.removeItem('RefreshTokenBH');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('isOAuth');
-    this.loggedIn.next(false);
-
+    this.clearSession();
     this.oAuthService.signOut(false).catch((err) => {
-      console.warn('Error cerrando sesión OAuth:', err);
+      console.warn('Error closing OAuth session:', err);
     });
   }
 
   getToken(): string {
-    if (localStorage.getItem('TokenBH')) {
-      return localStorage.getItem('TokenBH') ?? '';
-    }
-    return '';
+    return this.state.accessToken ?? '';
   }
-  
+
   getRawToken(): string {
-    const token = this.getToken();
-    return token.replace(/^Bearer\s/, '');
+    return this.getToken().replace(/^Bearer\s/, '');
   }
-  
+
   decodeToken(): any {
-    const token = this.getToken();
-    if (token && token != '')
+    const token = this.getRawToken();
+    if (!token) return null;
+    try {
       return jwt_decode(token);
-    return null;
+    } catch {
+      return null;
+    }
   }
 
+  /**
+   * True if there is a non-expired access token. We trust the SPA's clock;
+   * the API still verifies the token signature and `exp` on every request.
+   */
   isAuthorized(): boolean {
-    const token = this.getToken();
-    if (!token || token.length < 2) {
-
-      return false;
-    }
-    const decoded: any = jwt_decode(token);
-    const dateString = dayjs.unix(decoded.exp).toDate();
-    if (dateString > new Date()) {
-      return true;
-    } else {
-      localStorage.removeItem('TokenBH');
-      this.loggedIn.next(false);
-      return false;
-    }
+    if (!this.state.accessToken) return false;
+    if (!this.state.expiresAtMs) return false;
+    return this.state.expiresAtMs > Date.now();
   }
 
+  /**
+   * Legacy: the refresh cookie is httpOnly so the SPA cannot observe it.
+   * Callers should treat the cookie as opaque and rely on /auth/refresh.
+   */
   isRefreshTokenExpired(): boolean {
-    const token = this.getRefreshToken();
-    if (!token || token.length < 2) {
-      return true;
-    }
-    const decoded: any = jwt_decode(token);
-    const dateString = dayjs.unix(decoded.exp).toDate();
-    if (dateString > new Date()) {
-      return false;
-    } else {
-      localStorage.removeItem('RefreshTokenBH');
-      return true;
-    }
-  }
-
-  saveTokens(token?: string, refreshToken?: string): void {
-    if (token)
-      localStorage.setItem('TokenBH', `Bearer ${token}`);
-    if (refreshToken)
-      localStorage.setItem('RefreshTokenBH', `${refreshToken}`);
-    this.loggedIn.next(true);
+    return !this.state.accessToken;
   }
 
   getRefreshToken(): string {
-    if (localStorage.getItem('RefreshTokenBH')) {
-      return localStorage.getItem('RefreshTokenBH') ?? '';
-    }
     return '';
   }
 
   decodeRefreshToken(): any {
-    const token = this.getRefreshToken();
-    if (token && token != '')
-      return jwt_decode(token);
     return null;
+  }
+
+  getUserEmail(): string | null {
+    return this.state.userEmail ?? this.decodeToken()?.email ?? null;
   }
 }
