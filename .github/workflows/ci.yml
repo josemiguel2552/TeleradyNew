@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          config: .gitleaks.toml
+
+  back:
+    name: Back — lint + build + test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/back
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: apps/back/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - name: Generate ephemeral test secrets
+        run: |
+          echo "NODE_ENV=test" >> $GITHUB_ENV
+          echo "DATABASE_URL=postgres://test:test@localhost:5432/test" >> $GITHUB_ENV
+          echo "JWT_ACCESS_SECRET=$(openssl rand -hex 32)" >> $GITHUB_ENV
+          echo "JWT_REFRESH_SECRET=$(openssl rand -hex 32)" >> $GITHUB_ENV
+          echo "ENCRYPTION_MASTER_KEY=$(openssl rand -hex 32)" >> $GITHUB_ENV
+          echo "PSEUDONYM_PEPPER=$(openssl rand -hex 32)" >> $GITHUB_ENV
+      - run: npm test
+
+  front:
+    name: Front — lint + build + test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/front
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: apps/front/package-lock.json
+      - run: npm ci
+      - run: npm run build:dev
+      - run: npm test -- --ci

@@ -1,0 +1,27 @@
+title = "Telerady gitleaks config"
+
+# Use upstream default rules plus the project-specific patterns below.
+[extend]
+useDefault = true
+
+[[rules]]
+id = "radiogenia-token"
+description = "Internal radiogenia API token leaked in legacy front"
+regex = '''rdg_[A-Za-z0-9]{20,}'''
+
+[[rules]]
+id = "telerady-jwt-leak"
+description = "JWT-looking token committed to the repo"
+regex = '''eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}'''
+
+[allowlist]
+description = "Paths and fixtures that are explicitly safe"
+paths = [
+  '''.*node_modules/.*''',
+  '''.*\.lock''',
+  '''.*\.lockfile''',
+  '''.*package-lock\.json''',
+  '''docs/SECURITY-FINDINGS-SPRINT0\.md''',
+  '''.env\.example''',
+  '''.gitleaks\.toml''',
+]
