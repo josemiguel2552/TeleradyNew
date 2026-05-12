@@ -1,29 +1,37 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
-import { decryptDataKey } from '../../../common/utils/crypto/crypto.util';
 
+/**
+ * Adapter around google-auth-library's JWT client.
+ *
+ * Legacy integration with Google Drive — to be retired in Sprint 2 once
+ * documents migrate to S3-compatible storage.
+ */
 @Injectable()
 export class AuthGoogleService {
-    private readonly jwtClient: JWT;
+  private readonly jwtClient: JWT;
 
-    constructor() {
-        const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
-        const privateKey = process.env.GOOGLE_PRIVATE_KEY;
+  constructor(config: ConfigService) {
+    const clientEmail = config.get<string>('GOOGLE_CLIENT_EMAIL');
+    const privateKeyRaw = config.get<string>('GOOGLE_PRIVATE_KEY');
 
-        if (!clientEmail || !privateKey) {
-            throw new Error('Google client email or private key is not defined in environment variables.');
-        }
-
-        this.jwtClient = new google.auth.JWT(
-            clientEmail,
-            undefined,
-            decryptDataKey(privateKey).replace(/\\n/g, '\n'),
-            ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/spreadsheets']
-        );
+    if (!clientEmail || !privateKeyRaw) {
+      throw new Error(
+        'GOOGLE_CLIENT_EMAIL and GOOGLE_PRIVATE_KEY must be set to use the Drive integration.',
+      );
     }
 
-    getClient(): JWT {
-        return this.jwtClient;
-    }
+    const privateKey = privateKeyRaw.replace(/\\n/g, '\n');
+
+    this.jwtClient = new google.auth.JWT(clientEmail, undefined, privateKey, [
+      'https://www.googleapis.com/auth/drive',
+      'https://www.googleapis.com/auth/spreadsheets',
+    ]);
+  }
+
+  getClient(): JWT {
+    return this.jwtClient;
+  }
 }
