@@ -733,6 +733,37 @@ export const reportInTelerady = telerady.table("report", {
 	unique("report_study_unique").on(table.reportStudyId),
 ]);
 
+export const mwlEntryInTelerady = telerady.table("mwl_entry", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	hospitalId: uuid("hospital_id"),
+	accessionNumber: varchar("accession_number", { length: 64 }),
+	scheduledStationAet: varchar("scheduled_station_aet", { length: 16 }),
+	patientIdHash: varchar("patient_id_hash", { length: 64 }),
+	patientIdEnc: text("patient_id_enc"),
+	patientNameEnc: text("patient_name_enc"),
+	patientBirthdateEnc: text("patient_birthdate_enc"),
+	patientSex: varchar("patient_sex", { length: 4 }),
+	studyDescription: varchar("study_description", { length: 150 }),
+	scheduledDate: varchar("scheduled_date", { length: 8 }),
+	scheduledTime: varchar("scheduled_time", { length: 6 }),
+	modality: varchar({ length: 16 }),
+	requestingPhysician: varchar("requesting_physician", { length: 150 }),
+	state: varchar({ length: 20 }).default('scheduled').notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+});
+
+export const hl7MessageInTelerady = telerady.table("hl7_message", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	hospitalId: uuid("hospital_id"),
+	direction: varchar({ length: 4 }).notNull(),
+	messageType: varchar("message_type", { length: 16 }).notNull(),
+	controlId: varchar("control_id", { length: 64 }),
+	payloadEnc: text("payload_enc").notNull(),
+	processedAt: timestamp("processed_at", { withTimezone: true, mode: 'string' }),
+	error: text(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+});
+
 export const assignmentRuleInTelerady = telerady.table("assignment_rule", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	hospitalId: uuid("hospital_id"),

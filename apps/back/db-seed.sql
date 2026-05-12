@@ -267,3 +267,45 @@ CREATE TABLE telerady.assignment_rule (
 );
 CREATE INDEX assignment_rule_hospital_idx ON telerady.assignment_rule (hospital_id);
 CREATE INDEX assignment_rule_priority_idx ON telerady.assignment_rule (priority);
+
+-- =====================================================================
+-- Sprint 10 — DICOM MWL + HL7v2 interoperability
+-- =====================================================================
+
+CREATE TABLE telerady.mwl_entry (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    hospital_id UUID REFERENCES telerady.hospital(id) ON DELETE CASCADE,
+    accession_number VARCHAR(64),
+    scheduled_station_aet VARCHAR(16),
+    patient_id_hash VARCHAR(64),
+    patient_id_enc TEXT,
+    patient_name_enc TEXT,
+    patient_birthdate_enc TEXT,
+    patient_sex VARCHAR(4),
+    study_description VARCHAR(150),
+    scheduled_date VARCHAR(8),    -- DICOM date YYYYMMDD
+    scheduled_time VARCHAR(6),    -- DICOM time HHMMSS
+    modality VARCHAR(16),
+    requesting_physician VARCHAR(150),
+    state VARCHAR(20) NOT NULL DEFAULT 'scheduled'
+        CHECK (state IN ('scheduled','in_progress','completed','cancelled')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX mwl_hospital_idx ON telerady.mwl_entry (hospital_id);
+CREATE INDEX mwl_state_idx ON telerady.mwl_entry (state);
+CREATE INDEX mwl_accession_idx ON telerady.mwl_entry (accession_number);
+CREATE INDEX mwl_patient_id_hash_idx ON telerady.mwl_entry (patient_id_hash);
+
+CREATE TABLE telerady.hl7_message (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    hospital_id UUID REFERENCES telerady.hospital(id) ON DELETE SET NULL,
+    direction VARCHAR(4) NOT NULL CHECK (direction IN ('in','out')),
+    message_type VARCHAR(16) NOT NULL,
+    control_id VARCHAR(64),
+    payload_enc TEXT NOT NULL,
+    processed_at TIMESTAMPTZ,
+    error TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX hl7_hospital_idx ON telerady.hl7_message (hospital_id);
+CREATE INDEX hl7_control_idx ON telerady.hl7_message (control_id);

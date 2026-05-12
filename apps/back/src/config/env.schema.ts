@@ -81,6 +81,11 @@ export const envSchema = z.object({
   EMAIL_FROM: z.string().email().optional(),
   WEBHOOK_OUTGOING_SECRET: z.string().min(32).optional(),
 
+  HL7_MLLP_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false'),
+  HL7_MLLP_PORT: z.coerce.number().int().positive().default(2575),
+
   SWAGGER_USER: z.string().optional(),
   SWAGGER_PASSWORD: z.string().optional(),
 });
