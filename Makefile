@@ -11,7 +11,7 @@ SHELL := /bin/bash
 #   make back       — run the API in the foreground
 #   make front      — run the SPA in the foreground
 
-.PHONY: demo stack down reset install seed back front help
+.PHONY: demo stack down reset install seed back front smoke help
 
 help:
 	@echo "Telerady — common commands"
@@ -45,6 +45,9 @@ back:
 
 front:
 	cd apps/front && npm start
+
+smoke:
+	bash scripts/smoke.sh
 
 demo: stack install seed
 	@echo ""

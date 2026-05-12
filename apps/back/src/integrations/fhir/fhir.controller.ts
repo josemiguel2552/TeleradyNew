@@ -1,8 +1,11 @@
 import {
+  Body,
   Controller,
   Get,
   Header,
+  HttpCode,
   Param,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -68,6 +71,17 @@ export class FhirController {
     return this.fhir.searchDiagnosticReports(user, { patient, status });
   }
 
+  @Post('DiagnosticReport')
+  @HttpCode(201)
+  @Header('Content-Type', 'application/fhir+json')
+  @ApiOperation({ summary: 'FHIR R4 DiagnosticReport create' })
+  createDiagnosticReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: unknown,
+  ) {
+    return this.fhir.createDiagnosticReport(user, (body ?? {}) as never);
+  }
+
   @Get('metadata')
   @Header('Content-Type', 'application/fhir+json')
   @ApiOperation({ summary: 'FHIR R4 CapabilityStatement' })
@@ -88,7 +102,7 @@ export class FhirController {
             { type: 'ImagingStudy', interaction: [{ code: 'search-type' }] },
             {
               type: 'DiagnosticReport',
-              interaction: [{ code: 'read' }, { code: 'search-type' }],
+              interaction: [{ code: 'read' }, { code: 'search-type' }, { code: 'create' }],
             },
           ],
         },

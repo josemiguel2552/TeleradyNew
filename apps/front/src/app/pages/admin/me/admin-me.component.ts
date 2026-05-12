@@ -85,7 +85,7 @@ export class AdminMeComponent {
         try {
           await this.me.deleteAccount();
           this.token.logout();
-          this.router.navigateByUrl('/user/login');
+          this.router.navigateByUrl('/login');
         } catch (err: any) {
           this.messages.add({
             severity: 'error',

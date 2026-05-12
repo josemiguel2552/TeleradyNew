@@ -72,7 +72,7 @@ export class TokenInterceptor implements HttpInterceptor {
         this.refreshing = false;
         if (!res.ok) {
           this.tokenService.clearSession();
-          this.router.navigateByUrl('/user/login');
+          this.router.navigateByUrl('/login');
           return throwError(() => res);
         }
         const newToken = res.response.accessToken;
@@ -82,7 +82,7 @@ export class TokenInterceptor implements HttpInterceptor {
       catchError((err) => {
         this.refreshing = false;
         this.tokenService.clearSession();
-        this.router.navigateByUrl('/user/login');
+        this.router.navigateByUrl('/login');
         return throwError(() => err);
       }),
     );

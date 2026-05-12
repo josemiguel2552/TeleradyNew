@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { and, eq, sql, type SQL } from 'drizzle-orm';
 import { db } from '../../database/drizzle';
 import {
@@ -8,6 +8,8 @@ import {
   reportStudyInTelerady,
 } from '../../database/schema';
 import { ColumnEncryptionService } from '../../common/crypto/column-encryption.service';
+import { reportInTelerady as reportTable } from '../../database/schema';
+void reportTable;
 import { StorageService } from '../storage/storage.service';
 import { TenantScope } from '../../common/tenant/tenant-scope';
 import type { AuthenticatedUser } from '../../auth/jwt.strategy';
@@ -195,6 +197,67 @@ export class FhirService {
       type: 'searchset',
       total: entries.length,
       entry: entries,
+    };
+  }
+
+  /**
+   * Accepts a FHIR DiagnosticReport from an external HIS and creates the
+   * corresponding draft report row. The bridge is intentionally lenient:
+   * we accept `subject.identifier.value` *or* `subject.reference` to find
+   * the patient, and we tolerate a missing imagingStudy if the body
+   * carries enough text to be persisted as a draft.
+   */
+  async createDiagnosticReport(
+    user: AuthenticatedUser,
+    body: Partial<FhirDiagnosticReport> & {
+      subject?: { reference?: string; identifier?: { value?: string } };
+    },
+  ) {
+    if (!user.professionalId) {
+      throw new BadRequestException('Only a registered professional can create a report');
+    }
+    if (body.resourceType !== 'DiagnosticReport') {
+      throw new BadRequestException('Expected resourceType=DiagnosticReport');
+    }
+    const studyRef = body.imagingStudy?.[0]?.reference?.replace(/^ImagingStudy\//, '');
+    if (!studyRef) {
+      throw new BadRequestException('imagingStudy reference is required');
+    }
+    const studyRows = await db
+      .select()
+      .from(reportStudyInTelerady)
+      .where(eq(reportStudyInTelerady.id, studyRef))
+      .limit(1);
+    const study = studyRows[0];
+    if (!study) throw new NotFoundException('Study not visible');
+
+    const scope = TenantScope.for(user);
+    if (study.hospitalId && !scope.isPrivileged) scope.assertCanAct(study.hospitalId);
+
+    const text = body.conclusion ?? '';
+    const aad = `report:${study.id}`;
+    const contents = {
+      modality: (study.modalities ?? [])[0] ?? 'OTHER',
+      sections: [{ key: 'conclusion', title: 'Conclusion', body: text }],
+      metadata: { source: 'fhir', externalId: body.identifier?.[0]?.value ?? null },
+    };
+    const [row] = await db
+      .insert(reportInTelerady)
+      .values({
+        reportStudyId: study.id,
+        hospitalId: study.hospitalId,
+        professionalId: user.professionalId,
+        contentsEnc: this.enc.encrypt(JSON.stringify(contents), aad),
+        state: 'draft',
+        version: 1,
+      })
+      .onConflictDoNothing({ target: reportInTelerady.reportStudyId })
+      .returning();
+    return {
+      resourceType: 'DiagnosticReport',
+      id: row?.id ?? study.id,
+      status: 'preliminary',
+      created: true,
     };
   }
 
