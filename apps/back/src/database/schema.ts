@@ -517,7 +517,10 @@ export const freelancerDataInTelerady = telerady.table("freelancer_data", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	professionalId: uuid("professional_id"),
 	registrationNumber: varchar("registration_number", { length: 50 }).notNull(),
-	bankAccount: varchar("bank_account", { length: 50 }).notNull(),
+	// Legacy plaintext column. Nullable so new code only writes the encrypted
+	// sibling. Drop in Sprint 2.
+	bankAccount: varchar("bank_account", { length: 50 }),
+	bankAccountEnc: text("bank_account_enc"),
 });
 
 export const professionalAvailabilityInTelerady = telerady.table("professional_availability", {
@@ -578,13 +581,22 @@ export const reportStatesInTelerady = telerady.table("report_states", {
 
 export const reportStudyInTelerady = telerady.table("report_study", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
+	hospitalId: uuid("hospital_id"),
 	professionalId: uuid("professional_id").notNull(),
 	studyIuid: varchar("study_iuid", { length: 150 }).notNull(),
 	studyDesc: varchar("study_desc", { length: 150 }).notNull(),
-	patId: varchar("pat_id", { length: 150 }).notNull(),
-	patName: varchar("pat_name", { length: 150 }).notNull(),
+	// Legacy plaintext columns. Nullable so new code can write only the
+	// encrypted siblings. To be dropped in Sprint 2.
+	patId: varchar("pat_id", { length: 150 }),
+	patName: varchar("pat_name", { length: 150 }),
+	patBirthdate: varchar("pat_birthdate", { length: 150 }),
+	// Encrypted siblings (AES-256-GCM packed envelope) + deterministic
+	// HMAC of pat_id for lookups without re-identification.
+	patIdEnc: text("pat_id_enc"),
+	patIdHash: varchar("pat_id_hash", { length: 64 }),
+	patNameEnc: text("pat_name_enc"),
+	patBirthdateEnc: text("pat_birthdate_enc"),
 	sex: varchar({ length: 150 }).notNull(),
-	patBirthdate: varchar("pat_birthdate", { length: 150 }).notNull(),
 	modalities: varchar({ length: 50 }).array(),
 	institution: varchar({ length: 150 }).notNull(),
 	src: varchar({ length: 150 }).notNull(),
@@ -618,3 +630,73 @@ export const auditLogInTelerady = telerady.table("audit_log", {
 	requestIp: varchar("request_ip", { length: 45 }),
 	requestUa: varchar("request_ua", { length: 255 }),
 });
+
+// =====================================================================
+// Sprint 1 — Multi-tenant model (Telerady-native, not the BookHospital
+// legacy carried over from the imported repo).
+// =====================================================================
+
+export const hospitalSignaturePolicy = ['name_collegiate', 'drawn_hash_tsa'] as const;
+export type HospitalSignaturePolicy = (typeof hospitalSignaturePolicy)[number];
+
+export const hospitalInTelerady = telerady.table("hospital", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	name: varchar({ length: 200 }).notNull(),
+	taxId: varchar("tax_id", { length: 50 }),
+	signaturePolicy: varchar("signature_policy", { length: 40 }).default('name_collegiate').notNull(),
+	retentionDays: integer("retention_days").default(3650).notNull(),
+	active: boolean().default(true).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	unique("hospital_tax_id_key").on(table.taxId),
+]);
+
+export const appUserInTelerady = telerady.table("app_user", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	email: varchar({ length: 200 }).notNull(),
+	passwordHash: text("password_hash").notNull(),
+	mfaSecretEnc: text("mfa_secret_enc"),
+	mfaEnabled: boolean("mfa_enabled").default(false).notNull(),
+	professionalId: uuid("professional_id"),
+	failedAttempts: integer("failed_attempts").default(0).notNull(),
+	lockedUntil: timestamp("locked_until", { withTimezone: true, mode: 'string' }),
+	lastLoginAt: timestamp("last_login_at", { withTimezone: true, mode: 'string' }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	unique("app_user_email_key").on(table.email),
+]);
+
+export const userRoleAssignmentInTelerady = telerady.table("user_role_assignment", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	userId: uuid("user_id").notNull(),
+	role: varchar({ length: 50 }).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	unique("user_role_assignment_user_role_key").on(table.userId, table.role),
+]);
+
+export const hospitalMembershipInTelerady = telerady.table("hospital_membership", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	userId: uuid("user_id").notNull(),
+	hospitalId: uuid("hospital_id").notNull(),
+	isAdmin: boolean("is_admin").default(false).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	unique("hospital_membership_user_hospital_key").on(table.userId, table.hospitalId),
+]);
+
+export const refreshTokenInTelerady = telerady.table("refresh_token", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	userId: uuid("user_id").notNull(),
+	tokenHash: varchar("token_hash", { length: 64 }).notNull(),
+	expiresAt: timestamp("expires_at", { withTimezone: true, mode: 'string' }).notNull(),
+	revokedAt: timestamp("revoked_at", { withTimezone: true, mode: 'string' }),
+	replacedById: uuid("replaced_by_id"),
+	ip: varchar({ length: 45 }),
+	ua: varchar({ length: 255 }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	unique("refresh_token_hash_key").on(table.tokenHash),
+]);

@@ -130,3 +130,84 @@ DROP TRIGGER IF EXISTS audit_log_no_update ON telerady.audit_log;
 CREATE TRIGGER audit_log_no_update
     BEFORE UPDATE OR DELETE OR TRUNCATE ON telerady.audit_log
     FOR EACH STATEMENT EXECUTE FUNCTION telerady.audit_log_block_modifications();
+
+-- =====================================================================
+-- Sprint 1 — Multi-tenant model
+-- =====================================================================
+
+CREATE TABLE telerady.hospital (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(200) NOT NULL,
+    tax_id VARCHAR(50) UNIQUE,
+    signature_policy VARCHAR(40) NOT NULL DEFAULT 'name_collegiate'
+        CHECK (signature_policy IN ('name_collegiate', 'drawn_hash_tsa')),
+    retention_days INTEGER NOT NULL DEFAULT 3650,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE telerady.app_user (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(200) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    mfa_secret_enc TEXT,
+    mfa_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    professional_id UUID REFERENCES telerady.professional(id) ON DELETE SET NULL,
+    failed_attempts INTEGER NOT NULL DEFAULT 0,
+    locked_until TIMESTAMPTZ,
+    last_login_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX app_user_lower_email_idx ON telerady.app_user (lower(email));
+
+CREATE TABLE telerady.user_role_assignment (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES telerady.app_user(id) ON DELETE CASCADE,
+    role VARCHAR(50) NOT NULL
+        CHECK (role IN ('admin', 'coordinator', 'hospital_admin', 'hospital_user', 'radiologist')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (user_id, role)
+);
+
+CREATE TABLE telerady.hospital_membership (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES telerady.app_user(id) ON DELETE CASCADE,
+    hospital_id UUID NOT NULL REFERENCES telerady.hospital(id) ON DELETE CASCADE,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (user_id, hospital_id)
+);
+
+CREATE TABLE telerady.refresh_token (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES telerady.app_user(id) ON DELETE CASCADE,
+    token_hash VARCHAR(64) UNIQUE NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    revoked_at TIMESTAMPTZ,
+    replaced_by_id UUID REFERENCES telerady.refresh_token(id) ON DELETE SET NULL,
+    ip VARCHAR(45),
+    ua VARCHAR(255),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX refresh_token_user_idx ON telerady.refresh_token (user_id);
+CREATE INDEX refresh_token_expires_idx ON telerady.refresh_token (expires_at);
+
+-- Extend report_study with hospital_id + encrypted columns. Legacy plaintext
+-- columns are kept (nullable) until Sprint 2 retires the imported repos.
+ALTER TABLE telerady.report_study
+    ADD COLUMN hospital_id UUID REFERENCES telerady.hospital(id) ON DELETE SET NULL,
+    ADD COLUMN pat_id_enc TEXT,
+    ADD COLUMN pat_id_hash VARCHAR(64),
+    ADD COLUMN pat_name_enc TEXT,
+    ADD COLUMN pat_birthdate_enc TEXT,
+    ALTER COLUMN pat_id DROP NOT NULL,
+    ALTER COLUMN pat_name DROP NOT NULL,
+    ALTER COLUMN pat_birthdate DROP NOT NULL;
+CREATE INDEX report_study_hospital_idx ON telerady.report_study (hospital_id);
+CREATE INDEX report_study_pat_id_hash_idx ON telerady.report_study (pat_id_hash);
+
+ALTER TABLE telerady.freelancer_data
+    ADD COLUMN bank_account_enc TEXT,
+    ALTER COLUMN bank_account DROP NOT NULL;
