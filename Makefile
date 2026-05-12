@@ -11,7 +11,7 @@ SHELL := /bin/bash
 #   make back       — run the API in the foreground
 #   make front      — run the SPA in the foreground
 
-.PHONY: demo stack down reset install seed back front smoke help
+.PHONY: demo stack down reset install seed back front smoke observability observability-down help
 
 help:
 	@echo "Telerady — common commands"
@@ -48,6 +48,13 @@ front:
 
 smoke:
 	bash scripts/smoke.sh
+
+observability:
+	docker compose -f infra/observability/docker-compose.yml up -d
+	@echo "Grafana en http://localhost:3001  (admin / admin)"
+
+observability-down:
+	docker compose -f infra/observability/docker-compose.yml down
 
 demo: stack install seed
 	@echo ""
