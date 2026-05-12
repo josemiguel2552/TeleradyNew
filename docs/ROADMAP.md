@@ -197,6 +197,49 @@ cuando los criterios de aceptación están verdes, no por calendario.
   — queda en backlog hasta que un hospital concreto lo pida.
 - [ ] SMART-on-FHIR Backend Services — backlog.
 
+## Sprint 12-20 — Operación, robustez e integraciones (cerrado)
+
+Sprints atómicos cortos enfocados en cerrar huecos operativos y
+preparar producción. Todos ya pusheados.
+
+- **Sprint 12 — Jobs (BullMQ)**: workers reales con Redis.
+  - `sla-escalation` cada 15 min con deduplicación 24 h.
+  - `oru-sender` con reintentos exponenciales y validación de ACK.
+  - `webhook-delivery` con HMAC + reintentos exponenciales.
+  - `audit-verify` horario que replay del hash chain.
+  - `/v1/admin/jobs` con counts por cola para diagnóstico.
+- **Sprint 13 — Tests E2E**: `npm run test:e2e` con
+  `@testcontainers/postgresql` levanta un Postgres real, aplica el
+  seed y verifica aislamiento entre tenants y detección de tamper en
+  el audit log. Gated tras `E2E=1`.
+- **Sprint 14 — RGPD art. 20 + DICOM SR**:
+  - `GET /v1/me/dicom-export` streamea un ZIP con los estudios del
+    profesional (manifest.json incluido).
+  - `SrPusherService` empuja un Basic Text Structured Report al
+    Orthanc del hospital cuando un informe se firma.
+- **Sprint 15 — FHIR write + smoke runner + /login canónico**:
+  - `POST /fhir/DiagnosticReport` para recibir informes del HIS.
+  - `scripts/smoke.sh` end-to-end (auth → worklist → sign → audit →
+    fhir → rgpd). Hook `make smoke`.
+  - TokenInterceptor + AdminMe redirigen a `/login` (deprecated
+    `/user/login`).
+- **Sprint 16 — Observability**: stack opcional con Prometheus + Loki
+  + Promtail + Grafana en `infra/observability/`. Dashboard
+  "Telerady — API overview" provisionado.
+- **Sprint 17 — `/metrics`**: prom-client con counters/histograms
+  HTTP + por dominio (report_signed, report_sent, audit_appended,
+  sla_pending). `MetricsInterceptor` global.
+- **Sprint 18 — DR plan + backup/restore**:
+  - `scripts/backup.sh` (pg_dump + sha256 + GPG + S3) y
+    `scripts/restore.sh` idempotentes.
+  - `docs/DR-PLAN.md` con RPO/RTO, cron, cut-over por escenario y
+    drill trimestral.
+- **Sprint 19 — Front jest tests**: specs para `LoginV2`,
+  `WorklistService` y `ReportV2Service`.
+- **Sprint 20 — Limpieza legacy**: `/user/**` redirige a `/login`;
+  los archivos legacy quedan compilando hasta que un sprint posterior
+  los elimine físicamente.
+
 ## Backlog y futuro
 
 - IA de borrador (radiogenia o equivalente) — reincorporable cuando el flujo
