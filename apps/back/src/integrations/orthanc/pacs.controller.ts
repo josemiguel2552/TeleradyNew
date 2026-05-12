@@ -1,12 +1,16 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Role } from '../../auth/roles';
+import type { AuthenticatedUser } from '../../auth/jwt.strategy';
 import { OrthancClient } from './orthanc-client.service';
+import { PacsIngestService } from './pacs-ingest.service';
 import { StudySearchDto, StudySearchResultDto } from './dto/study-search.dto';
+import { SyncStudyDto, SyncStudyResponseDto } from './dto/sync-study.dto';
 
 @ApiTags('pacs')
 @Controller({ path: 'pacs', version: '1' })
@@ -19,6 +23,7 @@ export class PacsController {
 
   constructor(
     private readonly orthanc: OrthancClient,
+    private readonly ingest: PacsIngestService,
     config: ConfigService,
   ) {
     this.viewerBase = config.get<string>('OHIF_URL') ?? '';
@@ -63,6 +68,19 @@ export class PacsController {
   ): { url: string } {
     const url = `${this.viewerBase}${this.viewerPath}?StudyInstanceUIDs=${encodeURIComponent(studyInstanceUid)}`;
     return { url };
+  }
+
+  @Post('studies/sync')
+  @ApiOperation({
+    summary:
+      'Ingest a study from PACS into telerady.report_study (encrypted columns + hospital_id)',
+  })
+  @ApiCreatedResponse({ type: SyncStudyResponseDto })
+  syncStudy(
+    @Body() body: SyncStudyDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<SyncStudyResponseDto> {
+    return this.ingest.sync(user, body);
   }
 }
 
