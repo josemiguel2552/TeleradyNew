@@ -20,13 +20,16 @@ cuando los criterios de aceptación están verdes, no por calendario.
 - Front: eliminar `bypassSecurityTrustHtml`, plan de tokens, CSP scaffolding.
 - CI GitHub Actions con gitleaks.
 
-## Sprint 1 — Multi-tenant + Auth + Hospital
+## Sprint 1 — Multi-tenant + Auth + Hospital (en curso)
 
-- Modelo `hospital` y `user` rediseñado con `hospital_id` en todo.
-- `auth.controller`: register/login/refresh/logout/MFA.
-- Roles efectivos: radiologist, hospital_user, hospital_admin, coordinator, admin.
-- Cifrado por columna activado en `professional`, `freelancer_data`, `report_study`.
-- Endpoints CRUD de hospitales para admin.
+- [x] Modelo `hospital` y `app_user` rediseñado en schema telerady.
+- [x] `auth.controller v1`: register-hospital, login, refresh, logout, me, MFA.
+- [x] Roles efectivos: radiologist, hospital_user, hospital_admin, coordinator, admin.
+- [x] Cifrado por columna activado en `report_study` (Sprint 2 reescribirá
+  los repos restantes para usarlo igualmente).
+- [x] Token storage en el front: httpOnly cookie de refresh + access en memoria.
+- [x] CLI `npm run seed:admin` para bootstrap del primer admin.
+- [ ] Postgres RLS — diferido a Sprint 2 (ver `docs/RLS-PLAN.md`).
 
 ## Sprint 2 — Orthanc + OHIF
 

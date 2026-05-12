@@ -9,6 +9,7 @@ import { AuthController } from './v1/auth.controller';
 import { AuthRepository } from './v1/auth.repository';
 import { AuthService } from './v1/auth.service';
 import { JwtTokenService } from './v1/jwt-token.service';
+import { MfaService } from './v1/mfa.service';
 import { RefreshTokenService } from './v1/refresh-token.service';
 
 @Global()
@@ -29,6 +30,7 @@ import { RefreshTokenService } from './v1/refresh-token.service';
     AuthRepository,
     AuthService,
     JwtTokenService,
+    MfaService,
     RefreshTokenService,
     AbilityFactory,
     RolesGuard,
@@ -39,6 +41,7 @@ import { RefreshTokenService } from './v1/refresh-token.service';
     AuthRepository,
     AuthService,
     JwtTokenService,
+    MfaService,
     RefreshTokenService,
     AbilityFactory,
     RolesGuard,

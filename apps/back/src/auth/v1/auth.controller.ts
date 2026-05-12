@@ -29,6 +29,8 @@ import { RolesGuard } from '../guards/roles.guard';
 import { Role } from '../roles';
 import { AuthService, type IssuedSession } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { MfaSetupResponseDto, MfaTokenDto } from './dto/mfa.dto';
+import { MfaService } from './mfa.service';
 import { RegisterHospitalDto } from './dto/register-hospital.dto';
 import {
   LoginResponseDto,
@@ -48,6 +50,7 @@ export class AuthController {
 
   constructor(
     private readonly auth: AuthService,
+    private readonly mfa: MfaService,
     config: ConfigService,
   ) {
     this.cookieDomain = config.getOrThrow<string>('COOKIE_DOMAIN');
@@ -129,10 +132,41 @@ export class AuthController {
       id: user.id,
       email: user.email,
       roles: user.roles,
-      hospitals: user.hospitalId ? [user.hospitalId] : [],
+      hospitals: user.hospitalIds,
       professionalId: user.professionalId ?? null,
       mfaEnabled: false,
     };
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @Post('mfa/setup')
+  @ApiOperation({ summary: 'Generate a TOTP secret + QR for the current user' })
+  @ApiOkResponse({ type: MfaSetupResponseDto })
+  async mfaSetup(@CurrentUser() user: AuthenticatedUser): Promise<MfaSetupResponseDto> {
+    const result = await this.mfa.setup(user.id, user.email);
+    return { otpauthUrl: result.otpauthUrl, qrCodeDataUrl: result.qrCodeDataUrl };
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @Post('mfa/confirm')
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Activate MFA by confirming the first TOTP code' })
+  async mfaConfirm(
+    @Body() body: MfaTokenDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<void> {
+    await this.mfa.confirm(user.id, body.token);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @Post('mfa/disable')
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Disable MFA for the current user' })
+  async mfaDisable(@CurrentUser() user: AuthenticatedUser): Promise<void> {
+    await this.mfa.disable(user.id);
   }
 
   private setRefreshCookie(res: Response, session: IssuedSession): void {

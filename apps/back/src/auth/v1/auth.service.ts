@@ -9,6 +9,7 @@ import { AuthRepository } from './auth.repository';
 import { Argon2Service } from '../../common/crypto/argon2.service';
 import { AuditLogService } from '../../common/audit/audit-log.service';
 import { JwtTokenService, type AccessTokenClaims } from './jwt-token.service';
+import { MfaService } from './mfa.service';
 import { RefreshTokenService } from './refresh-token.service';
 import { Role } from '../roles';
 import type { LoginDto } from './dto/login.dto';
@@ -45,6 +46,7 @@ export class AuthService {
     private readonly jwt: JwtTokenService,
     private readonly refresh: RefreshTokenService,
     private readonly audit: AuditLogService,
+    private readonly mfa: MfaService,
   ) {}
 
   async registerHospital(
@@ -130,10 +132,9 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    if (user.mfaEnabled && !dto.totp) {
-      throw new UnauthorizedException('TOTP code required');
+    if (user.mfaEnabled) {
+      await this.mfa.verifyForLogin(user.id, dto.totp);
     }
-    // MFA verification lands in a later commit when otplib is wired in.
 
     await this.repo.resetFailedAttempts(db, user.id);
 
