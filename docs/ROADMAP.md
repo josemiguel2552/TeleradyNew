@@ -127,19 +127,38 @@ cuando los criterios de aceptación están verdes, no por calendario.
 - [ ] Limitación de tratamiento (art. 18) + portabilidad DICOM zip
   (Sprint 7).
 
-## Sprint 7 — Audit UI + notificaciones + estadísticas
+## Sprint 7 — Audit UI + notificaciones + RGPD restante (en curso)
 
-- UI para auditoría y verificación del hash chain.
-- Notificaciones por email y push (Web Push API).
-- Estadísticas reales por hospital y radiólogo.
+- [x] Back: `GET /v1/admin/audit` (lista paginada con TenantScope y
+  filtros action/hospital/actor) y `POST /v1/admin/audit/verify`
+  (replay del hash chain con detección del primer registro inválido).
+- [x] Back: `GET /v1/admin/professionals` (búsqueda paginada por
+  nombre/apellido/email) para alimentar el dropdown de asignaciones.
+- [x] Back: `NotificationsModule` (@Global) con `sendEmail` (stub
+  estructurado) y `fireWebhook` (HMAC-SHA256 + reintentos lineales).
+  Webhook/email opcional en `report.sent`.
+- [x] Back: RGPD art. 18 — columna `app_user.processing_restricted`
+  + `PATCH /v1/me/processing-restriction` con auditoría.
+- [x] Front: `/admin/audit` con tabla lazy + botón Verify chain; el
+  dropdown de asignaciones consulta `/v1/admin/professionals` con
+  búsqueda server-side.
+- [ ] Push notifications (Web Push API) — backlog.
+- [ ] Gráficas por hospital y radiólogo — backlog.
 
 ## Sprint 8 — Compliance & operación
 
-- Pen-test interno y plan de remediación.
-- DPIA y ROPA finales.
-- Contratos art. 28 firmados.
-- Procedimientos de brecha y soporte 24×7.
-- Documentación ENS categoría media.
+- [x] Plantillas vivas:
+  - `docs/ROPA.md` (Registro de actividades de tratamiento).
+  - `docs/DPIA-template.md` (Evaluación de impacto).
+  - `docs/breach-procedure.md` (notificación AEPD <72h).
+  - `docs/ENS-mapping.md` (mapeo a Esquema Nacional de Seguridad media).
+- [ ] Auditor ENS acreditado contratado y primera auditoría completada.
+- [ ] DPO designado y notificado a la AEPD.
+- [ ] Contratos art. 28 firmados con cada encargado de tratamiento.
+- [ ] Sustituir `TsaService` mock por proveedor eIDAS cualificado.
+- [ ] Generación de PDF/A archivable (postprocesador sobre pdfkit).
+- [ ] Pen-test interno + plan de remediación.
+- [ ] DR plan documentado + drill trimestral.
 
 ## Backlog y futuro
 
