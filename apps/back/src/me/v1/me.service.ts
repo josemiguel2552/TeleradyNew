@@ -108,6 +108,25 @@ export class MeService {
     };
   }
 
+  async setProcessingRestriction(
+    user: AuthenticatedUser,
+    restricted: boolean,
+  ): Promise<{ restricted: boolean }> {
+    await db
+      .update(appUserInTelerady)
+      .set({ processingRestricted: restricted, updatedAt: sql`now()` })
+      .where(eq(appUserInTelerady.id, user.id));
+    await this.audit.append({
+      actorId: user.id,
+      actorRole: user.roles[0] ?? null,
+      action: 'rgpd.processing_restriction',
+      targetKind: 'User',
+      targetId: user.id,
+      payload: { restricted },
+    });
+    return { restricted };
+  }
+
   /**
    * Logical-delete of the user. Right-to-erasure (art. 17 RGPD): we tombstone
    * the account (anonymise email, blank the password hash, revoke MFA),

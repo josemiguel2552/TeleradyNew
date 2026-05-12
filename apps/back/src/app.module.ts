@@ -11,6 +11,7 @@ import { AuditLogModule } from './common/audit/audit-log.module';
 import { CryptoModule } from './common/crypto/crypto.module';
 import { I18nModule } from './i18n/i18n.module';
 import { MeModule } from './me/me.module';
+import { NotificationsModule } from './integrations/notifications/notifications.module';
 import { OrthancModule } from './integrations/orthanc/orthanc.module';
 import { StorageModule } from './integrations/storage/storage.module';
 import { ParametersModule } from './parameters/parameters.module';
@@ -89,6 +90,7 @@ const REDACT_PATHS = [
     AuditLogModule,
     AuthModule,
     I18nModule,
+    NotificationsModule,
     OrthancModule,
     StorageModule,
     UserEventsModule,

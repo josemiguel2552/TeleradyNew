@@ -240,3 +240,6 @@ CREATE TABLE telerady.report (
 );
 CREATE INDEX report_hospital_idx ON telerady.report (hospital_id);
 CREATE INDEX report_state_idx ON telerady.report (state);
+
+ALTER TABLE telerady.app_user
+    ADD COLUMN processing_restricted BOOLEAN NOT NULL DEFAULT FALSE;

@@ -78,6 +78,9 @@ export const envSchema = z.object({
     .enum(['true', 'false'])
     .default('false'),
 
+  EMAIL_FROM: z.string().email().optional(),
+  WEBHOOK_OUTGOING_SECRET: z.string().min(32).optional(),
+
   SWAGGER_USER: z.string().optional(),
   SWAGGER_PASSWORD: z.string().optional(),
 });

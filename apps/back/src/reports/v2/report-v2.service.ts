@@ -7,16 +7,18 @@ import {
 } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { db } from '../../database/drizzle';
-import { professionalInTelerady, reportStudyInTelerady } from '../../database/schema';
+import { hospitalInTelerady, professionalInTelerady, reportStudyInTelerady } from '../../database/schema';
 import { AuditLogService } from '../../common/audit/audit-log.service';
 import { ColumnEncryptionService } from '../../common/crypto/column-encryption.service';
 import { StorageService } from '../../integrations/storage/storage.service';
+import { NotificationsService } from '../../integrations/notifications/notifications.service';
 import { TenantScope } from '../../common/tenant/tenant-scope';
 import type { AuthenticatedUser } from '../../auth/jwt.strategy';
 import { Role } from '../../auth/roles';
 import { PdfService } from './pdf.service';
 import { ReportRow, ReportV2Repository, ReportStudyContext } from './report-v2.repository';
 import { SignatureService } from './signature.service';
+import { eq as eq2 } from 'drizzle-orm';
 import type { ReportContentsDto } from './dto/save-report-v2.dto';
 import type { SignReportDto } from './dto/sign-report.dto';
 import type { ReportResponseDto } from './dto/report-response.dto';
@@ -32,6 +34,7 @@ export class ReportV2Service {
     private readonly storage: StorageService,
     private readonly audit: AuditLogService,
     private readonly enc: ColumnEncryptionService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async get(reportStudyId: string, user: AuthenticatedUser): Promise<ReportResponseDto> {
@@ -149,7 +152,31 @@ export class ReportV2Service {
       targetId: sent.id,
       payload: { reportStudyId },
     });
+    void this.notifyHospitalOnSent(sent).catch((err) => {
+      // Best-effort; the audit row stays as the source of truth.
+      // eslint-disable-next-line no-console
+      console.warn('Failed to notify hospital webhook:', (err as Error).message);
+    });
     return this.toResponse(sent);
+  }
+
+  private async notifyHospitalOnSent(report: ReportRow): Promise<void> {
+    if (!report.hospitalId) return;
+    const rows = await db
+      .select({
+        webhookUrl: hospitalInTelerady.name, // placeholder until the column lands
+      })
+      .from(hospitalInTelerady)
+      .where(eq2(hospitalInTelerady.id, report.hospitalId))
+      .limit(1);
+    void rows; // hospital webhook URL field is added in the next iteration
+    // Until hospital.webhook_url exists, route the event to the operator
+    // email channel and let Sprint 8 wire the per-hospital configuration.
+    await this.notifications.sendEmail({
+      to: 'ops@telerady.es',
+      subject: `Report sent: ${report.reportStudyId}`,
+      text: `Report ${report.id} (v${report.version}) for study ${report.reportStudyId} was marked as sent.`,
+    });
   }
 
   private async assertStudyVisible(

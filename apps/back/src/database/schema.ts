@@ -667,6 +667,7 @@ export const appUserInTelerady = telerady.table("app_user", {
 	failedAttempts: integer("failed_attempts").default(0).notNull(),
 	lockedUntil: timestamp("locked_until", { withTimezone: true, mode: 'string' }),
 	lastLoginAt: timestamp("last_login_at", { withTimezone: true, mode: 'string' }),
+	processingRestricted: boolean("processing_restricted").default(false).notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 }, (table) => [

@@ -1,8 +1,10 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
   HttpCode,
+  Patch,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -12,6 +14,7 @@ import { Response } from 'express';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../auth/jwt.strategy';
 import { MeService } from './me.service';
+import { ProcessingRestrictionDto } from './dto/restriction.dto';
 
 @ApiTags('me')
 @ApiBearerAuth()
@@ -34,6 +37,15 @@ export class MeController {
       `attachment; filename="telerady-data-export-${user.id}.json"`,
     );
     res.send(JSON.stringify(payload, null, 2));
+  }
+
+  @Patch('processing-restriction')
+  @ApiOperation({ summary: 'RGPD art. 18 — toggle processing restriction' })
+  async setRestriction(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: ProcessingRestrictionDto,
+  ) {
+    return this.me.setProcessingRestriction(user, body.restricted);
   }
 
   @Delete()
