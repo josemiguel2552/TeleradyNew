@@ -1,50 +1,70 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventLogRepository } from './event-log.repository';
-import { EventLog } from '../models/event-log.model';
-import { db, DBOrTx } from '../../database/drizzle';
+import type { EventLog } from '../models/event-log.model';
+import { db, type DBOrTx } from '../../database/drizzle';
 import { eventLogInTelerady } from '../../database/schema';
+import { PseudonymService } from '../crypto/pseudonym.service';
 
 jest.mock('../../database/drizzle', () => ({
-    db: {
-        insert: jest.fn().mockReturnThis(),
-        values: jest.fn().mockReturnThis(),
-        execute: jest.fn(),
-    }
+  db: {
+    insert: jest.fn().mockReturnThis(),
+    values: jest.fn().mockReturnThis(),
+    execute: jest.fn(),
+  },
 }));
+
 describe('EventLogRepository', () => {
-    let repository: EventLogRepository;
+  let repository: EventLogRepository;
+  const pseudonym = new PseudonymService({
+    getOrThrow: () => Buffer.alloc(32, 7).toString('hex'),
+  } as unknown as ConfigService);
 
-    beforeEach(async () => {
-        const module: TestingModule = await Test.createTestingModule({
-            providers: [EventLogRepository],
-        }).compile();
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        EventLogRepository,
+        { provide: PseudonymService, useValue: pseudonym },
+      ],
+    }).compile();
 
-        repository = module.get<EventLogRepository>(EventLogRepository);
-    });
+    repository = module.get<EventLogRepository>(EventLogRepository);
+  });
 
-    afterEach(() => {
-        jest.clearAllMocks();
-        jest.restoreAllMocks();
-    });
+  afterEach(() => jest.clearAllMocks());
 
-    it('should be defined', () => {
-        expect(repository).toBeDefined();
-    });
+  it('is defined', () => {
+    expect(repository).toBeDefined();
+  });
 
-    describe('saveEvent', () => {
-        it('should save an event log into the database', async () => {
-            const mockEvent: EventLog = {
-                eventPayload: { action: 'start', additionalData: 'test' },
-                eventType: 'START',
-                idProfessional: '123',
-            };
+  it('persists sanitised payloads', async () => {
+    const event: EventLog = {
+      eventType: 'report_finalize',
+      idProfessional: 'p-1',
+      eventPayload: {
+        action: 'finalize',
+        studyId: 'STUDY-001',
+        patId: '12345678A',
+        patName: 'María García',
+        nested: { phone: '+34 600 000 000', other: 'keep' },
+      },
+    };
+    (db.execute as jest.Mock).mockResolvedValue(undefined);
 
-            (db.execute as jest.Mock).mockResolvedValue(undefined);
+    await repository.saveEvent(db as DBOrTx, event);
 
-            await repository.saveEvent(db as DBOrTx, mockEvent);
+    expect(db.insert).toHaveBeenCalledWith(eventLogInTelerady);
+    const values = (db.values as jest.Mock).mock.calls[0][0];
+    expect(values.eventType).toBe('report_finalize');
+    expect(values.eventPayload.patId).toBe(pseudonym.hash('12345678A'));
+    expect(values.eventPayload.patName).toBe('[REDACTED]');
+    expect(values.eventPayload.nested.phone).toBe('[REDACTED]');
+    expect(values.eventPayload.nested.other).toBe('keep');
+    expect(values.eventPayload.studyId).toBe('STUDY-001');
+  });
 
-            expect(db.insert).toHaveBeenCalledWith(eventLogInTelerady);
-            expect(db.execute).toHaveBeenCalled();
-        });
-    });
+  it('handles primitive payloads gracefully', () => {
+    expect(repository.sanitise(42)).toBe(42);
+    expect(repository.sanitise(null)).toBe(null);
+  });
 });

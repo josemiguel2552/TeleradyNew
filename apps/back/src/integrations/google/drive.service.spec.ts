@@ -1,8 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DriveService } from './drive.service';
+import { DriveService, escapeDriveLiteral } from './drive.service';
 import { google } from 'googleapis';
 import { AuthGoogleService } from './auth-google/auth-google.service';
 import { Readable } from 'stream';
+
+describe('escapeDriveLiteral', () => {
+  it('wraps benign strings in single quotes', () => {
+    expect(escapeDriveLiteral('hello')).toBe("'hello'");
+  });
+
+  it('escapes embedded single quotes', () => {
+    expect(escapeDriveLiteral("O'Brien")).toBe("'O\\'Brien'");
+  });
+
+  it('escapes backslashes', () => {
+    expect(escapeDriveLiteral('foo\\bar')).toBe("'foo\\\\bar'");
+  });
+
+  it('neutralises attempts to break out of the literal', () => {
+    const injected = `bad' and 'a'='a`;
+    const escaped = escapeDriveLiteral(injected);
+    expect(escaped).toBe("'bad\\' and \\'a\\'=\\'a'");
+  });
+});
 
 jest.mock('googleapis', () => ({
   google: {

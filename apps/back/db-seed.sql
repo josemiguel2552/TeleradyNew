@@ -95,6 +95,38 @@ CREATE TABLE telerady.event_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     professional_id UUID NOT NULL,
     event_type VARCHAR(100) NOT NULL,   -- Ej: 'report_start', 'report_view_img', 'report_generate_ia', 'report_finalize'
-    event_payload JSONB NOT NULL,           
+    event_payload JSONB NOT NULL,
     event_timestamp TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- Append-only audit log with SHA-256 hash chain. Inserts only; modifications
+-- and deletions are blocked by a trigger to keep the chain verifiable.
+CREATE TABLE telerady.audit_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ts TIMESTAMPTZ NOT NULL DEFAULT now(),
+    actor_id UUID,
+    actor_role VARCHAR(50),
+    hospital_id UUID,
+    action VARCHAR(100) NOT NULL,
+    target_kind VARCHAR(50) NOT NULL,
+    target_id VARCHAR(150),
+    payload JSONB NOT NULL,
+    prev_hash VARCHAR(64),
+    hash VARCHAR(64) NOT NULL,
+    request_ip VARCHAR(45),
+    request_ua VARCHAR(255)
+);
+CREATE INDEX IF NOT EXISTS audit_log_ts_idx ON telerady.audit_log (ts);
+CREATE INDEX IF NOT EXISTS audit_log_actor_idx ON telerady.audit_log (actor_id);
+CREATE INDEX IF NOT EXISTS audit_log_hospital_idx ON telerady.audit_log (hospital_id);
+
+CREATE OR REPLACE FUNCTION telerady.audit_log_block_modifications()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    RAISE EXCEPTION 'telerady.audit_log is append-only';
+END;
+$$;
+
+DROP TRIGGER IF EXISTS audit_log_no_update ON telerady.audit_log;
+CREATE TRIGGER audit_log_no_update
+    BEFORE UPDATE OR DELETE OR TRUNCATE ON telerady.audit_log
+    FOR EACH STATEMENT EXECUTE FUNCTION telerady.audit_log_block_modifications();

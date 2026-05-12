@@ -6,6 +6,7 @@ import { LoggerModule } from 'nestjs-pino';
 
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
+import { AuditLogModule } from './common/audit/audit-log.module';
 import { CryptoModule } from './common/crypto/crypto.module';
 import { I18nModule } from './i18n/i18n.module';
 import { ParametersModule } from './parameters/parameters.module';
@@ -79,6 +80,7 @@ const REDACT_PATHS = [
       ],
     }),
     CryptoModule,
+    AuditLogModule,
     AuthModule,
     I18nModule,
     UserEventsModule,

@@ -602,3 +602,19 @@ export const eventLogInTelerady = telerady.table("event_log", {
 	eventPayload: jsonb("event_payload").notNull(),
 	eventTimestamp: timestamp("event_timestamp", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 });
+
+export const auditLogInTelerady = telerady.table("audit_log", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	ts: timestamp("ts", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	actorId: uuid("actor_id"),
+	actorRole: varchar("actor_role", { length: 50 }),
+	hospitalId: uuid("hospital_id"),
+	action: varchar("action", { length: 100 }).notNull(),
+	targetKind: varchar("target_kind", { length: 50 }).notNull(),
+	targetId: varchar("target_id", { length: 150 }),
+	payload: jsonb("payload").notNull(),
+	prevHash: varchar("prev_hash", { length: 64 }),
+	hash: varchar("hash", { length: 64 }).notNull(),
+	requestIp: varchar("request_ip", { length: 45 }),
+	requestUa: varchar("request_ua", { length: 255 }),
+});
