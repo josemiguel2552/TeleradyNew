@@ -1,10 +1,9 @@
 export const environment = {
   production: true,
-  apiURL: 'https://bookhospital-back.vercel.app/api',
-  apiTelerady: 'https://telerady-back.vercel.app/v1',
-  apiActualPacs: 'https://telerady.actualpacs.com',
-  apiActualPacsToken: 'c18ebd3631cfcd356786b1e5e2b2d6458efb4119',
-  apiUrlradiogenia: 'https://radiogenia-1-0-583f8bf9dcce.herokuapp.com/api/v1',
+  // Replace with the sovereign-provider URLs once Sprint 8 deploys live.
+  apiURL: 'https://api.telerady.es/api',
+  apiTelerady: 'https://api.telerady.es/v1',
+  apiPacs: 'https://api.telerady.es/v1/pacs',
   GOOGLE_CLIENT_ID: '184549322689-0peeqq45k08hi00nc9r5srboa4pb5t87.apps.googleusercontent.com',
-  MICROSOFT_CLIENT_ID: '6ad0eeea-7de7-4e1a-874b-4d51279ad6da'
+  MICROSOFT_CLIENT_ID: '6ad0eeea-7de7-4e1a-874b-4d51279ad6da',
 };

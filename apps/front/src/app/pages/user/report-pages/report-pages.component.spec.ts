@@ -1,41 +1,26 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReportPagesComponent } from './report-pages.component';
-import { ReportService } from '../../../service/report.service';
 import { MessageService } from 'primeng/api';
-import { of, throwError } from 'rxjs';
 import { MarkdownModule } from 'ngx-markdown';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 jest.mock('../../../shared/i18n/i18n', () => ({
-  t: (key: string) => key
+  t: (key: string) => key,
 }));
 
-const reportServiceMock = {
-  getReports: jest.fn().mockReturnValue(of(['General', 'Cardiac'])),
-  generateReport: jest.fn()
-};
-
-const messageServiceMock = {
-  add: jest.fn()
-};
+const messageServiceMock = { add: jest.fn() };
 
 describe('ReportPagesComponent', () => {
   let component: ReportPagesComponent;
   let fixture: ComponentFixture<ReportPagesComponent>;
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     await TestBed.configureTestingModule({
-      imports: [
-        MarkdownModule.forRoot(),
-        CommonModule,
-        FormsModule
-      ],
+      imports: [MarkdownModule.forRoot(), CommonModule, FormsModule],
       declarations: [ReportPagesComponent],
-      providers: [
-        { provide: ReportService, useValue: reportServiceMock },
-        { provide: MessageService, useValue: messageServiceMock }
-      ]
+      providers: [{ provide: MessageService, useValue: messageServiceMock }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ReportPagesComponent);
@@ -43,90 +28,48 @@ describe('ReportPagesComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create the component', () => {
+  it('creates the component', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should load report types from service', () => {
-    component.getReportType();
-    expect(reportServiceMock.getReports).toHaveBeenCalled();
-    expect(component.reportTypes).toEqual(['General', 'Cardiac']);
-  });
-
-  it('should show warning if getReports fails', () => {
-    reportServiceMock.getReports.mockReturnValueOnce(throwError(() => new Error('Error')));
-    component.getReportType();
-    expect(messageServiceMock.add).toHaveBeenCalledWith(expect.objectContaining({
-      severity: 'warn'
-    }));
-  });
-
-  it('should show warning if generateReport called with empty fields', () => {
-    component.selectedReport = '';
-    component.findings = '';
+  it('notifies that the AI draft is disabled', () => {
     component.generateReport();
-    expect(messageServiceMock.add).toHaveBeenCalledWith(expect.objectContaining({
-      severity: 'warn'
-    }));
+    expect(messageServiceMock.add).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'info', summary: 'AI draft disabled' }),
+    );
   });
 
-  it('should generate report and update chatHistory', () => {
-    const responseText = 'FINDINGS\nThere is a mass.';
-    component.selectedReport = 'General';
-    component.findings = 'Something abnormal';
-    reportServiceMock.generateReport.mockReturnValue(of(responseText));
-
-    component.generateReport();
-
-    expect(reportServiceMock.generateReport).toHaveBeenCalled();
-    expect(component.chatHistory).toContain('#### **Findings**');
-  });
-
-  it('should copy to clipboard if chatHistory is not empty', async () => {
+  it('copies to clipboard when content is present', async () => {
     component.chatHistory = 'Some content';
     const writeTextMock = jest.fn().mockResolvedValue(true);
-    Object.assign(navigator, {
-      clipboard: { writeText: writeTextMock }
-    });
+    Object.assign(navigator, { clipboard: { writeText: writeTextMock } });
 
     await component.copyToClipboard();
 
     expect(writeTextMock).toHaveBeenCalledWith('Some content');
-    expect(messageServiceMock.add).toHaveBeenCalledWith(expect.objectContaining({
-      severity: 'success'
-    }));
+    expect(messageServiceMock.add).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'success' }),
+    );
   });
 
-  it('should show error when copying with empty chatHistory', async () => {
+  it('warns when copying with empty content', async () => {
     component.chatHistory = '';
     await component.copyToClipboard();
-    expect(messageServiceMock.add).toHaveBeenCalledWith(expect.objectContaining({
-      severity: 'error'
-    }));
+    expect(messageServiceMock.add).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'error' }),
+    );
   });
 
-  it('should save to history correctly', () => {
-    component.chatHistory = 'Texto de ejemplo';
-    component.saveToHistory();
-    expect(component.history.length).toBe(1);
-    expect(component.history[0]).toBe('Texto de ejemplo');
-  });
-
-  it('should go back in history', () => {
+  it('walks the history backwards and forwards', () => {
     component.history = ['A', 'B', 'C'];
     component.currentIndex = 2;
     component.goBack();
     expect(component.chatHistory).toBe('B');
-  });
-
-  it('should go forward in history', () => {
-    component.history = ['A', 'B', 'C'];
-    component.currentIndex = 1;
     component.goForward();
     expect(component.chatHistory).toBe('C');
   });
 
-  it('should convert text to markdown', () => {
+  it('converts text to markdown', () => {
     const result = component.convertToMarkdown('FINDINGS\n- Item');
     expect(result).toContain('#### **Findings**');
     expect(result).toContain('- Item');

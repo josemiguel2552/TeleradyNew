@@ -1,30 +1,34 @@
 import { Injectable } from '@angular/core';
-import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
+import {
+  HttpRequest,
+  HttpHandler,
+  HttpEvent,
+  HttpInterceptor,
+} from '@angular/common/http';
 import { catchError, Observable, switchMap } from 'rxjs';
+import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../service/auth.service';
-import { Router } from '@angular/router';
 import { Base } from '../models/service/Base.model';
 import { TokensLogin } from '../models/service/auth.model';
 import { TokenService } from '../service/token.service';
 
 @Injectable()
 export class TokenInterceptor implements HttpInterceptor {
-
-  constructor(private authService: AuthService, private tokenService: TokenService, private route: Router) { }
+  constructor(
+    private authService: AuthService,
+    private tokenService: TokenService,
+    private route: Router,
+  ) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    if (!request.url.includes(environment.apiURL) && !request.url.includes(environment.apiTelerady) &&!request.url.includes(environment.apiActualPacs)) {
+    const isOwnApi =
+      request.url.includes(environment.apiURL) || request.url.includes(environment.apiTelerady);
+    if (!isOwnApi) {
       return next.handle(request);
     }
 
-    if(request.url.includes(environment.apiActualPacs)){
-      const pacsToken = environment.apiActualPacsToken;
-      return next.handle(this.addActualpacsTokenHeader(request, pacsToken));
-    }
-
     const decoded: any = this.tokenService.decodeToken();
-
     if (!decoded) {
       return next.handle(request);
     }
@@ -32,7 +36,7 @@ export class TokenInterceptor implements HttpInterceptor {
     if (this.tokenService.isAuthorized()) {
       return next.handle(this.addTokenHeader(request, this.tokenService.getToken()));
     }
-       
+
     if (this.tokenService.isRefreshTokenExpired()) {
       this.navigateToLogin();
       return next.handle(request);
@@ -52,29 +56,17 @@ export class TokenInterceptor implements HttpInterceptor {
       catchError(() => {
         this.navigateToLogin();
         return next.handle(request);
-      })
+      }),
     );
   }
 
   private addTokenHeader(request: HttpRequest<unknown>, token: string = ''): HttpRequest<unknown> {
     return request.clone({
-      setHeaders: {
-        Authorization: token,
-      }
+      setHeaders: { Authorization: token },
     });
   }
 
-  private addActualpacsTokenHeader(request: HttpRequest<unknown>, token: string = ''): HttpRequest<unknown> {
-    return request.clone({
-      setHeaders: {
-        'Authorization': `Token ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-  }
   private navigateToLogin(): void {
-    const loginUrl = '/user/login';
-    this.route.navigateByUrl(loginUrl);
+    this.route.navigateByUrl('/user/login');
   }
-
 }

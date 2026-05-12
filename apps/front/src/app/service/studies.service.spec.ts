@@ -53,7 +53,7 @@ describe('StudiesService', () => {
       expect(response).toEqual(mockStudyResponse);
     });
 
-    const req = httpMock.expectOne(`${environment.apiActualPacs}/ris/es/api/ris/search/studies/`);
+    const req = httpMock.expectOne(`${environment.apiPacs}/studies/search`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(mockParams);
     req.flush(mockStudyResponse);
