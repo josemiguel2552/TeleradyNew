@@ -20,6 +20,7 @@ export const envSchema = z.object({
     .transform((v) => v === 'true'),
 
   REDIS_URL: z.string().url().optional(),
+  REDIS_AUTH_PASSWORD: z.string().optional(),
 
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),

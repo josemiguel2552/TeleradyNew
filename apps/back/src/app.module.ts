@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { AuditLogModule } from './common/audit/audit-log.module';
 import { CryptoModule } from './common/crypto/crypto.module';
 import { I18nModule } from './i18n/i18n.module';
+import { JobsModule } from './jobs/jobs.module';
 import { MeModule } from './me/me.module';
 import { FhirModule } from './integrations/fhir/fhir.module';
 import { Hl7v2Module } from './integrations/hl7v2/hl7v2.module';
@@ -108,6 +109,7 @@ const REDACT_PATHS = [
     AdminModule,
     MeModule,
     WorkflowsModule,
+    JobsModule,
   ],
   controllers: [AppController],
   providers: [
