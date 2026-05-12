@@ -5,10 +5,12 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 
 import { AppController } from './app.controller';
+import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { AuditLogModule } from './common/audit/audit-log.module';
 import { CryptoModule } from './common/crypto/crypto.module';
 import { I18nModule } from './i18n/i18n.module';
+import { MeModule } from './me/me.module';
 import { OrthancModule } from './integrations/orthanc/orthanc.module';
 import { StorageModule } from './integrations/storage/storage.module';
 import { ParametersModule } from './parameters/parameters.module';
@@ -96,6 +98,8 @@ const REDACT_PATHS = [
     ReportsV2Module,
     ParametersModule,
     WorklistModule,
+    AdminModule,
+    MeModule,
   ],
   controllers: [AppController],
   providers: [
