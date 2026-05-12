@@ -12,6 +12,7 @@ import { ColumnEncryptionService } from '../../common/crypto/column-encryption.s
 import { TenantScope } from '../../common/tenant/tenant-scope';
 import { Role } from '../../auth/roles';
 import type { AuthenticatedUser } from '../../auth/jwt.strategy';
+import { WorkflowEngine } from '../../workflows/v1/workflow-engine.service';
 import { OrthancClient, type OrthancStudy } from './orthanc-client.service';
 
 const DEFAULT_PENDING_STATE_ID = 1;
@@ -41,6 +42,7 @@ export class PacsIngestService {
     private readonly orthanc: OrthancClient,
     private readonly enc: ColumnEncryptionService,
     private readonly audit: AuditLogService,
+    private readonly workflow: WorkflowEngine,
   ) {}
 
   async sync(actor: AuthenticatedUser, input: SyncStudyInput): Promise<SyncStudyResult> {
@@ -111,6 +113,19 @@ export class PacsIngestService {
         action = 'created';
       }
 
+      // Auto-assign primary based on workflow rules. Only applied on first
+      // ingest so a manual reassignment via /v1/admin/studies/:id/assign
+      // survives re-syncs.
+      let appliedRuleId: string | null = null;
+      if (action === 'created' && hospitalId) {
+        const decision = await this.workflow.applyToStudy(tx, reportStudyId, {
+          hospitalId,
+          modalities: dicomFields.modalities,
+          subspecialtyId: null,
+        });
+        appliedRuleId = decision.matchedRuleId;
+      }
+
       await this.audit.append(
         {
           actorId: actor.id,
@@ -124,6 +139,7 @@ export class PacsIngestService {
             modalities: dicomFields.modalities,
             // pat_id is pseudonymised before logging.
             patIdHash: values.patIdHash,
+            appliedRuleId,
           },
         },
         tx,

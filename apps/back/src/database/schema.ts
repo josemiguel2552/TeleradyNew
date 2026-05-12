@@ -717,19 +717,30 @@ export const reportInTelerady = telerady.table("report", {
 	professionalId: uuid("professional_id").notNull(),
 	version: integer().default(1).notNull(),
 	state: varchar({ length: 20 }).default('draft').notNull(),
-	// Structured report contents stored as a single AES-256-GCM ciphertext
-	// (envelope packed via ColumnEncryptionService).
 	contentsEnc: text("contents_enc"),
-	// Signature payload (jsonb) — shape depends on the hospital policy.
-	// name_collegiate -> { policy, displayedName, collegiate, signedAt }
-	// drawn_hash_tsa  -> { policy, drawingStorageKey, hash, ts, tsaProvider }
 	signatureData: jsonb("signature_data"),
 	pdfBucket: varchar("pdf_bucket", { length: 50 }),
 	pdfKey: varchar("pdf_key", { length: 250 }),
 	signedAt: timestamp("signed_at", { withTimezone: true, mode: 'string' }),
 	sentAt: timestamp("sent_at", { withTimezone: true, mode: 'string' }),
+	requiresReview: boolean("requires_review").default(false).notNull(),
+	reviewerProfessionalId: uuid("reviewer_professional_id"),
+	reviewedAt: timestamp("reviewed_at", { withTimezone: true, mode: 'string' }),
+	reviewApproved: boolean("review_approved"),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
 	unique("report_study_unique").on(table.reportStudyId),
 ]);
+
+export const assignmentRuleInTelerady = telerady.table("assignment_rule", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	hospitalId: uuid("hospital_id"),
+	modality: varchar({ length: 20 }),
+	subspecialtyId: integer("subspecialty_id"),
+	targetProfessionalId: uuid("target_professional_id"),
+	priority: integer().default(100).notNull(),
+	requiresReview: boolean("requires_review").default(false).notNull(),
+	active: boolean().default(true).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+});

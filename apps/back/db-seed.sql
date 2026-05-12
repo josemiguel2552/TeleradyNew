@@ -243,3 +243,27 @@ CREATE INDEX report_state_idx ON telerady.report (state);
 
 ALTER TABLE telerady.app_user
     ADD COLUMN processing_restricted BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- =====================================================================
+-- Sprint 9 — Workflow rules
+-- =====================================================================
+
+ALTER TABLE telerady.report
+    ADD COLUMN requires_review BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN reviewer_professional_id UUID REFERENCES telerady.professional(id) ON DELETE SET NULL,
+    ADD COLUMN reviewed_at TIMESTAMPTZ,
+    ADD COLUMN review_approved BOOLEAN;
+
+CREATE TABLE telerady.assignment_rule (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    hospital_id UUID REFERENCES telerady.hospital(id) ON DELETE CASCADE,
+    modality VARCHAR(20),
+    subspecialty_id INTEGER REFERENCES telerady.subspecialty(id),
+    target_professional_id UUID REFERENCES telerady.professional(id) ON DELETE SET NULL,
+    priority INTEGER NOT NULL DEFAULT 100,
+    requires_review BOOLEAN NOT NULL DEFAULT FALSE,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX assignment_rule_hospital_idx ON telerady.assignment_rule (hospital_id);
+CREATE INDEX assignment_rule_priority_idx ON telerady.assignment_rule (priority);

@@ -21,6 +21,7 @@ import { ReportModule } from './reports/reports.module';
 import { ReportsV2Module } from './reports/v2/reports-v2.module';
 import { UserEventsModule } from './user-events/user-events.module';
 import { WorklistModule } from './worklist/worklist.module';
+import { WorkflowsModule } from './workflows/workflows.module';
 import { validateEnv } from './config/env.schema';
 
 const REDACT_PATHS = [
@@ -102,6 +103,7 @@ const REDACT_PATHS = [
     WorklistModule,
     AdminModule,
     MeModule,
+    WorkflowsModule,
   ],
   controllers: [AppController],
   providers: [
