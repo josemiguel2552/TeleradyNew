@@ -1,0 +1,60 @@
+<div class="w-100 m-auto px-3 max-width-user-bh text-center mt-5">
+    <h2 class="h3 mb-3 mt-3 fw-bold">{{t('recoverPass.title')}}</h2>
+</div>
+
+<div class="w-100 m-auto px-3 max-width-user-bh text-center">
+    <p>{{t('recoverPass.subtitle')}}</p>
+</div>
+
+
+<div class="w-100 m-auto px-3 max-width-user-bh mt-4 mb-3">
+    <form [formGroup]="formGroup" (ngSubmit)="savePass()">
+        <div class="mb-4">
+            <p-floatlabel variant="on" class="mt-4 mb-2 input-user-bh">
+                <input pInputText id="password" class="input-border-bh form-control rounded-pill"
+                    formControlName="password" type="password" [ngClass]="{'input-error': showError('password')}" />
+                <label class="placeH-input-bh d-flex align-items-center" htmlFor="password"><span class="iconify"
+                        data-icon="material-symbols:lock-outline"></span> {{t('recoverPass.labelPass1')}} </label>
+            </p-floatlabel>
+            <div *ngIf="showError('password')" class="text-danger ms-5">
+                <div class="alert-size-bh" *ngIf="this.formGroup.controls['password'].errors?.['required']">
+                    {{t('recoverPass.errorPass1')}}
+                </div>
+            </div>
+        </div>
+        <div class="mb-3">
+            <p-floatlabel variant="on" class="mt-4 mb-2 input-user-bh">
+                <input pInputText id="confirmPassword" class="input-border-bh form-control rounded-pill"
+                    formControlName="confirmPassword" type="password"
+                    [ngClass]="{'input-error': showError('confirmPassword')}" />
+                <label class="placeH-input-bh d-flex align-items-center" htmlFor="confirmPassword"><span class="iconify"
+                        data-icon="material-symbols:lock-outline"></span> {{t('recoverPass.labelPass2')}} </label>
+            </p-floatlabel>
+            <div *ngIf="showError('confirmPassword')" class="text-danger ms-5">
+                <div class="alert-size-bh" *ngIf="this.formGroup.controls['confirmPassword'].errors?.['required']">
+                    {{t('recoverPass.errorPass1')}}
+                </div>
+            </div>
+            <div *ngIf="this.formGroup.invalid && (this.formGroup.dirty || this.formGroup.touched)"
+                class="text-danger ms-5">
+                <div class="alert-size-bh" *ngIf="this.formGroup.errors?.['mustMatch']">
+                    {{t('recoverPass.errorPass2')}}
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-2">
+            <button class="btn rounded-pill color-sbtn-bh button-bh" type="submit"
+                *ngIf="!loading">{{t('recoverPass.button')}}</button>
+            <p-progressSpinner *ngIf="loading" strokeWidth="6" fill="white" animationDuration="1s"
+                aria-label="Loading"></p-progressSpinner>
+        </div>
+    </form>
+</div>
+
+<div class="w-100 m-auto px-3 max-width-user-bh text-center">
+    <p class="text-policy-bh">{{t('authText.textTerms')}} <a class="link-txt-bh text-reset"
+            [routerLink]="'/user/support/terms-and-conditions'">{{t('authText.terms')}}</a> {{t('authText.textPolicy')}}
+        <a class="link-txt-bh text-reset" [routerLink]="'/user/support/terms-and-conditions'"
+            fragment="section-policy">{{t('authText.policy')}}</a>
+    </p>
+</div>

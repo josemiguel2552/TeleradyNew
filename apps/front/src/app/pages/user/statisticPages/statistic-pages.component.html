@@ -1,0 +1,105 @@
+<div class="container py-4">
+  <h2 class="fw-bold">{{t('statistic.title')}} <span class="text-primary">{{ infoUser.name }}</span></h2>
+  <p class="text-muted">{{t('statistic.subtitle')}}</p>
+  <div class="mb-3">
+    <select class="form-select w-auto">
+      <option value="mes">{{t('statistic.Fecha.mes')}}</option>
+      <option value="semana">{{t('statistic.Fecha.semana')}}</option>
+      <option value="año">{{t('statistic.Fecha.año')}}</option>
+    </select>
+  </div>
+  <div class="row g-3">
+    <div class="col-md-3" *ngFor="let stat of statistics">
+      <div class="card stat-card p-3 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3 class="fw-bold">{{ stat.value }}</h3>
+          <span class="iconify fs-3 text-primary"
+            [attr.data-icon]="stat.icon"
+            [ngClass]="{'rotate-icon': stat.label === unidadRadi}">
+          </span>
+        </div>
+        <p class="text-muted text-start w-100">{{ stat.label }}</p>
+      </div>
+    </div>
+  </div>
+  <div class="row g-7 mt-4">
+    <div class="col-md-6">
+      <div class="card p-3 shadow-sm chart-card">
+        <div class="border-bottom-rounded">
+          <h4 class="fw-bold">{{t('statistic.card.title1')}}</h4>
+        </div>
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="legend-container">
+            <div *ngFor="let item of subspecialtyData; let i = index" class="legend-item">
+              <span class="legend-color" [style.backgroundColor]="item.color"></span>
+              <strong>{{ i + 1 }}</strong> {{ item.label }} <span class="value fw-bold ps-5">{{ item.value }}</span>
+            </div>
+                      </div>
+          <div class="chart-container">
+            <canvas id="subspecialtyChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card p-3 shadow-sm chart-card">
+        <div class="border-bottom-rounded">
+          <h4 class="fw-bold">{{t('statistic.card.title2')}}</h4>
+        </div>
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="legend-container">
+            <div *ngFor="let item of modalityData; let i = index" class="legend-item">
+              <img [src]="item.flag" class="legend-flag" alt="Bandera de {{ item.label }}"/>
+              <span class="fw-bold">{{ i + 1 }}</span> {{ item.label }}
+              <span class="value fw-bold ps-5">{{ item.value }}</span>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="modalityChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card p-4 shadow-sm mt-4 fixed-chart">
+    <h4 class="fw-bold">{{t('statistic.card.title3')}}</h4>
+    <div class="chart-container-b">
+      <canvas id="evolutionChart" height="200"></canvas>
+    </div>
+  </div>
+  <div class="container">
+    <h2>{{t('statistic.container2.title')}}</h2>
+    <p>{{t('statistic.container2.subtitle')}}</p>
+    <h2 class="ms-4 ps-5">{{t('statistic.container2.subtitle2')}}</h2>
+    <div class="d-flex justify-content-center">
+      <div class="col-md-8">
+        <div class="d-flex flex-column align-items-start gap-3 mb-4 pt-2">
+          <div class="w-100">
+            <label for="desde">{{t('statistic.container2.desde')}}</label>
+            <select id="desde" class="form-control form-select w-auto" [(ngModel)]="desde">
+              <option *ngFor="let mes of mesesDisponibles" [value]="mes">{{ mes }}</option>
+            </select>
+          </div>
+          <div class="w-100">
+            <label for="hasta">{{t('statistic.container2.hasta')}}</label>
+            <select id="hasta" class="form-control form-select w-auto" [(ngModel)]="hasta">
+              <option *ngFor="let mes of mesesDisponibles" [value]="mes">
+                {{ mes }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <table class="table">
+          <tbody>
+            <tr *ngFor="let factura of facturas" class="border-bottom">
+              <td class="py-3">{{ factura.mes }}</td>
+              <td class="td-btn">
+                <button class="btn btn-outline-primary btn-lg rounded-pill w-100">{{t('statistic.container2.button')}}</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

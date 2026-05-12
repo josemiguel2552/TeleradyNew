@@ -1,0 +1,51 @@
+{
+    "parameters": {
+        "subspecialties": {
+            "noData": "No subspecialties were found.",
+            "errorMessage": "Error retrieving subspecialties."
+        }
+    },
+    "personalData": {
+        "validateProfessional": {
+            "errorMessage": "Error validating the professional.",
+            "update": "The information was updated",
+            "save": "The information was saved",
+            "notValid": "Invalid information."
+        },
+        "personalDataService": {
+            "errorMessageSignature": "signatureBase64 and signatureFileName are required to upload the signature.",
+            "Unsupported": "Unsupported file type: "
+        }
+    },
+    "professionalDocument": {
+        "uploadDocument": {
+            "errorMessage": "Error saving the file.",
+            "errorExt": "Invalid file extension."
+        },
+        "getUploadDocument": {
+            "errorMessage": "Error validating the files."
+        }
+    },
+    "professionalData": {
+        "title": "specialist-title",
+        "colegiacion": "professional-membership",
+        "alta-autonomo": "self-employment-registration",
+        "Dni": "DNI",
+        "insaurance": "civil-liability-insurance",
+        "bank_cert": "bank-certificate",
+        "signature": "signature"
+    },
+    "report": {
+        "saveReport": {
+            "save": "The report data was saved successfully.",
+            "update": "The report data was updated successfully.",
+            "errorMessage": "An error occurred while saving the report data."
+        }
+    },
+    "userEvent": {
+        "registerEvent": {
+            "save": "The event was saved successfully.",
+            "errorMessage": "An error occurred while saving the event."
+        }
+    }
+}

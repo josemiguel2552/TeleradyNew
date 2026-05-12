@@ -1,0 +1,48 @@
+@use '../../../../../styles.scss' as *;
+
+.input-user-bh {
+    width: 400px;
+    margin: auto;
+    font-size: 14px;
+
+    @media only screen and (max-width: 768px) {
+        width: 330px;
+    }
+}
+
+.placeH-input-bh {
+    justify-content: center;
+    color: $text-color-bh !important;
+    font-size: 12px;
+
+    .iconify {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+.button-bh {
+    font-size: 14px;
+    height: 40px;
+    width: 400px;
+    margin: auto !important;
+
+    @media only screen and (max-width: 768px) {
+        width: 330px;
+    }
+}
+
+.link-txt-bh {
+    color: $primary-color-bh !important;
+    cursor: pointer;
+}
+
+p {
+    font-size: 12px;
+}
+
+@media only screen and (max-width: 768px) {
+    .text-policy-bh {
+        margin: 0vh 3vw;
+    }
+}

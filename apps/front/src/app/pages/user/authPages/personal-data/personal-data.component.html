@@ -1,0 +1,120 @@
+
+<div class="register-container">
+  <h2> {{t('personalData.title')}}</h2>
+
+  <div class="dropdown-container">
+    <div class="dropdown-header" (click)="toggleDropdown('name')">
+      <span class="iconify" data-icon="streamline:medical-bag"></span>
+      <span *ngIf="!labelName && !labelLastName"> {{t('personalData.nameAndSurname')}}</span>
+      <span *ngIf="labelName || labelLastName">{{ labelName }} {{ labelLastName }}</span>
+      <span class="iconify dropdown-arrow" data-icon="mdi:chevron-down"></span>
+    </div>
+    <div class="dropdown-body" *ngIf="isDropdownOpen['name']">
+      <div class="input-row">
+        <input type="text" placeholder="Nombre" class="input-field" [(ngModel)]="labelName" (keyup)="selectOption(labelName, 1)" />
+        <input type="text" placeholder="Apellido" class="input-field" [(ngModel)]="labelLastName" (keyup)="selectOption(labelLastName, 2)" />
+      </div>
+    </div>
+  </div>
+
+  <div class="dropdown-container">
+    <div class="dropdown-header" (click)="toggleDropdown('phone')">
+      <span class="iconify" data-icon="solar:document-medicine-linear"></span>
+      <span *ngIf="!labelPhoneNumber">{{t('personalData.phone')}}</span>
+      <span *ngIf="labelPhoneNumber">{{t('personalData.phone')}} {{ labelPhoneNumber }}</span>
+      <span class="iconify dropdown-arrow" data-icon="mdi:chevron-down"></span>
+    </div>
+    <div class="dropdown-body" *ngIf="isDropdownOpen['phone']">
+      <input type="text" placeholder="+34 612345678 / (+34) 612345678" class="input-field" [(ngModel)]="labelPhoneNumber" (keyup)="selectOption(labelPhoneNumber, 3)" />
+    </div>
+  </div>
+
+  <div class="dropdown-container">
+    <div class="dropdown-header" (click)="toggleDropdown('email')">
+      <span class="iconify" data-icon="eva:email-outline"></span>
+      <span *ngIf="!labelEmail">{{t('personalData.email')}}</span>
+      <span *ngIf="labelEmail">{{ labelEmail }}</span>
+      <span class="iconify dropdown-arrow" data-icon="mdi:chevron-down"></span>
+    </div>
+    <div class="dropdown-body" *ngIf="isDropdownOpen['email']">
+      <input type="text" placeholder="Email" class="input-field" [(ngModel)]="labelEmail" (keyup)="selectOption(labelEmail, 4)" [disabled]="true" />
+    </div>
+  </div>
+
+  <div class="dropdown-container">
+    <div class="dropdown-header" (click)="toggleDropdown('cityResidence')">
+      <span class="iconify" data-icon="streamline:medical-bag"></span>
+      <span *ngIf="!labelCity">{{t('personalData.city')}}</span>
+      <span *ngIf="labelCity">{{ labelCity }}</span>
+      <span class="iconify dropdown-arrow" data-icon="mdi:chevron-down"></span>
+    </div>
+    <div class="dropdown-body" *ngIf="isDropdownOpen['cityResidence']">
+      <input type="text" placeholder="Ciudad" class="input-field" [(ngModel)]="labelCity" (keyup)="selectOption(labelCity, 5)" />
+    </div>
+  </div>
+
+  <div class="dropdown-container">
+    <div class="dropdown-header" (click)="toggleDropdown('professionalLicense')">
+      <span class="iconify" data-icon="streamline:medical-bag"></span>
+      <span *ngIf="!labelProfessionalLicense">{{t('personalData.license')}}</span>
+      <span *ngIf="labelProfessionalLicense">{{ labelProfessionalLicense }}</span>
+      <span class="iconify dropdown-arrow" data-icon="mdi:chevron-down"></span>
+    </div>
+    <div class="dropdown-body" *ngIf="isDropdownOpen['professionalLicense']">
+      <input type="text" placeholder="Numero de licencia" class="input-field" [(ngModel)]="labelProfessionalLicense" (keyup)="selectOption(labelProfessionalLicense, 7)" />
+    </div>
+  </div>
+
+  <div class="dropdown-container">
+    <div class="dropdown-header" (click)="toggleDropdown('titleStatusId')">
+      <span class="iconify" data-icon="healthicons:doctor-outline"></span>
+      <span *ngIf="!labelSpecialistTitle">{{t('personalData.specialtyTitle')}}</span>
+      <span *ngIf="labelSpecialistTitle">{{ labelSpecialistTitle }}</span>
+      <span class="iconify dropdown-arrow" data-icon="mdi:chevron-down"></span>
+    </div>
+    <div class="dropdown-body" *ngIf="isDropdownOpen['titleStatusId']">
+      <ul>
+        <li *ngFor="let specialty of titleSpecialties" (click)="selectOption(specialty.id.toString(), 6)">
+          {{ specialty.name }}
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="dropdown-container">
+    <div class="dropdown-header" (click)="toggleDropdown('signature')">
+      <span class="iconify" data-icon="mdi:signature-freehand"></span>
+      <span *ngIf="!signatureFileName">{{t('personalData.digitalSignature')}}</span>
+      <span *ngIf="signatureFileName">Archivo: {{ signatureFileName }}</span>
+      <span class="iconify dropdown-arrow" data-icon="mdi:chevron-down"></span>
+    </div>
+    <div class="dropdown-body" *ngIf="isDropdownOpen['signature']">
+      <input type="file" accept="image/*" (change)="handleSignatureUpload($event)" />
+    </div>
+  </div> 
+  
+  <div class="dropdown-container">
+    <div class="dropdown-header" (click)="toggleDropdown('subespecialty')">
+      <span class="iconify" data-icon="iconoir:coins"></span>
+      <span class="subspecialty-label" *ngIf="labelSubSpecialistTitle.length === 0">{{t('personalData.subspecialty')}}</span>
+      <span  class="subspecialty-label" *ngIf="labelSubSpecialistTitle.length > 0">{{ labelSubSpecialistTitle }}</span>
+      <span class="iconify dropdown-arrow" data-icon="mdi:chevron-down"></span>
+    </div>
+    <div class="dropdown-body" *ngIf="isDropdownOpen['subespecialty']">
+      <ul>
+        <li *ngFor="let subspecialty of subSpecialties">
+          <label>
+            <input type="checkbox" [value]="subspecialty.id" (change)="selectOption(subspecialty.id.toString(), 8)"
+              [checked]="formGroup.controls['subspecialties'].value?.includes(subspecialty.id.toString())"
+            />
+            {{ subspecialty.name }}
+          </label>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+
+  
+  <button type="submit" class="register-btn" [disabled]="loading" (click)="register()">{{t('personalData.saveButton')}}</button>
+</div>

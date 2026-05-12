@@ -1,0 +1,30 @@
+@use '../../../../../styles.scss' as *;
+
+
+.modal-inscription-title {
+    display: flex;
+    justify-content: center;
+    padding-top: 1px;
+    text-align: center;
+    color: $primary-color-bh;
+    font-weight: 800;
+    font-size: 16px;
+}
+
+
+@media only screen and (max-width: 768px){
+    h4, h5 {
+        text-align: center;
+        font-size: 14px; 
+    }
+
+    button {
+        font-size: 12px;
+        width: auto;
+    }
+}
+
+li{
+    color: #495057;
+    font-size: 14px;
+}

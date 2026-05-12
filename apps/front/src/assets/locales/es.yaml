@@ -1,0 +1,297 @@
+header:
+  profile: "Perfil"
+  settings: "Ajustes"
+  logout: "Cerrar Sesión"
+  login: "Iniciar sesión"
+  signUp: "Regístrate"
+  home: "Inicio"
+  reports: "Estudios"
+  messages: "Mensajes"
+  myStatistics: "Mis Estadísticas"
+  myDocuments: "Mis documentos"
+footer:
+  about: "Sobre nosotros"
+  terms: "Términos y condiciones"
+  privacy: "Política de privacidad"
+  privacyCokies: "Política de Cookies"
+home:
+  subtitle: "Las mejores ofertas de empleo para profesionales sanitarios"
+  title: "Encuentra tu trabajo ideal Telerady"
+forgotPass:
+  title: "¿Olvidaste la contraseña?"
+  subtitle: "Le enviaremos un enlace de recuperación al correo electrónico"
+  labelEmail: "Introduzca email"
+  errorEmail1: "El correo es requerido."
+  errorEmail2: "El correo es incorrecto."
+  button: "Enviar contraseña"
+  summaryMessages: "Recuperar contraseña"
+login:
+  title: "Te damos la bienvenida a Telerady."
+  subtitle: "Inicia sesión para acceder a todos nuestros servicios."
+  labelMicrosoft: "Continuar con Microsoft"
+  textSeparator: "o usa otra forma de iniciar sesión"
+  labelEmail: "Email"
+  errorEmail1: "El correo es requerido."
+  errorEmail2: "El correo es incorrecto."
+  labelPass: "Contraseña"
+  errorPass: "La contraseña es requerida."
+  button: "Iniciar sesión"
+  summaryMessages: "Inicio de sesión"
+personalData:
+  title: "Datos Personales"
+  nameAndSurname: "Nombre y Apellidos"
+  email: "Email"
+  phone: "Nº de teléfono"
+  city: "Ciudad"
+  license: "Número de Licencia"
+  specialtyTitle: "¿Cómo has obtenido tu título de especialista?"
+  digitalSignature: "Firma Digital"
+  subspecialty: "Subespecialidades relacionadas con tu perfil"
+  saveButton: "Guardar Datos"
+  error:
+    errorSubspecialty: "Error al obtener subSpecialties: "
+    errorTitle: "Error al obtener titleSpecialties: "
+    error405: "Ocurrió un error inesperado."
+  message:
+    detail1: "Por favor, completa todos los campos."
+    summarywarn: "Campos requeridos"
+    detail2: "Debes seleccionar un título válido."
+    summarysuccess: "Datos guardados"
+
+recoverPass:
+  title: "Confirmación de la nueva contraseña."
+  subtitle: "Complete los siguientes campos para la actualizar la contraseña."
+  labelPass1: "Introducir nueva contraseña*"
+  labelPass2: "Confirmar contraseña*"
+  errorPass1: "La contraseña es requerida."
+  errorPass2: "La contraseña debe coincidir."
+  button: "Actualizar contraseña"
+  summaryMessages: "Recuperar contraseña"
+  messages1: "El enlace esta vencido"
+register:
+  title: "Te damos la bienvenida a Telerady."
+  subtitle: "¡Regístrate y accede a todos nuestros servicios!"
+  labelMicrosoft: "Continuar con Microsoft"
+  textSeparator: "o regístrate"
+  labelEmail: "Introduce tu email"
+  errorEmail1: "El correo es requerido."
+  errorEmail2: "El correo es incorrecto."
+  labelPass: "Introduce tu contraseña"
+  errorPass: "La contraseña es requerida."
+  button: "Registrarse"
+  summaryMessages: "Registro"
+  errorMessages:
+    errorGetEmail: "No se pudo obtener el email del usuario."
+authText:
+  forgotPass: "¿Has olvidado tu contraseña?"
+  forgotPassMb1: "¿Has olvidado tu"
+  forgotPassMb2: "contraseña?"
+  haveAccount: "¿Ya tienes una cuenta?"
+  login: "Inicia sesión"
+  noAccount: "¿Todavía no tienes una cuenta?"
+  signUp: "Regístrate"
+  textTerms: "Al iniciar sesión o al crear una cuenta, aceptas nuestros"
+  terms: "Términos y condiciones"
+  textPolicy: "y nuestra"
+  policy: "Política de privacidad."
+dashboard:
+  title: "Bienvenido a tu Dashboard,"
+  subtitle1: "Accede a tus informes pendientes y comienza a trabajar."
+  subtitle2: "También puedes probar Radiogen-IA y consultar tus estadísticas y documentación."
+  card1:
+    title: "Informes"
+    content1: "Accede a tu espacio de trabajo y empieza a informar."
+    content2: "Una vez subida tu documentación podrás empezar con Telerady."
+    button: "Informar Ahora"
+  card2:
+    title: "Radiogen - IA"
+    content1: "Radiogen-IA es gratuita para los usuarios de Telerady."
+    content2: "Descubre sus funcionalidades y mejora tu flujo de trabajo."
+    button: "Probar Ahora"
+  onGraphicsText: "Accede a tus estadísticas y rentabiliza tu tiempo de trabajo"
+  onGraphicsButton: "Estadísticas"
+  title2: "Estamos aquí para ayudarte"
+  cardInfo:
+    title: "Equipo de soporte Telerady"
+    content1: "¿Tienes alguna duda o sugerencia? Contacta con nosotros."
+    content2: "Telerady Help Center"
+  buttonInfo: "Guías de uso y ayuda"
+  radioGenia:
+    title1: "Agiliza tus informes con nuestra IA"
+    title2: "y reduce el tiempo de tus estudios"
+    content: " Utiliza Radiogen-IA para agilizar tu trabajo. Esta herramienta es gratuita por ser miembro de Telerady."
+    button: "Accede a Radiogen-IA"
+  title3: "Más de 4.000 hospitales y centros médicos están a tu disposición."
+document:
+  title: "Documentación Aportada"
+  info-card:
+    info-title: "Gestiona tus Documentos"
+    info-text: "Descarga o sube documentos de forma precisa y sencilla. Puedes encontrar toda la información en la sección de documentos."
+  names:
+    specialistTitle: "Título de Especialista u Homologación"
+    professionalAssociation: "Colegiación Profesional"
+    selfEmployment: "Alta de Autónomo"
+    idCard: "DNI / NIE"
+    liabilityInsurance: "Seguro de Responsabilidad Civil"
+    bankCertificate: "Certificado de Cuenta Bancaria"
+    signature: "Firma Digital"
+  status:
+    pending: "Pendiente"
+    download: "Descargar"
+  error:
+    signatureError: "Solo se permite subir imágenes para la firma"
+    documentError: "Solo se permite subir archivos PDF para este documento"
+    uploadError: "Error al subir el documento"
+study:
+  title: "Mis Estudios"
+  tc_thorax: "TC de tórax"
+  ecography_abdomen: "Ecografía de abdomen"
+  tc_abdomen: "TC de abdomen"
+  rm_brain: "RM de cerebro"
+  rx_thorax: "RX de tórax"
+  rx_ankle: "RX de tobillo"
+  table:
+    study_type: "Tipo de estudio"
+    due_date: "Fecha"
+    pat_name: "Nombre del paciente"
+    pat_birthdate: "Fecha de nacimiento"
+    sex: "Sexo"
+    src_aet: "Source AET"
+    institution: "Institución"
+    modality: "Modalidad"
+    status: "Estado"
+    add_note: "Acciones"
+  filter:
+    status:
+      title: "Estado"
+      inform: "Informado"
+      pending: "Pendiente"
+    date:
+      title: "Fecha"
+      d1: "12 nov 2024"
+    input:
+        info: "Número de historia clínica"
+    institution:
+      title: "Institución"
+      placeholder: "Buscar por nombre de institución"
+  paginacion:
+    p1: "Filas por página"
+    p2: "Ir a la página"
+  view: "Imagen"
+  
+  card: 
+    title: "Estamos aquí para ayudarte"
+    card_title: "Equipo de soporte Telerady"
+    card-text: "¿Tienes problemas para informar algún estudio? Haz clic en los 3
+            puntos verticales en el extremo lateral derecho del estudio y
+            déjanos una nota.
+            <br />
+            ¿Deseas comunicar hallazgos incidentales importantes o urgentes por
+            su relevancia clínica? Sigue las mismas instrucciones y déjanos una
+            nota."
+    card_footer: "Telerady Help Center"
+urgency:
+  urgent: "Urgente"
+  non_urgent: "No urgente"
+  priority: "Prioritario"
+  informed: "Informado"
+
+modality:
+  default: "Modalidad"
+  ecography: "Ecografía"
+  tc: "TC"
+  rm: "RM"
+  mx: "MX"
+  rx: "RX"
+  ct: "CT"
+  mr: "MR"
+  xa: "XA"
+
+status:
+  to_report: "Informar"
+  new: "Nuevo"
+  informed: "Informado"
+
+report:
+  title: "Tipo de Informe"
+  subtitle: "Estudios: "
+  botton:
+    short: "Corto"
+    medium: "Medio"
+    long: "Largo"
+    generateReport: "Generar Informe"
+  Subtitle1: "Tipo de Informe:"
+  Subtitle2: "Hallazgos:"
+  Editor:
+    title: "Informe Generado:"
+    button: 
+      Copy: "Copiar"
+      Save: "Guardar"
+      Edit: "Editar"
+      Back: "Atrás"
+      Forward: "Adelante"
+      Bold: "Negrita"
+      Print: "Imprimir"
+  copyBoard:
+    summary: "Copiado!"
+    detail: "Reporte Copiando Correctamente"
+    error: "Error"
+    errDetail: "No se ha podido Copiar!"
+  getReportType:
+    summary: "Error al cargar los tipos de informe. Por favor, inténtalo de nuevo más tarde."
+    detail: "Por favor, completa todos los campos."
+  generateReport:
+    summary: "Campos faltantes"
+    detail: "Por favor, completa todos los campos."
+
+statistic:
+  title: "Tus estadísticas,"
+  subtitle: "Los precios no incluyen los impuestos aplicables a la facturación final. El
+    precio final se mostrará en la página de pago."
+  Fecha:
+    mes: "Mes"
+    semana: "Semana"
+    año: "Año"
+  card:
+    title1: "Subespecialidad"
+    title2: "Modalidad"
+    title3: "Estadísticas"
+  container2:
+    title: "Facturas y pagos"
+    subtitle: "Los precios no incluyen los impuestos aplicables a la facturación final.
+      El precio final se mostrará en la página de pago."
+    subtitle2: "Descarga tus facturas aquí"
+    desde: "Desde"
+    hasta: "Hasta"
+    button: "Descargar"
+  cardData:
+    label1: "Informes"
+    label2: "Tiempo medio por informe"
+    label3: "Ingresos"
+    label4: "Unidades radiológicas"
+    value2: "15 minutos"
+  facturas:
+    meses:
+      enero: "Enero"
+      febrero: "Febrero"
+      marzo: "Marzo"
+      abril: "Abril"
+      mayo: "Mayo"
+  EvolutionChart:
+    labels:
+      jan: "Enero"
+      feb: "Feb"
+      mar: "Mar"
+      apr: "Abr"
+      may: "Mayo"
+      jun: "Jun"
+      jul: "Jul"
+      aug: "ago"
+      sep: "Sep"
+      oct: "Oct"
+    dataset:
+      label: "Número de estudios / Unidades Radiológicas por mes"
+  initializeCharts:
+    label1: "Cuerpo"
+    label2: "Neuro"
+    label3: "Mama"

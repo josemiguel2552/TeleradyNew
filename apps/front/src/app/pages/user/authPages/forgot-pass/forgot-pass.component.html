@@ -1,0 +1,56 @@
+<div class="w-100 m-auto px-3 max-width-user-bh text-center mt-5">
+    <h2 class="h3 mb-3 mt-3 fw-bold">{{t('forgotPass.title')}}</h2>
+</div>
+
+<div class="w-100 m-auto px-3 max-width-user-bh text-center">
+    <p>{{t('forgotPass.subtitle')}}</p>
+</div>
+
+<div class="w-100 m-auto px-3 max-width-user-bh mt-4 mb-3">
+    <form [formGroup]="formGroup" (ngSubmit)="sendEmail()">
+        <div class="mb-4">
+            <p-floatlabel variant="on" class="mt-4 mb-2 input-user-bh">
+                <input pInputText id="email" class="input-border-bh form-control rounded-pill" formControlName="email"
+                    type="email" [ngClass]="{'input-error': showError('email')}" />
+                <label class="placeH-input-bh d-flex align-items-center" htmlFor="email"><span class="iconify me-2"
+                        data-icon="ion:mail-outline"></span>
+                    {{t('forgotPass.labelEmail')}}</label>
+            </p-floatlabel>
+            <div *ngIf="showError('email')" class="text-danger ms-5">
+                <div class="alert-size-bh" *ngIf="this.formGroup.controls['email'].errors?.['required']">
+                    {{t('forgotPass.errorEamil1')}}
+                </div>
+            </div>
+            <div *ngIf="showError('email')" class="text-danger ms-5">
+                <div class="alert-size-bh" *ngIf="this.formGroup.controls['email'].errors?.['pattern']">
+                    {{t('forgotPass.errrorEmail2')}}
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-2">
+            <button class="btn rounded-pill color-sbtn-bh button-bh" type="submit"
+                *ngIf="!loading">{{t('forgotPass.button')}}</button>
+            <p-progressSpinner *ngIf="loading" strokeWidth="6" fill="white" animationDuration="1s"
+                aria-label="Loading"></p-progressSpinner>
+        </div>
+    </form>
+</div>
+
+<div class="w-100 m-auto px-3 max-width-user-bh text-center">
+    <p class="text-web-bh">{{t('authText.haveAccount')}} <a class="link-txt-bh text-reset fw-bold"
+            [routerLink]="'/user/login'">{{t('authText.login')}}</a>
+        <span class="iconify" data-icon="tabler:point-filled"></span> {{t('authText.noAccount')}} <a
+            class="link-txt-bh text-reset" [routerLink]="'/user/register'">{{t('authText.signUp')}}</a>
+    </p>
+
+    <p class="text-mobile-bh">{{t('authText.haveAccount')}} <span class="link-txt-bh"
+            [routerLink]="'/user/login'">{{t('authText.login')}}</span></p>
+
+    <p class="text-mobile-bh">{{t('authText.noAccount')}} <span class="link-txt-bh"
+            [routerLink]="'/user/register'">{{t('authText.signUp')}}</span></p>
+
+    <p class="text-policy-bh">{{t('authText.textTerms')}} <a class="link-txt-bh text-reset"
+            [routerLink]="'/user/support/terms-and-conditions'">{{t('authText.terms')}}</a> {{t('authText.textPolicy')}}
+        <a class="link-txt-bh text-reset" [routerLink]="'/user/support/terms-and-conditions'"
+            fragment="section-policy">{{t('authText.policy')}}</a></p>
+</div>

@@ -1,0 +1,51 @@
+{
+    "parameters": {
+        "subspecialties": {
+            "noData": "No se encontraron subespecialidades.",
+            "errorMessage": "Error en obtener las subespecialidades."
+        }
+    },
+    "personalData": {
+        "validateProfessional": {
+            "errorMessage": "Error al validar al profesional.",
+            "update": "Se actualizó la información.",
+            "save": "Se guardó la información.",
+            "notValid": "Información no válida."
+        },
+        "personalDataService": {
+            "errorMessageSignature": "Se requieren signatureBase64 y signatureFileName para cargar la firma.",
+            "Unsupported": "Tipo de archivo no compatible: "
+        }
+    },
+    "professionalDocument": {
+        "uploadDocument": {
+            "errorMessage": "Error al guardar el archivo.",
+            "errorExt": "Extensión de archivo no válida."
+        },
+        "getUploadDocument": {
+            "errorMessage": "Error al validar los archivos."
+        }
+    },
+    "professionalData": {
+        "title": "titulo-especialista",
+        "colegiacion": "colegiacion",
+        "alta-autonomo": "alta-autonomo",
+        "Dni": "DNI",
+        "insaurance": "seguro-rc",
+        "bank_cert": "certificado-bancario",
+        "signature": "firma"
+    },
+    "report": {
+        "saveReport": {
+            "save": "Los datos del reporte se guardaron correctamente.",
+            "update": "Los datos del reporte se actualizaron correctamente.",
+            "errorMessage": "Ocurrió un error al guardar los datos del reporte."
+        }
+    },
+    "userEvent": {
+        "registerEvent": {
+            "save": "El evento se guardó correctamente.",
+            "errorMessage": "Ocurrió un error al guardar el evento."
+        }
+    }
+}

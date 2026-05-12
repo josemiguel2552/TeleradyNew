@@ -1,0 +1,166 @@
+<header class="shadow bg-body rounded">
+    <div class="container">
+        <div class="d-flex flex-wrap align-items-center justify-content-between">
+            <!-- <a href="/user/offers" *ngIf="showImg"
+                    class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+                    <img class="size-logo-bh" src="assets/img/header/logo1.svg" alt="Bookahospi">
+                </a> -->
+            <a href="/user/offers" *ngIf="showImg"
+                class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+                <img class="size-logo-bh" src="assets/img/header/logo.png" alt="Bookahospi">
+            </a>
+            <a href="" *ngIf="!showImg" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+                <img class="size-logo-bh" src="assets/img/header/logo.png" alt="Bookahospi">
+            </a>
+            <div class="content-header-bh">
+                <div class="d-flex align-items-center" *ngIf="isUserLoggedIn && !isMobile else loggedOut">
+                    <div class="position-relative me-3" *ngIf="notifications.bell!=0">
+                        <div [routerLink]="['/user/profile/messages']">
+                            <span class="iconify icon-bh" data-icon="fa-regular:bell"></span>
+                        </div>
+                        <span
+                            class="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle label-icon-bh">
+                            {{notifications.bell}}
+                        </span>
+                    </div>
+                    <!-- <div class="position-relative me-3">
+                            <div>
+                                <span class="iconify icon-bh" data-icon="solar:document-medicine-linear"></span>
+                            </div>
+                            <span
+                                class="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle label-icon-bh"
+                                *ngIf="notifications.document!=0">
+                                {{notifications.document}}
+                            </span>
+                        </div>
+                        <div class="position-relative me-3">
+                            <div [routerLink]="['/user/offers/dashboardUser']">
+                                <span class="iconify icon-bh" data-icon="icon-park-outline:medicine-chest"></span>
+                            </div>
+                            <span
+                                class="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle label-icon-bh"
+                                *ngIf="notifications.chest!=0">
+                                {{notifications.chest}}
+                            </span>
+                        </div> -->
+
+                    <div class="dropdown text-end ms-5">
+                        <a href="#"
+                            class="d-flex align-items-center link-body-emphasis text-decoration-none dropdown-toggle"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <img *ngIf="!photo" class="me-2" src="assets/img/header/photoDefault.svg" alt="default">
+                            <img *ngIf="photo" class="rounded-circle me-2" [src]="photo" alt="Imagen Cargada" width="40"
+                                height="40">
+                            <div class="size-name-bh">
+                                {{ !infoUser.name || infoUser.name=='' ?infoUser.email:infoUser.name}}
+                                <div class="text-start text-specialty-bh" *ngIf="infoUser.specialty">
+                                    {{infoUser.specialty}}</div>
+                            </div>
+                            <div>
+                                <span class="iconify arrow-button-bh" data-icon="iconamoon:arrow-left-2-duotone"></span>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu text-small menu-bh shadow">
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center"
+                                    [routerLink]="['/user/profile']"><span class="iconify icon-menu-bh me-3"
+                                        data-icon="healthicons:doctor-outline"></span>{{t('header.profile')}}</a>
+                            </li>
+                            <!-- <li>
+                                <a class="dropdown-item d-flex align-items-center"
+                                    [routerLink]="['/user/profile/setting']"><span class="iconify icon-menu-bh me-3"
+                                        data-icon="tabler:settings-heart"></span>{{t('header.settings')}}</a>
+                            </li> -->
+                            <li>
+                                <hr class="dropdown-divider divider-bh">
+                            </li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center" (click)="logout()"><span
+                                        class="iconify icon-menu-bh me-3"
+                                        data-icon="bx:bx-log-out-circle"></span>{{t('header.logout')}}</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <ng-template #loggedOut>
+                    <div class="d-flex" *ngIf="!isMobile">
+                        <div class="d-flex align-items-center">
+                            <button class="btn color-potnoutline-bh width-button-bh size-button-bh rounded-pill ms-3"
+                                [routerLink]="'/user/login'" [class.color-sbtn-bh]="isLoginActive"
+                                [class.color-potnoutline-bh]="!isLoginActive"
+                                (click)="isLoginActive = true">{{t('header.login')}}</button>
+                            <button class="btn color-sbtn-bh width-button-bh size-button-bh rounded-pill ms-3"
+                                [routerLink]="'/user/register'" [class.color-sbtn-bh]="!isLoginActive"
+                                [class.color-potnoutline-bh]="isLoginActive"
+                                (click)="isLoginActive = false">{{t('header.signUp')}}</button>
+                        </div>
+                    </div>
+                    <div class="menu-mobile-bh">
+                        <div class="dropdown text-end ms-5 me-2" *ngIf="!isUserLoggedIn">
+                            <a href="#"
+                                class="d-flex align-items-center link-body-emphasis text-decoration-none dropdown-toggle"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="iconify menu-button-bh icon-auth-mobile-bh" data-icon="mi:menu"></span>
+                            </a>
+                            <ul class="dropdown-menu text-small shadow">
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center"
+                                        [routerLink]="'/user/login'">{{t('header.login')}}</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center"
+                                        [routerLink]="'/user/register'">{{t('header.signUp')}}</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </ng-template>
+            </div>
+        </div>
+    </div>
+
+    <div class="blue-background-color-bh" *ngIf="!isMobile && isUserLoggedIn">
+        <div class="container d-flex justify-content-center align-items-center">
+            <div class="d-flex justify-content-center align-items-center mx-2 px-3 cursor-pointer p-bh"
+                routerLink="/user/dashboard">
+                <span class="iconify icon-menu-bh" data-icon="iconoir:home-hospital"></span>
+                <p class="pt-3">{{t('header.home')}}</p>
+            </div>
+            <div class="d-flex justify-content-center align-items-center mx-2 px-3 cursor-pointer p-bh"
+                routerLink="/user/studies">
+                <span class="iconify icon-menu-bh" data-icon="icon-park-outline:medicine-chest"></span>
+                <p class="pt-3">{{t('header.reports')}}</p>
+            </div>
+            <div class="d-flex justify-content-center align-items-center mx-2 px-3 cursor-pointer p-bh"
+                routerLink="/user/profile/messages">
+                <span class="iconify icon-menu-bh" data-icon="ph:chat-circle-text"></span>
+                <p class="pt-3">{{t('header.messages')}}</p>
+            </div>
+            <div class="d-flex justify-content-center align-items-center mx-2 px-3 cursor-pointer p-bh"
+                routerLink="/user/statistic">
+                <span class="iconify icon-menu-bh" data-icon="icon-park-outline:medicine-chest"></span>
+                <p class="pt-3">{{t('header.myStatistics')}}</p>
+            </div>
+            <div class="d-flex justify-content-center align-items-center mx-2 px-3 cursor-pointer p-bh"
+                routerLink="/user/document">
+                <span class="iconify icon-menu-bh" data-icon="lucide:scroll-text"></span>
+                <p class="pt-3">{{t('header.myDocuments')}}</p>
+            </div>
+        </div>
+    </div>
+    <div class="menu-mobile-bh" *ngIf="isMobile && isUserLoggedIn && infoUser.isNormal && !hideMenuMobile">
+        <div class="fixed-bottom bg-white shadow-lg" style="height: 50px;">
+            <div class="container h-100">
+                <div class="d-flex justify-content-between align-items-center h-100">
+                    <div class="text-center element-menu-mobile-bh" *ngFor="let item of itemsMenuMobile; let i=index"
+                        [ngClass]="{'active-menu-mobile-bh': elementActive === i}" (click)="setElement(i)"
+                        [routerLink]="item.path">
+                        <span class="iconify d-block mx-auto icon-menu-mobile-bh" [attr.data-icon]="item.icon"></span>
+                        <span class="d-block text-menu-bh"
+                            [ngClass]="{'active-text-menu-bh': elementActive === i}">{{item.label}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>

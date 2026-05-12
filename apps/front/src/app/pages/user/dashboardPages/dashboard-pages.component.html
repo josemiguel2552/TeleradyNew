@@ -1,0 +1,102 @@
+<div class="light-background-color-bh">
+    <div class="imagen-background-bh">
+        <div class="container-p w-100 m-auto max-width-bh color-opacy-bh">
+            <div class="d-flex flex-column flex-md-row align-items-center justify-content-between">
+                <div class="text-img-bh d-none d-md-block text-center text-md-start">
+                    <h1 class="h-30 semibold">
+                        {{t('dashboard.title')}} {{ infoUser.name || infoUser.email }}
+                    </h1>
+                    <h3 class="h5 h-18">
+                        {{t('dashboard.subtitle1')}}<br>{{t('dashboard.subtitle2')}}
+                    </h3>
+                </div>
+            </div>
+            <div class="container-p">
+                <div class="row row-padd-card">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title"><strong>{{t('dashboard.card1.title')}}</strong></h5>
+                                <p class="card-text">
+                                    {{t('dashboard.card1.content1')}}<br>{{t('dashboard.card1.content2')}}
+                                </p>
+                                <button class="btn btn-primary">{{t('dashboard.card1.button')}}</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title"><strong>{{t('dashboard.card2.title')}}</strong></h5>
+                                <p class="card-text">
+                                    {{t('dashboard.card2.content1')}}<br>{{t('dashboard.card2.content2')}}
+                                </p>
+                                <button class="btn btn-primary"
+                                    (click)="navigateToReport()">{{t('dashboard.card2.button')}}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="imagen-background-statement">
+            <div class="text-img-bh text-center">
+                <h1 class="h-30 semibold">
+                    {{t('dashboard.onGraphicsText')}}
+                </h1>
+                <button class="btn btn-primary">{{t('dashboard.onGraphicsButton')}}</button>
+            </div>
+        </div>
+        <div class="text-img-bh-c max-width-bh text-center">
+            <h1 class="h-20 semibold">{{t('dashboard.title2')}}</h1>
+        </div>
+        <div class="container">
+            <div class="row d-flex align-items-center">
+                <div class="col-lg-9 col-md-8">
+                    <div class="card-b card-helpCenter">
+                        <div class="card-body-helpCenter d-flex align-items-center gap-3">
+                            <img src="/assets/img/dashboard/helpcenter-icon.png" alt="Icono de ayuda"
+                                class="icon-helpCenter">
+                            <div>
+                                <h5 class="card-title">{{t('dashboard.cardInfo.title')}}</h5>
+                                <p class="card-text">{{t('dashboard.cardInfo.content1')}}</p>
+                                <p class="h-telerady-help-center">{{t('dashboard.cardInfo.content2')}}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4 d-flex justify-content-end">
+                    <button class="btn btn-primary btn-helpCenter">{{t('dashboard.buttonInfo')}}</button>
+                </div>
+            </div>
+        </div>
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-section ">
+                    <h2 class="title-text">
+                        {{t('dashboard.radioGenia.title1')}} <br> {{t('dashboard.radioGenia.title2')}}
+                    </h2>
+                    <p class="description-text">
+                        {{t('dashboard.radioGenia.content')}}
+                    </p>
+                    <button class="btn btn-primary  btn-custom">{{t('dashboard.radioGenia.button')}}</button>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="image-container">
+                        <img src="/assets/img/dashboard/businessman-desktop.png"
+                            alt="Imagen de inteligencia artificial en salud">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container text-center my-5">
+            <div class="icon-container">
+                <img src="/assets/img/dashboard/hospital-icon.png" alt="Icono de hospital" class="icon-hospital">
+            </div>
+            <p class="hospital-text">
+                <strong>{{t('dashboard.title3')}}</strong>
+            </p>
+        </div>
+    </div>
+</div>

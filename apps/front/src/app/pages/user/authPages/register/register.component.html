@@ -1,0 +1,129 @@
+<div class="w-100 m-auto px-3 max-width-user-bh text-center mt-5">
+    <h2 class="h3 mb-3 mt-3 fw-bold">{{t('register.title')}}
+        <h3>{{t('register.subtitle')}}</h3>
+    </h2>
+</div>
+
+<div class="w-100 m-auto px-3 mb-3 btn-auth4-bh" style="max-width: 435px;">
+    <asl-google-signin-button type="standard" shape="circle" size='medium' text="continue_with"
+        width="400"></asl-google-signin-button>
+</div>
+
+<div class="w-100 m-auto px-3 mb-3 btn-auth3-bh">
+    <asl-google-signin-button type="standard" shape="circle" size='medium' text="continue_with" width="330"
+        theme="filled_black"></asl-google-signin-button>
+</div>
+
+
+<div class="w-100 m-auto px-3 btn-auth4-bh mb-3">
+    <div tabindex="0" role="button" aria-labelledby="button-label"
+        class="button-microsoft-bh nsm7Bb-HzV7m-LgbsSe  pSzOP-SxQuSe i5vt6e-Ia7Qfc JGcpL-RbRzK mt-2 rounded-pill"
+        style="margin-top: 0;" (click)="registerMicrosoft()">
+        <div class="nsm7Bb-HzV7m-LgbsSe-MJoBVe"></div>
+        <div class="nsm7Bb-HzV7m-LgbsSe-bN97Pc-sM5MNb">
+            <div class="nsm7Bb-HzV7m-LgbsSe-Bz112c" style="margin-bottom: 6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="17px" height="17px">
+                    <path fill="#ff5722" d="M6 6H22V22H6z" transform="rotate(-180 14 14)" />
+                    <path fill="#4caf50" d="M26 6H42V22H26z" transform="rotate(-180 34 14)" />
+                    <path fill="#ffc107" d="M26 26H42V42H26z" transform="rotate(-180 34 34)" />
+                    <path fill="#03a9f4" d="M6 26H22V42H6z" transform="rotate(-180 14 34)" />
+                </svg>
+            </div>
+            <span class="nsm7Bb-HzV7m-LgbsSe-BPrWId">{{t('register.labelMicrosoft')}}</span><span class="L6cTce"
+                id="button-label">{{t('register.labelMicrosoft')}}</span>
+        </div>
+    </div>
+</div>
+
+<div class="w-100 m-auto px-3 btn-auth3-bh mb-3 mt-2">
+    <div tabindex="0" role="button" aria-labelledby="button-label"
+        class="nsm7Bb-HzV7m-LgbsSe  pSzOP-SxQuSe MFS4be-JaPV2b-Ia7Qfc MFS4be-Ia7Qfc JGcpL-RbRzK"
+        style="width:330px; max-width:400px; min-width:min-content; background-color: #364698;"
+        (click)="registerMicrosoft()">
+        <div class="nsm7Bb-HzV7m-LgbsSe-MJoBVe"></div>
+        <div class="nsm7Bb-HzV7m-LgbsSe-bN97Pc-sM5MNb ">
+            <div class="nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf">
+                <div class="nsm7Bb-HzV7m-LgbsSe-Bz112c" style="margin-bottom: 6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="17px" height="17px">
+                        <path fill="#ff5722" d="M6 6H22V22H6z" transform="rotate(-180 14 14)" />
+                        <path fill="#4caf50" d="M26 6H42V22H26z" transform="rotate(-180 34 14)" />
+                        <path fill="#ffc107" d="M26 26H42V42H26z" transform="rotate(-180 34 34)" />
+                        <path fill="#03a9f4" d="M6 26H22V42H6z" transform="rotate(-180 14 34)" />
+                    </svg>
+                </div>
+            </div>
+            <span class="nsm7Bb-HzV7m-LgbsSe-BPrWId">{{t('register.labelMicrosoft')}}</span><span class="L6cTce"
+                id="button-label">{{t('register.labelMicrosoft')}}</span>
+        </div>
+    </div>
+</div>
+
+<div class="w-100 m-auto px-3 mb-3 max-width-user-bh mb-3">
+    <div class="row hide-line">
+        <div class="col p-0 ">
+            <svg width="120" height="2" viewBox="0 0 150 2" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line y1="1" x2="150" y2="1" stroke="#1B1B1B" />
+            </svg>
+        </div>
+        <p class="col-6 p-0 text-center">{{t('register.textSeparator')}}</p>
+        <div class="col p-0 mb-2">
+            <svg width="120" height="2" viewBox="0 0 150 2" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line y1="1" x2="150" y2="1" stroke="#1B1B1B" />
+            </svg>
+        </div>
+    </div>
+    <div class="show-text text-center">
+        <p class="p-0">{{t('register.textSeparator')}}</p>
+    </div>
+
+    <form [formGroup]="formGroup" (ngSubmit)="sigup()">
+        <div class="mb-4 py-2">
+            <p-floatlabel variant="on" class="mt-4 mb-2 input-user-bh">
+                <input pInputText id="email" class="input-border-bh form-control rounded-pill" formControlName="email"
+                    type="email" [ngClass]="{'input-error': showError('email')}" />
+                <label class="placeH-input-bh" htmlFor="email"><span class="iconify me-2"
+                        data-icon="la:user-nurse"></span>
+                    {{t('register.labelEmail')}}</label>
+            </p-floatlabel>
+            <div *ngIf="showError('email')" class="text-danger">
+                <div class="alert-size-bh mt-2" *ngIf="this.formGroup.controls['email'].errors?.['required']">
+                    {{t('register.errorEmail1')}}
+                </div>
+            </div>
+            <div *ngIf="showError('email')" class="text-danger">
+                <div class="alert-size-bh mt-2" *ngIf="this.formGroup.controls['email'].errors?.['pattern']">
+                    {{t('register.errorEmail2')}}
+                </div>
+            </div>
+        </div>
+        <div class="mb-3">
+            <p-floatlabel variant="on" class="mt-4 mb-2 input-user-bh">
+                <input pInputText id="password" class="input-border-bh form-control rounded-pill"
+                    formControlName="password" type="password" [ngClass]="{'input-error': showError('password')}" />
+                <label class="placeH-input-bh" htmlFor="password"><span class="iconify me-2"
+                        data-icon="material-symbols:lock-outline"></span> {{t('register.labelPass')}}</label>
+            </p-floatlabel>
+            <div *ngIf="showError('password')" class="text-danger">
+                <div class="alert-size-bh mt-2" *ngIf="this.formGroup.controls['password'].errors?.['required']">
+                    {{t('register.errorPass')}}
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <button class="btn rounded-pill color-sbtn-bh button-bh" type="submit"
+                *ngIf="!loading">{{t('register.button')}}</button>
+            <p-progressSpinner *ngIf="loading" strokeWidth="6" fill="white" animationDuration="1s"
+                aria-label="Loading"></p-progressSpinner>
+        </div>
+    </form>
+</div>
+<div class="w-100 m-auto px-3 max-width-user-bh text-center">
+    <p class="text-web-bh">{{t('authText.haveAccount')}} <a class="link-txt-bh text-reset fw-bold"
+            [routerLink]="'/user/login'">{{t('authText.login')}}</a></p>
+
+    <p class="text-policy-bh">{{t('authText.textTerms')}} <a class="link-txt-bh text-reset"
+            [routerLink]="'/user/support/terms-and-conditions'">{{t('authText.terms')}}</a>
+        {{t('authText.textPolicy')}} <a class="link-txt-bh text-reset"
+            [routerLink]="'/user/support/terms-and-conditions'" fragment="section-policy">{{t('authText.policy')}}</a>
+    </p>
+</div>

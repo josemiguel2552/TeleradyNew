@@ -1,0 +1,24 @@
+<div class="container">
+  <h2 class="title">{{t('document.title')}}</h2>
+  <div class="content">
+    <div class="documents-list">
+      <div *ngFor="let document of documents" class="document-item">
+        <span class="document-name">{{ document.name }}</span>
+        <button class="document-btn" [ngClass]="{ 'pending': document.status === 'pending', 'download': document.status === 'uploaded'}" (click)="handleAction(document)">
+          <ng-container *ngIf="isUploading(document.id)">
+            <i class="pi pi-spin pi-spinner"></i> Subiendo...
+          </ng-container>
+          <ng-container *ngIf="!isUploading(document.id)">
+            {{ document.status === 'pending' ? 'Pendiente' : 'Actualizar' }}
+          </ng-container>
+        </button>
+      </div>
+    </div>
+    <div class="info-card">
+      <img src="/assets/img/document/Frame.png" alt="Documentos" class="info-icon">
+      <h4 class="info-title">{{t('document.info-card.info-title')}} </h4>
+      <p class="info-text">
+        {{t('document.info-card.info-text')}}</p>
+    </div>
+  </div>
+</div>

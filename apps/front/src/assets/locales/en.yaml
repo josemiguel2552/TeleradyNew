@@ -1,0 +1,287 @@
+header:
+  profile: "Profile"
+  settings: "Settings"
+  logout: "Log out"
+  login: "Log in"
+  signUp: "Sign up"
+  home: "Home"
+  reports: "Reports"
+  messages: "Messages"
+  myStatistics: "My Statistics"
+  myDocuments: "My Documents"
+footer:
+  about: "About us"
+  terms: "Terms and Conditions"
+  privacy: "Privacy Policy"
+  privacyCokies: "Cookies Policy"
+home:
+  subtitle: "The best job offers for healthcare professionals"
+  title: "Find your ideal job at Telerady"
+forgotPass:
+  title: "Forgot your password?"
+  subtitle: "We will send a recovery link to your email"
+  labelEmail: "Enter email"
+  errorEmail1: "Email is required."
+  errorEmail2: "The email is incorrect."
+  button: "Send password"
+  summaryMessages: "Recover password"
+login:
+  title: "Welcome to Telerady."
+  subtitle: "Log in to access all our services."
+  labelMicrosoft: "Continue with Microsoft"
+  textSeparator: "or use another way to log in"
+  labelEmail: "Email"
+  errorEmail1: "Email is required."
+  errorEmail2: "The email is incorrect."
+  labelPass: "Password"
+  errorPass: "Password is required."
+  button: "Log in"
+  summaryMessages: "Log in"
+personalData:
+  title: "Personal Information"
+  nameAndSurname: "Name and Surname"
+  email: "Email"
+  phone: "Phone Number"
+  city: "City"
+  license: "License Number"
+  specialtyTitle: "How did you obtain your specialist title?"
+  digitalSignature: "Digital Signature"
+  subspecialty: "Subspecialties related to your profile"
+  saveButton: "Save Data"
+  error:
+    errorSubspecialty: "Error fetching subSpecialties: "
+    errorTitle: "Error fetching titleSpecialties: "
+    error405: "An unexpected error occurred."
+  message:
+    detail1: "Please complete all fields."
+    summarywarn: "Required fields"
+    detail2: "You must select a valid title."
+    summarysuccess: "Saved data"
+
+recoverPass:
+  title: "New Password Confirmation."
+  subtitle: "Fill in the following fields to update your password."
+  labelPass1: "Enter new password*"
+  labelPass2: "Confirm password*"
+  errorPass1: "Password is required."
+  errorPass2: "Passwords must match."
+  button: "Update password"
+  summaryMessages: "Recover password"
+  messages1: "The link has expired"
+register:
+  title: "Welcome to Telerady."
+  subtitle: "Sign up and access all our services!"
+  labelMicrosoft: "Continue with Microsoft"
+  textSeparator: "or sign up"
+  labelEmail: "Enter your email"
+  errorEmail1: "Email is required."
+  errorEmail2: "The email is incorrect."
+  labelPass: "Enter your password"
+  errorPass: "Password is required."
+  button: "Sign up"
+  summaryMessages: "Registration"
+  errorMessages:
+    errorGetEmail: "Could not retrieve the user's email."
+authText:
+  forgotPass: "Forgot your password?"
+  forgotPassMb1: "Forgot your"
+  forgotPassMb2: "password?"
+  haveAccount: "Already have an account?"
+  login: "Log in"
+  noAccount: "Don't have an account yet?"
+  signUp: "Sign up"
+  textTerms: "By logging in or creating an account, you agree to our"
+  terms: "Terms and Conditions"
+  textPolicy: "and our"
+  policy: "Privacy Policy."
+dashboard:
+  title: "Welcome to your Dashboard,"
+  subtitle1: "Access your pending reports and start working."
+  subtitle2: "You can also try Radiogen-AI and check your statistics and documentation."
+  card1:
+    title: "Reports"
+    content1: "Access your workspace and start reporting."
+    content2: "Once your documentation is uploaded, you can start with Telerady."
+    button: "Report Now"
+  card2:
+    title: "Radiogen - AI"
+    content1: "Radiogen-AI is free for Telerady users."
+    content2: "Discover its features and improve your workflow."
+    button: "Try Now"
+  onGraphicsText: "Access your statistics and optimize your working time"
+  onGraphicsButton: "Statistics"
+  title2: "We are here to help you"
+  cardInfo:
+    title: "Telerady Support Team"
+    content1: "Do you have any questions or suggestions? Contact us."
+    content2: "Telerady Help Center"
+  buttonInfo: "User guides and support"
+  radioGenia:
+    title1: "Streamline your reports with our AI"
+    title2: "and reduce your study time"
+    content: "Use Radiogen-AI to speed up your work. This tool is free for Telerady members."
+    button: "Access Radiogen-AI"
+  title3: "More than 4,000 hospitals and medical centers are at your disposal."
+document:
+  title: "Submitted Documentation"
+  info-card:
+    info-title: "Manage Your Documents"
+    info-text: "Download or upload documents accurately and easily. You can find all the information within the documents section."
+  names:
+    specialistTitle: "Specialist Title or Equivalency"
+    professionalAssociation: "Professional Association Registration"
+    selfEmployment: "Self-Employment Registration"
+    idCard: "ID Card / Foreigner Identification Number (DNI / NIE)"
+    liabilityInsurance: "Professional Liability Insurance"
+    bankCertificate: "Bank Account Certificate"
+    signature: "Digital Signature"
+  status:
+    pending: "Pending"
+    download: "Download"
+  error: 
+    signatureError: "Only JPG or PNG images are allowed for the signature"
+    documentError: "Only PDF files are allowed for this document"
+    uploadError: "An error occurred while uploading the document"
+
+study:
+  title: "My Studies"
+  tc_thorax: "Thoracic CT"
+  ecography_abdomen: "Abdominal ultrasound"
+  tc_abdomen: "Abdominal CT"
+  rm_brain: "Brain MRI"
+  rx_thorax: "Chest X-ray"
+  rx_ankle: "Ankle X-ray"
+  table:
+    study_type: "Study Type"
+    urgency: "Urgency Type"
+    due_date: "Due Date"
+    pat_name: "Patient Name"
+    pat_birthdate: "Birthdate"
+    sex: "Sex"
+    src_aet: "Source AET"
+    institution: "History Number"
+    modality: "Modality"
+    status: "Status"
+    add_note: "Add Note"
+  filter:
+    status:
+      title: "Status"
+      inform: "Informed"
+      pending: "Pending"
+    date:
+      title: "Date"
+      d1: "12 nov 2024"
+    input:
+      info: "Medical record number"
+  paginacion:
+    p1: "Rows per page"
+    p2: " Go to a page"
+  card: 
+    title: "We are here to help you"
+    card_title: "Telerady Support Team"
+    card-text: "Do you have issues reporting a study? Click on the three vertical dots on the right side of the study and leave us a note.<br /> Do you want to report important or urgent incidental findings due to their clinical relevance? Follow the same instructions and leave us a note."
+    card_footer: "Telerady Help Center"
+  view: "Image"
+urgency:
+  urgent: "Urgent"
+  non_urgent: "Non-urgent"
+  priority: "Priority"
+  informed: "Informed"
+
+modality:
+  default: "Modality"
+  ecography: "Ultrasound"
+  tc: "CT"
+  rm: "MRI"
+  mx: "MX"
+  rx: "X-ray"
+  ct: "CT"
+  mr: "MR"
+  xa: "XA"
+
+status:
+  to_report: "To report"
+  new: "New"
+  informed: "Reported"
+
+report:
+  title: "Report Type"
+  botton:
+    short: "Short"
+    medium: "Medium"
+    long: "Long"
+    generateReport: "Generate Report"
+  Subtitle1: "Report Type:"
+  Subtitle2: "Findings:"
+  Editor:
+    title: "Generated Report:"
+    button: 
+      Copy: "Copy"
+      Save: "Save"
+      Edit: "Edit"
+      Back: "Back"
+      Forward: "Forward"
+      Bold: "Bold"
+      Print: "Print"
+  copyBoard:
+    summary: "Copied!"
+    detail: "Report copied to clipboard!"
+    error: "Error"
+    errDetail: "Could not copy text!"
+  getReportType:
+    summary: "Failed to load report types. Please try again later."
+    detail: "Please fill all fields"
+  generateReport:
+    summary: "Missing Fields"
+    detail: "Please fill all fields"
+    
+statistic:
+  title: "Your Statistics,"
+  subtitle: "Prices do not include applicable taxes on the final invoice. The final price will be displayed on the payment page."
+  Fecha:
+    mes: "Month"
+    semana: "Week"
+    año: "Year"
+  card:
+    title1: "Subspecialty"
+    title2: "Modality"
+    title3: "Statistics"
+  container2:
+    title: "Invoices and Payments"
+    subtitle: "Prices do not include applicable taxes on the final invoice. The final price will be displayed on the payment page."
+    subtitle2: "Download your invoices here"
+    desde: "From"
+    hasta: "To"
+    button: "Download"
+  cardData:
+    label1: "Reports"
+    label2: "Average time per report"
+    label3: "Revenue"
+    label4: "Radiological Units"
+    value2: "15 minutes"
+  facturas:
+    meses:
+      enero: "January"
+      febrero: "February"
+      marzo: "March"
+      abril: "April"
+      mayo: "May"
+  EvolutionChart:
+    labels:
+      jan: "Jan"
+      feb: "Feb"
+      mar: "Mar"
+      apr: "Apr"
+      may: "May"
+      jun: "Jun"
+      jul: "Jul"
+      aug: "Aug"
+      sep: "Sep"
+      oct: "Oct"
+    dataset:
+      label: "Number of studies / Radiological Units per month"
+  initializeCharts:
+    label1: "Body"
+    label2: "Neuro"
+    label3: "Breast"
+    

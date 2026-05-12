@@ -1,0 +1,169 @@
+@use '../../../../styles.scss' as *;
+
+.content-header-bh{
+    margin-left: auto;
+    
+    @media only screen and (max-width: 760px) {
+        margin: 20px;
+        color: $text-color-bh;
+    }
+    @media only screen and (width: 768px ) {
+        margin: 40px;
+        color: $text-color-bh;
+    }
+
+}
+.icon-bh {
+    width: 25px;
+    height: 25px;
+    color: $primary-color-bh;
+    cursor: pointer;
+}
+
+.size-name-bh {
+    font-size: 14px;
+}
+
+.label-icon-bh {
+    font-size: 10px;
+}
+
+.text-specialty-bh {
+    color: $shadow-color-bh;
+}
+
+.arrow-button-bh {
+    rotate: 270deg;
+    width: 20px;
+    height: 20px;
+}
+
+.width-button-bh {
+    width: 150px;
+}
+
+.menu-bh {
+    width: 300px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.icon-menu-bh {
+    width: 40px;
+    height: 40px;
+    padding: 7px;
+    color: $primary-color-bh;
+
+    @media only screen and (max-width: 768px) {
+        padding: 8px;
+        color: $text-color-bh;
+    }
+}
+
+.dropdown-item:focus,
+.dropdown-item:hover {
+    color: $primary-color-bh;
+    background-color: #fff;
+
+    @media only screen and (max-width: 768px) {
+        background-color: $primary-light-bh;
+    }
+}
+
+.dropdown-item:hover .icon-menu-bh {
+    background-color: $primary-light-bh;
+    border-radius: 50%;
+}
+
+.dropdown-toggle::after {
+    display: none;
+}
+
+.divider-bh {
+    width: 250px;
+    margin: 0 auto;
+}
+
+.link-txt-bh {
+    color: $primary-color-bh !important;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.size-logo-bh {
+    width: 250px;
+    height: 50px;
+    margin: 25px 0px;
+
+    @media only screen and (max-width: 768px) {
+        width: 100px;
+        height: auto;
+    }
+}
+
+@media only screen and (min-width: 768px) {
+    .menu-mobile-bh {
+        display: flex !important;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: white;
+        z-index: 1000;
+        box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
+        padding: 8px 0;
+    }
+
+    .menu-mobile-bh .container {
+        width: 100%;
+        display: flex;
+        justify-content: space-evenly; /* 🔹 Mayor separación entre iconos */
+        align-items: center;
+        padding: 0 15px; /* 🔹 Agrega más margen lateral */
+    }
+
+    .element-menu-mobile-bh {
+        flex: 1 1 auto; /* 🔹 Permite que cada ítem se ajuste automáticamente */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0 15px; /* 🔹 Aumenta espacio entre botones */
+    }
+
+    .icon-menu-mobile-bh {
+        font-size: clamp(22px, 5vw, 28px); /* 🔹 Tamaño adaptable al viewport */
+        margin-bottom: 6px; /* 🔹 Más espacio entre icono y texto */
+    }
+
+    .text-menu-bh {
+        font-size: clamp(11px, 2vw, 15px); /* 🔹 Tamaño de texto responsivo */
+        text-align: center;
+        white-space: nowrap; /* 🔹 Evita que el texto se divida en dos líneas */
+    }
+
+    .active-menu-mobile-bh {
+        color: #007bff; /* 🔹 Color del icono activo */
+    }
+}
+
+
+
+/* 🔹 ESTILOS GENERALES */
+.header-link:hover {
+    color: $primary-color-bh;
+    font-weight: bolder;
+}
+
+.blue-background-color-bh {
+    background-color: $primary-light-bh;
+}
+
+.p-bh:hover {
+    color: $primary-color-bh;
+}
+
+.icon-chevron {
+    font-size: 28px;
+}

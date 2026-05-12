@@ -1,0 +1,355 @@
+/* You can add global styles to this file, and also import other style files */
+
+
+$primary-color-bh: #0BBBEF;
+$primary-dark-bh: #0091BC;
+$primary-light-bh: #EBF9FF;
+$secondary-color-bh: #0A243F;
+$secondary-dark-bh: #040a11;
+$secondary-light-bh: #F4E8F2;
+$tertiary-color-bh: #95C121;
+$tertiary-dark-bh: #4CAF50;
+$tertiary-light-bh: #4CAF500A;
+$text-color-bh: #1B1B1B;
+$text-color-md-bh: #393939;
+$text-color-gy-bh: #969696;
+$text-color-ye-bh: #FFB700;
+$shadow-color-bh: #E2E2E2;
+
+
+.color-pbtn-bh,
+.color-pbtn-bh:active {
+    background-color: $primary-color-bh;
+    border-color: $primary-color-bh;
+    color: #fff;
+}
+
+.color-pbtn-bh:hover {
+    background-color: $primary-dark-bh;
+    border-color: $primary-dark-bh;
+    color: #fff;
+}
+
+.color-sbtn-bh,
+.color-sbtn-bh:active {
+    background-color: $secondary-color-bh;
+    border-color: $secondary-color-bh;
+    color: #fff;
+}
+
+.color-sbtn-bh:hover {
+    background-color: $secondary-dark-bh;
+    border-color: $secondary-dark-bh;
+    color: #fff;
+}
+
+.color-potnoutline-bh,
+.color-potnoutline-bh:active {
+    border-color: $primary-color-bh;
+    color: $primary-color-bh;
+}
+
+.color-potnoutline-bh:hover {
+    background-color: $primary-color-bh;
+    color: #fff;
+}
+
+.color-sotnoutline-bh,
+.color-sotnoutline-bh:active {
+    border-color: $secondary-color-bh;
+    color: $secondary-color-bh;
+}
+
+.color-sotnoutline-bh:hover {
+    background-color: $secondary-color-bh;
+    color: #fff;
+}
+
+.size-button-bh {
+    height: 40px;
+    width: 190px;
+    font-size: 14px;
+}
+
+.input-border-bh:focus {
+    border-color: $primary-color-bh;
+    box-shadow: none;
+    font-size: 14px;
+}
+
+.max-width-user-bh {
+    max-width: 520px;
+}
+
+.max-width-bh {
+    max-width: 1020px;
+    margin-right: auto;
+    margin-left: auto;
+
+    @media only screen and (max-width: 900px) {
+        max-width: 100%;
+        padding-right: 16px;
+        padding-left: 16px;
+    }
+}
+
+.input-bh {
+    height: 50px;
+    font-family: Poppins;
+    font-size: 14px;
+    line-height: 19.6px;
+
+    @media only screen and (max-width: 768px) {
+        height: 45px;
+        font-size: 11px;
+    }
+}
+
+.alert-size-bh {
+    font-size: 11px;
+
+    @media only screen and (max-width: 768px) {
+        font-size: 8px;
+    }
+}
+
+.input-error {
+    border: 1.5px solid #DC3545 !important;
+}
+
+.form-check-input {
+    width: 18px;
+    height: 18px;
+}
+
+.form-check-input:checked {
+    background-color: $primary-color-bh;
+    border-color: $primary-color-bh;
+}
+
+.form-check-input:checked::before {
+    color: white;
+}
+
+.icon-load-bh {
+    width: 25%;
+    height: 25%;
+    color: $secondary-color-bh;
+}
+
+.banner {
+    position: relative;
+    align-items: center;
+    color: white;
+    background-color: $primary-color-bh;
+    height: auto;
+}
+
+
+body {
+    font-family: Poppins;
+    font-size: 14px;
+    line-height: 1.5;
+    color: $text-color-bh;
+    width: 100%;
+    overflow-x: hidden; 
+
+}
+
+.option-bh {
+    cursor: pointer;
+}
+
+.option-bh:hover,
+.option-bh:focus {
+    color: $primary-color-bh;
+    background-color: $primary-light-bh;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+h1 {
+    font-size: 35px;
+    line-height: 45.50px;
+    line-height: 1.5;
+}
+
+h2 {
+    font-size: 25px;
+    line-height: 35px;
+    line-height: 1.5;
+}
+
+h3 {
+    font-size: 20px;
+    line-height: 28px;
+    line-height: 1.5;
+}
+
+h4 {
+    font-size: 16px;
+    line-height: 22.4px;
+    line-height: 1.5;
+}
+
+p,
+label {
+    font-size: 14px;
+    line-height: 19.60px;
+    line-height: 1.5;
+}
+
+button {
+    font-size: 14px;
+}
+
+@media only screen and (max-width: 768px) {
+    h1 {
+        font-size: 25px;
+        font-weight: 900;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+
+    h3 {
+        font-size: 16px;
+    }
+
+    h4 {
+        font-size: 14px;
+    }
+
+    p,
+    label {
+        font-size: 11px;
+    }
+}
+
+.bold {
+    font-weight: 900;
+}
+
+.semibold {
+    font-weight: 700;
+}
+
+.medium {
+    font-weight: 500;
+}
+
+.regular {
+    font-weight: 400;
+}
+
+::ng-deep {
+
+    .p-progressspinner {
+        width: 40px !important;
+        height: 40px !important;
+    }
+
+    .dropdown-error {
+        .p-dropdown {
+            border: 1.5px solid #DC3545 !important;
+        }
+    }
+
+    .p-dropdown {
+        width: 100%;
+        height: 50px;
+
+        @media only screen and (max-width: 768px) {
+            height: 45px;
+        }
+    }
+
+    .p-dropdown:hover {
+        border-color: $primary-color-bh;
+    }
+
+    .p-dropdown-label {
+        font-size: 14px;
+        font-family: Poppins;
+        padding-top: 15px;
+
+        @media only screen and (max-width: 768px) {
+            font-size: 11px;
+        }
+    }
+
+    .p-dropdown-header {
+        background: #fff;
+    }
+
+    .p-dropdown-filter {
+        height: 35px;
+    }
+
+    .p-dropdown-filter:hover {
+        border-color: #ced4da;
+    }
+
+    .p-dropdown-filter:focus {
+        border-color: $primary-color-bh;
+        box-shadow: none;
+    }
+
+    dl,
+    ol,
+    ul {
+        margin-bottom: 0%;
+        padding-left: 0%;
+    }
+
+    .p-dropdown-item:hover,
+    .p-dropdown-item.p-highlight {
+        color: $primary-color-bh;
+        background: $primary-light-bh;
+    }
+
+    .p-dropdown-items {
+        @media only screen and (max-width: 768px) {
+            font-size: 14px;
+        }
+    }
+
+
+    .p-inputtext:enabled:focus {
+        border-color: $primary-color-bh !important;
+    }
+
+    .p-focus {
+        border-color: $primary-color-bh !important;
+    }
+}
+
+.p-select-option.p-select-option-selected {
+    background: $primary-light-bh !important;
+    color: $primary-color-bh !important;
+}
+
+.p-select-option:hover{
+    background: $primary-light-bh !important;
+}
+
+.divider-bh {
+    border-top: 1px solid #F4F4F4;
+
+    @media only screen and (max-width: 768px) {
+        display: none;
+    }
+}
+
+.reduce-space {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.reduce-space-top {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}

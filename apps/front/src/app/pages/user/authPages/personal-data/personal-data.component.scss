@@ -1,0 +1,138 @@
+.register-container {
+  max-width: 500px;
+  margin: auto;
+  padding: 20px;
+  background: #fff;
+  margin-bottom: 20px;
+  margin-top: 30px;
+}
+
+h2 {
+  text-align: center;
+  font-size: 25px;
+  margin-bottom: 15px;
+}
+
+.dropdown-container {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  background: #ffffff;
+  width: 455px;
+  position: relative;
+}
+
+.dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 400;
+  padding: 10px;
+  background: #ffffff;
+  border: 1px solid #fefefe;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dropdown-header span {
+  flex-grow: 1;
+}
+
+.dropdown-container:hover .dropdown-header {
+  background: #e0f0ff;
+  border: 1px solid #00aaff;
+
+}
+
+.dropdown-body {
+  margin-top: 5px;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 10px;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+  max-height: 200px;
+  overflow-y: auto; 
+  z-index: 10;
+}
+
+.dropdown-arrow{
+  margin-left: auto;
+  font-size: 24px;
+}
+.input-row {
+  display: flex;
+  gap: 10px; 
+}
+
+.input-field {
+  flex: 1; 
+}
+
+.iconify{
+  font-size: 24px;
+  margin-right: 10px;
+  width: 24px;
+  height: 24px;
+}
+
+.input-field {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  background: white;
+  white-space: nowrap; 
+  overflow: hidden;      
+  text-overflow: ellipsis; 
+  display: block;
+}
+.subspecialty-label {
+  display: block;
+  max-width: 80%;  
+  white-space: nowrap;  
+  overflow: hidden;  
+  text-overflow: ellipsis; 
+}
+
+.register-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.register-btn:disabled {
+  background: #ccc;
+}
+
+.dropdown-body ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  background: white;
+  border: 0px solid #ddd;
+}
+
+.dropdown-body ul li {
+  padding: 10px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.dropdown-body ul li:hover {
+  background: #ebf9ff;
+  color: #51cef4;
+}
+
+.dropdown-body input[type="checkbox"] {
+  margin-right: 10px;
+}

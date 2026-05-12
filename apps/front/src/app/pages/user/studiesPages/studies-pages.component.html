@@ -1,0 +1,180 @@
+<div class="container-custom">
+  <div class="row">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+      <h3 class="h4">{{t('study.title')}} ({{ filteredReports.length }})</h3>
+    </div>
+  </div>
+  <div class="filters-container">
+    <div class="input-group search-box">
+      <span class="input-group-text"><i class="iconify" data-icon="akar-icons:search"></i></span>
+      <input type="text"
+        class="form-control"
+        placeholder="{{t('study.filter.input.info')}}"
+        [(ngModel)]="searchNumber"
+      />
+    </div>
+
+    <div class="custom-select">
+      <select class="form-select" [(ngModel)]="searchStatus">
+        <option value="">{{t('study.filter.status.title')}}</option>
+        <option value="Informar">{{t('study.filter.status.inform')}}</option>
+        <option value="Nuevo">{{t('study.filter.status.pending')}}</option>
+      </select>
+      <span class="iconify" data-icon="mdi:chevron-down"></span>
+    </div>
+    
+    <div class="custom-select">
+      <select class="form-select" [(ngModel)]="searchDate">
+        <option value="">{{t('study.filter.date.title')}}</option>
+        <option value="12 nov 2024">{{t('study.filter.date.d1')}}</option>
+      </select>
+      <span class="iconify" data-icon="mdi:chevron-down"></span>
+    </div>
+    <div class="custom-select">
+      <select class="form-select" [(ngModel)]="searchModality">
+        <option value="">{{t('modality.default')}}</option>
+        <option value="RX">{{t('modality.rx')}}</option>
+        <option value="MX">{{t('modality.mx')}}</option>
+        <option value="TC">{{t('modality.tc')}}</option>
+        <option value="RM">{{t('modality.rm')}}</option>
+        <option value="RM">{{t('modality.ct')}}</option>
+        <option value="RM">{{t('modality.mr')}}</option>
+        <option value="RM">{{t('modality.xa')}}</option>
+        <option value="Ecografía">{{t('modality.ecography')}}</option>
+        <span class="iconify" data-icon="mdi:chevron-down"></span>
+      </select>
+      <span class="iconify" data-icon="mdi:chevron-down"></span>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table mt-4">
+      <thead>
+        <tr>
+          <th>
+            {{ t('study.table.study_type') }}
+            <span
+              class="iconify"
+              data-icon="line-md:arrows-vertical-alt"
+              data-inline="false"
+            ></span>
+          </th>
+          <th>{{ t('study.table.status') }}</th>
+          <th>{{ t('study.table.pat_name') }}</th>
+          <th>{{ t('study.table.pat_birthdate') }}</th>
+          <th>{{ t('study.table.sex') }}</th>
+          <th>{{ t('study.table.src_aet') }}</th>
+          <th>{{ t('study.table.due_date') }}</th>
+          <th>{{ t('study.table.institution') }}</th>
+          <th>{{ t('study.table.modality') }}</th>
+          <th>{{ t('study.table.add_note') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let report of paginatedReports" 
+            [ngClass]="{ 'report-inactive': report.status === translateStatusInformed }">
+          <td>
+            <div class="report-type">
+              <div class="report-icon-circle">
+                <img src="/assets/img/studies/lifeline.png" alt="Heartbeat Icon" class="report-img" [ngClass]="{ 'greyed-out': report.status === translateStatusInformed }"/>
+              </div>
+              <div class="report-info">
+                <div class="report-header">
+                  <span class="iconify icon-lock" data-icon="icon-park-outline:medicine-chest"  [ngClass]="{ 'greyed-out': report.status === translateStatusInformed }"></span>
+                  <span class="icon-text" [ngClass]="{ 'greyed-out': report.status === translateStatusInformed }">BODY</span>
+                </div>
+                <span class="report-text" [ngClass]="{ 'grey-text': report.status === translateStatusInformed }"> {{ report.study_desc }} </span>
+              </div>
+            </div>
+          </td>
+          <td> <span class="badge" [ngClass]="{'badge-inactive': report.status === translateStatusInformed,'badge-active': report.status === translateStatusTo_Report || report.status === translateStatusNew }">
+            {{ report.status }} </span>
+        </td>
+        <td [ngClass]="{ 'text-inactive': report.status === translateStatusInformed }">{{ report.pat_name }}</td>
+        <td [ngClass]="{ 'text-inactive': report.status === translateStatusInformed }">{{ report.pat_birthdate }}</td>
+        <td [ngClass]="{ 'text-inactive': report.status === translateStatusInformed }">{{ report.sex }}</td>
+        <td [ngClass]="{ 'text-inactive': report.status === translateStatusInformed }">{{ report.src_aet }}</td>
+        <td [ngClass]="{ 'text-inactive': report.status === translateStatusInformed }"> {{ report.dueDate }} </td>
+        <td class="text-center" [ngClass]="{ 'text-inactive': report.status === translateStatusInformed }">{{ report.institution }}</td>
+        <td [ngClass]="{ 'text-inactive': report.status === translateStatusInformed }">{{ report.modalities }}</td>
+        <td>
+          <div class="d-none d-sm-block">
+            <button class="btn btn-icon" (click)="toggleMenu(report, $event)">
+              <span class="iconify" data-icon="uil:ellipsis-v"></span>
+            </button>
+            <div
+              *ngIf="report.showMenu"
+              class="dropdown-menu-custom"
+              [ngStyle]="{
+                position: 'fixed',
+                top: report.menuStyle?.top,
+                left: report.menuStyle?.left,
+                display: 'block'
+              }"
+            >
+              <button class="dropdown-item" (click)="viewStudy(report.study_iuid)">
+                <span class="iconify me-2" data-icon="mdi:eye-outline"></span>
+                {{ t('study.view') || 'Imagen' }}
+              </button>
+              <button class="dropdown-item" (click)="navigateToReportWithStudy(report)">
+                <span class="iconify me-2" data-icon="material-symbols:edit-square-outline-rounded"></span>
+                {{ 'Crear Informe' }}
+              </button>
+            </div>
+          </div>        
+          <div class="d-block d-sm-none action-icons-mobile">
+            <button class="btn-icon" (click)="viewStudy(report.study_iuid)">
+              <span class="iconify" data-icon="mdi:eye-outline"></span>
+            </button>
+            <button class="btn-icon" (click)="navigateToReportWithStudy(report)">
+              <span class="iconify" data-icon="material-symbols:edit-square-outline-rounded"></span>
+            </button>
+          </div>
+        </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination-container d-flex flex-wrap justify-content-between align-items-center mt-4">
+    <div class="pagination-info d-flex align-items-center mb-2 mb-md-0">
+      <span class="text">{{t('study.paginacion.p1')}}</span>
+      <select [(ngModel)]="rowsPerPage" class="border-0 mx-2" (change)="changeRowsPerPage()">
+        <option [value]="10">10</option>
+        <option [value]="20">20</option>
+        <option [value]="30">30</option>
+        <option [value]="50">50</option>
+      </select>
+    </div>
+    <div class="pagination-controls d-flex align-items-center mb-2 mb-md-0">
+      <button class="btn btn-secondary" (click)="prevPage()" [disabled]="currentPage === 1"> < </button>
+      <div class="pagination mx-2">
+        <span *ngFor="let page of pages" class="page-item" [ngClass]="{ active: page === currentPage }">
+          <a *ngIf="typeof page === 'number'" class="page-link" (click)="changePage(+page)" >{{ page }}</a>
+          <span *ngIf="page === '...'" class="page-link">...</span>
+        </span>
+      </div>
+      <button class="btn btn-secondary" (click)="nextPage()" [disabled]="currentPage === TotalPages"> > </button>
+    </div>
+    <div class="pagination-info d-flex align-items-center">
+      <span class="text" >{{t('study.paginacion.p2')}}</span>
+      <input type="number" [(ngModel)]="currentPage" class="border-0 border-bottom border-secondary mx-2" min="1" [max]="TotalPages"/>
+      <button (click)="changePage(currentPage)" class="btn btn-next">></button>
+    </div>
+  </div>
+
+  <div class="text-img-bh-c max-width-bh text-center mt-4">
+    <h1 class="h-20 semibold">{{t('study.card.title')}}</h1>
+  </div>
+  <div class="row d-flex align-items-center">
+    <div class="card card-helpCenter">
+      <div class="card-body-helpCenter">
+        <img src="/assets/img/dashboard/helpcenter-icon.png" alt="Icono de ayuda" class="icon-helpCenter"/>
+        <div class="card-helpCenter-text">
+          <h5 class="card-title"><strong>{{t('study.card.card_title')}}</strong></h5>
+          <p class="card-text">{{t('study.card.card-text')}}</p>
+          <p class="h-telerady-help-center">{{t('study.card.card_footer')}}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

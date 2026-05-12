@@ -1,0 +1,23 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { ReportService } from './reports.service';
+
+describe('ReportService', () => {
+  let service: ReportService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [ReportService],
+    }).compile();
+
+    service = module.get<ReportService>(ReportService);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+});

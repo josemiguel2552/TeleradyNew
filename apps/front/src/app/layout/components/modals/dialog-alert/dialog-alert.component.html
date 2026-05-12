@@ -1,0 +1,63 @@
+<p-dialog [(visible)]="visible" [modal]="true" [style]="{ width: getWindowWidth() }" [responsive]="true"
+    [draggable]="false" [resizable]="false" (onHide)="closeDialog()">
+    <ng-template pTemplate="header" *ngIf="!isMobile">
+        <div class="container">
+            <div [ngSwitch]="typeAlert">
+                <h5 *ngSwitchCase="type_alert.requirements" class="modal-inscription-title mt-3 lh-sm">¡Falta algo!</h5>
+                <h5 *ngSwitchCase="type_alert.plan" class="modal-inscription-title mt-3 lh-sm">¡Ups!</h5>
+                <h5 *ngSwitchCase="type_alert.warning" class="modal-inscription-title mt-3 lh-sm">¡Aviso!</h5>
+            </div>
+        </div>
+    </ng-template>
+    <div class="d-flex align-items-center justify-content-center">
+        <div class="col-md-10 text-center" [ngSwitch]="typeAlert">
+            <div *ngSwitchCase="type_alert.requirements">
+                <div *ngIf="validateR.length!=0">
+                    <h4 class="lh-base mt-2" *ngIf="!isMobile">Nos encanta tu perfil, pero este hospital <span
+                            class="fw-bold">requiere el {{validateR[0].subTitle}} {{validateR[0].message}}</span>, ¡No
+                        te preocupes, nosotros te ayudamos!</h4>
+                    <h2 class="lh-base mt-2" *ngIf="isMobile">Nos encanta tu perfil, pero este hospital <span
+                            class="fw-bold">requiere el {{validateR[0].subTitle}} {{validateR[0].message}}</span>, ¡No
+                        te preocupes, nosotros te ayudamos!
+                    </h2>
+                </div>
+                <div class="justify-content-center mt-4">
+                    <button class="btn color-sbtn-bh size-button-bh rounded-pill m-1"
+                        [routerLink]="'/home'">
+                        Homologar
+                    </button>
+                </div>
+            </div>
+
+            <div *ngSwitchCase="type_alert.plan">
+                <div>
+                    <h4 class="lh-base mt-2" *ngIf="!isMobile">{{message}} Pero no te preocupes, puedes mejorar tu plan.
+                    </h4>
+                    <h2 class="lh-base mt-2" *ngIf="isMobile">{{message}} Pero no te preocupes, puedes mejorar tu plan.
+                    </h2>
+                </div>
+                <div class="justify-content-center my-4">
+                    <button class="btn color-sbtn-bh size-button-bh rounded-pill m-1" routerLink="/hospital/pricing">
+                        Ver planes
+                    </button>
+                </div>
+            </div>
+
+            <div *ngSwitchCase="type_alert.warning">
+                <div>
+                    <h4 class="lh-base mt-2" *ngIf="!isMobile">{{message}}
+                    </h4>
+                    <h2 class="lh-base mt-2" *ngIf="isMobile">{{message}}
+                    </h2>
+                </div>
+                <div class="justify-content-center my-4">
+                    <button class="btn color-sbtn-bh size-button-bh rounded-pill m-1" (click)="accept()">
+                        Continuar
+                    </button>
+                </div>
+                <div>
+                </div>
+            </div>
+        </div>
+    </div>
+</p-dialog>

@@ -1,0 +1,55 @@
+<div class="container">
+  <div class="report-header">
+    <h3>{{t('report.title')}}</h3>
+    <div class="length-toggle"> 
+      <button class="toggle-button" [class.active]="reportLength === 'Short'"(click)="setReportLength('Short')">{{t('report.botton.short')}} </button> 
+      <button class="toggle-button" [class.active]="reportLength === 'Medium'" (click)="setReportLength('Medium')">{{t('report.botton.medium')}}</button> 
+      <button class="toggle-button" [class.active]="reportLength === 'Long'" (click)="setReportLength('Long')">{{t('report.botton.long')}}</button> 
+    </div>
+  </div>
+
+  <label for="selectedReport">{{t('report.Subtitle1')}}</label>
+  <select id="selectedReport" [(ngModel)]="selectedReport">
+    <option *ngFor="let report of reportTypes" [value]="report">{{ report }}</option>
+  </select>
+  
+  <label for="findings">{{t('report.Subtitle2')}}</label>
+  <textarea id="findings" [(ngModel)]="findings" placeholder="Enter your findings here..."></textarea>
+  <button class="generate-btn" (click)="generateReport()">{{t('report.botton.generateReport')}}</button>
+
+  <div class="editor-container">
+    <h4>{{t('report.Editor.title')}}</h4>
+    
+    <div class="editor-container-botton">
+      <div class="button-container">
+        <button class="btn-icon" (click)="copyToClipboard()" title=translateCopy>
+          <span class="iconify icon-button" data-icon="octicon:paste-24"></span>
+        </button>
+        <button class="btn-icon" (click)="toggleEditMode()" title="{{ isEditing ? translateSave : translateEdit }}">
+          <span class="iconify icon-button" [attr.data-icon]="isEditing ? 'fad:save' : 'bxs:edit'"></span>
+        </button>
+        <div *ngIf="isEditing" class="extra-buttons">
+          <button class="btn-icon" (click)="goBack()" title=translateBack [disabled]="currentIndex <= 0">
+            <span class="iconify icon-button" data-icon="fad:undo"></span>
+          </button>
+          <button class="btn-icon" (click)="goForward()" title=translateForward [disabled]="currentIndex >= history.length - 1">
+            <span class="iconify icon-button" data-icon="fad:redo"></span>
+          </button> 
+          <button class="btn-icon" (click)="makeBold()" title=translateBold>
+            <span class="iconify icon-button" data-icon="radix-icons:font-bold"></span>
+          </button>
+        </div>
+        <button class="btn-icon" (click)="printChatHistory()" title=translatePrint>
+          <span class="iconify icon-button" data-icon="material-symbols:print-outline-rounded"></span>
+        </button>
+      </div>
+    </div>
+
+    <div id="chat-history" class="markdown-editor" [contentEditable]="isEditing">
+      <div *ngIf="isLoading" class="loading-overlay">
+        <img src="assets/img/report/spinner.svg" alt="Loading..." class="loading-spinner">
+      </div>
+      <markdown *ngIf="!isLoading && chatHistory" [data]="chatHistory"></markdown>
+    </div>
+  </div>
+</div>
