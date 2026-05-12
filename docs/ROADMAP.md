@@ -109,14 +109,23 @@ cuando los criterios de aceptación están verdes, no por calendario.
 - [ ] PDF/A formal + integración real con TSA cualificado eIDAS
   (Sprint 8).
 
-## Sprint 6 — Portal admin / coordinador
+## Sprint 6 — Portal admin/coordinador + RGPD (en curso)
 
-- Asignación de estudios a radiólogos (manual y por reglas).
-- Verificación intermedia (segundo informe opcional).
-- Envío final al hospital.
-- Gestión de incidencias.
-- SLA dashboard básico.
-- Derechos del interesado RGPD.
+- [x] Back: `PUT /v1/admin/studies/:id/assign` (admin/coordinator)
+  reasigna primario y opcional reviewer; TenantScope sobre hospital;
+  auditoría `study.assigned`.
+- [x] Back: `GET /v1/admin/dashboard/sla` con conteos por estado,
+  averages minutes-to-sign / sign-to-sent, y pendientes > SLA 24h.
+- [x] Back: `GET /v1/me/data-export` (RGPD art. 15) y `DELETE /v1/me`
+  (RGPD art. 17) con tombstone + auditoría.
+- [x] Front: `/admin/*` standalone con SLA dashboard, asignaciones
+  (lista + diálogo de reassign) y "My data" RGPD.
+- [x] Docs: `docs/RLS-ACTIVATION-RUNBOOK.md` con el procedimiento
+  paso a paso para activar RLS en producción.
+- [ ] Activación efectiva de RLS en staging + tests E2E con
+  testcontainers (Sprint 7).
+- [ ] Limitación de tratamiento (art. 18) + portabilidad DICOM zip
+  (Sprint 7).
 
 ## Sprint 7 — Audit UI + notificaciones + estadísticas
 

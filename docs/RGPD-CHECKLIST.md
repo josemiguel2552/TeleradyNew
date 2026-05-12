@@ -25,14 +25,23 @@ o procedimiento. Se revisa al cierre de cada sprint.
 
 ## 3. Derechos de los interesados (art. 15-22)
 
-- [ ] **Acceso**: endpoint `GET /v1/me/data-export` que devuelve dump propio.
-- [ ] **Rectificación**: ya existe `PUT /v1/personal-data`.
-- [ ] **Supresión**: endpoint que aplica borrado lógico + purga programada.
-- [ ] **Limitación**: flag `processing_restricted` por usuario.
-- [ ] **Portabilidad**: export en JSON estructurado + DICOM en zip.
-- [ ] **Oposición**: oposición a tratamientos no esenciales (marketing).
-- [ ] **Decisiones automatizadas**: si volvemos a usar IA, banner explicativo y
-      derecho a revisión humana (art. 22).
+- [x] **Acceso** (art. 15): `GET /v1/me/data-export` devuelve un JSON
+  con la copia de los datos personales del usuario (user record, roles,
+  hospitales, professional, freelancer_data con `bank_account`
+  descifrado, subespecialidades). El evento se registra como
+  `rgpd.data_export` en el hash-chained audit log.
+- [x] **Rectificación** (art. 16): `PUT /v1/personal-data` (existente).
+- [x] **Supresión** (art. 17): `DELETE /v1/me` aplica tombstone:
+  email anonimizado, password hash en blanco, MFA revocado, refresh
+  tokens invalidados y el profesional asociado con campos redactados.
+  Los informes firmados quedan auditables (art. 17.3.b).
+- [ ] **Limitación** (art. 18): flag `processing_restricted` por usuario
+  (Sprint 7).
+- [ ] **Portabilidad** (art. 20): añadir export DICOM zip al JSON
+  (Sprint 7).
+- [ ] **Oposición** (art. 21): banner + flag para marketing (Sprint 7).
+- [ ] **Decisiones automatizadas** (art. 22): cuando vuelva la IA,
+  banner explicativo y revisión humana (backlog).
 
 ## 4. Seguridad técnica (art. 32)
 
