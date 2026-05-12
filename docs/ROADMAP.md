@@ -160,10 +160,47 @@ cuando los criterios de aceptación están verdes, no por calendario.
 - [ ] Pen-test interno + plan de remediación.
 - [ ] DR plan documentado + drill trimestral.
 
+## Sprint 9 — Workflow interno (en curso)
+
+- [x] `telerady.assignment_rule` (hospital + modality + subspecialty)
+  + `WorkflowEngine.decide/applyToStudy` aplicado en
+  `PacsIngestService.sync` (sólo en primera ingesta).
+- [x] Segunda lectura: `report.requires_review` / `reviewer_*` y
+  `POST /v1/reports/:reportStudyId/review` (rechazo vuelve a draft +
+  versión++).
+- [x] CRUD de reglas (`GET/POST/DELETE /v1/admin/assignment-rules`).
+- [x] `POST /v1/admin/sla/escalate?minutes=` registra
+  `workflow.sla_breach_escalated` por cada estudio vencido.
+
+## Sprint 10 — Interop HL7v2 + DICOM MWL (en curso)
+
+- [x] Schema: `telerady.mwl_entry` (paciente cifrado) y
+  `telerady.hl7_message` (payload cifrado).
+- [x] Codec HL7 v2 propio (parser + escapes + ACK builder).
+- [x] Mapper ORM/OMI/OMG → MWL row y constructor ORU^R01 desde un
+  informe firmado.
+- [x] `Hl7MllpServer` (VT/FS framing) + `Hl7MllpClient` con timeout.
+  Disabled por defecto (`HL7_MLLP_ENABLED=false`); producción detrás
+  de Stunnel/nginx stream con mTLS.
+- [x] `/v1/mwl` CRUD para crear/cancelar entradas y listar las
+  visibles al actor.
+
+## Sprint 11 — FHIR R4 (en curso)
+
+- [x] `/fhir/metadata` CapabilityStatement.
+- [x] `/fhir/Patient/:id` (busca por `pat_id_hash`).
+- [x] `/fhir/ImagingStudy` (search por `patient` y `modality`).
+- [x] `/fhir/DiagnosticReport/:id` y `/fhir/DiagnosticReport` (search
+  por `patient` y `status`) con `presentedForm` apuntando a la URL
+  firmada del PDF (TTL 5 min).
+- [ ] Capacidad de **escritura** desde el HIS (POST DiagnosticReport)
+  — queda en backlog hasta que un hospital concreto lo pida.
+- [ ] SMART-on-FHIR Backend Services — backlog.
+
 ## Backlog y futuro
 
 - IA de borrador (radiogenia o equivalente) — reincorporable cuando el flujo
   base esté estable.
-- Workflows DICOM avanzados (Modality Performed Procedure Step, structured reports).
-- Integración HL7/FHIR para hospitales que lo soliciten.
+- Workflows DICOM avanzados (Modality Performed Procedure Step,
+  Structured Reports DICOM SR).
 - App móvil para alertas urgentes.
