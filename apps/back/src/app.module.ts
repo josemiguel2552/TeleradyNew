@@ -15,6 +15,7 @@ import { ParametersModule } from './parameters/parameters.module';
 import { PersonalDataModule } from './personal-data/personal-data.module';
 import { ProfessionalDocumentModule } from './professional-document/professional-document.module';
 import { ReportModule } from './reports/reports.module';
+import { ReportsV2Module } from './reports/v2/reports-v2.module';
 import { UserEventsModule } from './user-events/user-events.module';
 import { WorklistModule } from './worklist/worklist.module';
 import { validateEnv } from './config/env.schema';
@@ -92,6 +93,7 @@ const REDACT_PATHS = [
     PersonalDataModule,
     ProfessionalDocumentModule,
     ReportModule,
+    ReportsV2Module,
     ParametersModule,
     WorklistModule,
   ],

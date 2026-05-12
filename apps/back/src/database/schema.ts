@@ -705,3 +705,30 @@ export const refreshTokenInTelerady = telerady.table("refresh_token", {
 }, (table) => [
 	unique("refresh_token_hash_key").on(table.tokenHash),
 ]);
+
+export const reportStates = ['draft', 'finalized', 'signed', 'sent'] as const;
+export type ReportState = (typeof reportStates)[number];
+
+export const reportInTelerady = telerady.table("report", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	reportStudyId: uuid("report_study_id").notNull(),
+	hospitalId: uuid("hospital_id"),
+	professionalId: uuid("professional_id").notNull(),
+	version: integer().default(1).notNull(),
+	state: varchar({ length: 20 }).default('draft').notNull(),
+	// Structured report contents stored as a single AES-256-GCM ciphertext
+	// (envelope packed via ColumnEncryptionService).
+	contentsEnc: text("contents_enc"),
+	// Signature payload (jsonb) — shape depends on the hospital policy.
+	// name_collegiate -> { policy, displayedName, collegiate, signedAt }
+	// drawn_hash_tsa  -> { policy, drawingStorageKey, hash, ts, tsaProvider }
+	signatureData: jsonb("signature_data"),
+	pdfBucket: varchar("pdf_bucket", { length: 50 }),
+	pdfKey: varchar("pdf_key", { length: 250 }),
+	signedAt: timestamp("signed_at", { withTimezone: true, mode: 'string' }),
+	sentAt: timestamp("sent_at", { withTimezone: true, mode: 'string' }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	unique("report_study_unique").on(table.reportStudyId),
+]);

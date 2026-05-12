@@ -217,3 +217,26 @@ ALTER TABLE telerady.professional_document
     ADD COLUMN storage_key VARCHAR(250);
 CREATE INDEX professional_document_storage_key_idx
     ON telerady.professional_document (storage_key);
+
+-- =====================================================================
+-- Sprint 5 — Structured report (encrypted body, per-hospital signatures)
+-- =====================================================================
+CREATE TABLE telerady.report (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    report_study_id UUID NOT NULL UNIQUE REFERENCES telerady.report_study(id) ON DELETE CASCADE,
+    hospital_id UUID REFERENCES telerady.hospital(id) ON DELETE SET NULL,
+    professional_id UUID NOT NULL REFERENCES telerady.professional(id) ON DELETE RESTRICT,
+    version INTEGER NOT NULL DEFAULT 1,
+    state VARCHAR(20) NOT NULL DEFAULT 'draft'
+        CHECK (state IN ('draft', 'finalized', 'signed', 'sent')),
+    contents_enc TEXT,
+    signature_data JSONB,
+    pdf_bucket VARCHAR(50),
+    pdf_key VARCHAR(250),
+    signed_at TIMESTAMPTZ,
+    sent_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX report_hospital_idx ON telerady.report (hospital_id);
+CREATE INDEX report_state_idx ON telerady.report (state);
