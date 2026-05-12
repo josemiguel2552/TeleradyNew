@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { AuditLogModule } from './common/audit/audit-log.module';
 import { CryptoModule } from './common/crypto/crypto.module';
 import { I18nModule } from './i18n/i18n.module';
+import { OrthancModule } from './integrations/orthanc/orthanc.module';
 import { ParametersModule } from './parameters/parameters.module';
 import { PersonalDataModule } from './personal-data/personal-data.module';
 import { ProfessionalDocumentModule } from './professional-document/professional-document.module';
@@ -83,6 +84,7 @@ const REDACT_PATHS = [
     AuditLogModule,
     AuthModule,
     I18nModule,
+    OrthancModule,
     UserEventsModule,
     PersonalDataModule,
     ProfessionalDocumentModule,

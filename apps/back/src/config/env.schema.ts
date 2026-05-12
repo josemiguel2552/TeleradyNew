@@ -64,6 +64,10 @@ export const envSchema = z.object({
   ORTHANC_USER: z.string().optional(),
   ORTHANC_PASSWORD: z.string().optional(),
   ORTHANC_DICOMWEB_PATH: z.string().default('/dicom-web'),
+  ORTHANC_MAX_UPLOAD_MB: z.coerce.number().int().positive().default(512),
+
+  OHIF_URL: z.string().url().optional(),
+  OHIF_VIEWER_PATH: z.string().default('/viewer'),
 
   GOOGLE_CLIENT_EMAIL: z.string().email().optional(),
   GOOGLE_PRIVATE_KEY: z.string().optional(),
