@@ -6,14 +6,16 @@ const routes: Routes = [{
     path: '',
     component: BaseLayoutComponent,
     children: [
-        { path: '', redirectTo: '/home', pathMatch: 'full' },
+        // Default landing now points at the canonical login.
+        { path: '', redirectTo: '/login', pathMatch: 'full' },
+        // Legacy /user/** is stubbed to /login. The whole legacy tree
+        // is kept compiling so any cached deep link in someone's
+        // browser still resolves to a usable page; a later sprint
+        // deletes the files outright.
+        { path: 'user', redirectTo: '/login', pathMatch: 'prefix' },
         {
             path: 'home',
             loadChildren: () => import('./home-pages/home-pages.module').then(m => m.HomePagesModule)
-        },
-        {
-            path: 'user',
-            loadChildren: () => import('./user/user.module').then(m => m.UserModule)
         },
     ]
 }];
