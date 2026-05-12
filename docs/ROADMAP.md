@@ -89,14 +89,25 @@ cuando los criterios de aceptación están verdes, no por calendario.
 - [ ] Activación efectiva de RLS en staging + tests E2E de aislamiento
   (cierra al completar el flujo de informe en Sprint 5).
 
-## Sprint 5 — Editor de informe + firma
+## Sprint 5 — Editor de informe + firma (en curso)
 
-- Editor con plantillas por modalidad (TC, RX, RM, ECO).
-- Almacenamiento estructurado del informe (no sólo PDF).
-- Firma configurable por hospital:
-  - Modo simple: nombre + colegiado al pie.
-  - Modo avanzado: firma manuscrita en canvas + hash + TSA.
-- Generación de PDF/A archivable.
+- [x] Back: tabla `telerady.report` (1:1 con `report_study`), state machine
+  draft → finalized → signed → sent, contenido cifrado (AES-256-GCM) y
+  versión incremental.
+- [x] Endpoints `/v2/reports/:reportStudyId{GET,PUT,/sign,/send}` con
+  TenantScope y auditoría hash-chained en cada transición.
+- [x] `SignatureService` con dos políticas por hospital:
+  - `name_collegiate`: nombre + colegiado renderizado al pie.
+  - `drawn_hash_tsa`: firma manuscrita PNG + sha256 del bundle + sello
+    de tiempo TSA (mock interno, se sustituye por proveedor eIDAS
+    cualificado en Sprint 8).
+- [x] `PdfService` (pdfkit) renderiza el informe y lo sube a S3 con
+  SSE-S3; el front recibe URL firmada (5 min) en cada GET.
+- [x] Front: `ReportEditorComponent` standalone con autosave debounced
+  (800 ms), plantillas por modalidad, `SignReportDialog` y
+  `SignatureCanvas`. Estado bloqueado en signed/sent.
+- [ ] PDF/A formal + integración real con TSA cualificado eIDAS
+  (Sprint 8).
 
 ## Sprint 6 — Portal admin / coordinador
 

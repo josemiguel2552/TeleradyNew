@@ -16,6 +16,11 @@ export const RADIOLOGIST_ROUTES: Routes = [
         loadComponent: () =>
           import('./study-viewer/study-viewer.component').then((m) => m.StudyViewerComponent),
       },
+      {
+        path: 'study/:id/report',
+        loadComponent: () =>
+          import('./report-editor/report-editor.component').then((m) => m.ReportEditorComponent),
+      },
       { path: '', pathMatch: 'full', redirectTo: 'worklist' },
     ],
   },

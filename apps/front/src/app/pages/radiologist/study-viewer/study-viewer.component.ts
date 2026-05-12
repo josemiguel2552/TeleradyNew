@@ -27,6 +27,11 @@ import { WorklistEntry, WorklistService } from '../services/worklist.service';
           <span class="separator">/</span>
           <span>Study</span>
         </h1>
+        <a
+          *ngIf="entry()"
+          class="open-report"
+          [routerLink]="['/radiologist/study', entry()!.id, 'report']"
+        >Edit report</a>
       </header>
 
       <p-progressSpinner *ngIf="loading()"></p-progressSpinner>
@@ -61,9 +66,11 @@ import { WorklistEntry, WorklistService } from '../services/worklist.service';
   styles: [
     `
       :host { display: grid; grid-template-rows: auto auto 1fr; height: 100%; padding: 1rem; gap: 1rem; }
+      header { display: flex; align-items: center; justify-content: space-between; }
       header h1 { display: flex; align-items: center; gap: 0.5rem; }
       header a { color: inherit; text-decoration: none; }
       header .separator { color: #999; }
+      .open-report { font-size: 0.9rem; padding: 0.4rem 0.75rem; border-radius: 6px; background: #1e88e5; color: #fff; }
       dl { display: grid; grid-template-columns: 140px 1fr; gap: 0.25rem 1rem; margin: 0; }
       dt { color: #666; }
       .ohif { height: 70vh; min-height: 480px; border-radius: 8px; overflow: hidden; }
