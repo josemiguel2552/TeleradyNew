@@ -73,12 +73,21 @@ cuando los criterios de aceptación están verdes, no por calendario.
 - [ ] Agente: post-call automático a `/v1/pacs/studies/sync` tras cada
   upload exitoso (Sprint 5 cuando el flujo del radiólogo lo necesite).
 
-## Sprint 4 — Portal radiólogo (refactor)
+## Sprint 4 — Portal radiólogo (en curso)
 
-- Migración progresiva a standalone components + signals.
-- Lista de trabajo real, filtros, búsqueda.
-- Apertura del visor OHIF, comparación con previas.
-- Página de detalle del estudio con tags relevantes.
+- [x] Back: `GET /v1/worklist` y `/v1/worklist/:id` con `TenantScope`,
+  paginación y filtros (modality / stateId / studyDate / hospitalId).
+  Los campos PII se descifran en el repositorio antes de devolverlos.
+- [x] Front: nueva área `/radiologist/*` con componentes **standalone**
+  (signals + PrimeNG):
+  - `WorklistComponent`: tabla lazy con filtros (modalidad, estado).
+  - `StudyViewerComponent`: cabecera de paciente + visor OHIF en iframe.
+- [x] Guardia ligera `radiologistGuard` que valida el rol del JWT antes
+  de entrar; el back vuelve a validar en cada request.
+- [ ] Migración progresiva del resto del portal legacy a standalone +
+  signals (queda en backlog conforme cada página se rehaga).
+- [ ] Activación efectiva de RLS en staging + tests E2E de aislamiento
+  (cierra al completar el flujo de informe en Sprint 5).
 
 ## Sprint 5 — Editor de informe + firma
 
