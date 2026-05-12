@@ -16,6 +16,7 @@ import { PersonalDataModule } from './personal-data/personal-data.module';
 import { ProfessionalDocumentModule } from './professional-document/professional-document.module';
 import { ReportModule } from './reports/reports.module';
 import { UserEventsModule } from './user-events/user-events.module';
+import { WorklistModule } from './worklist/worklist.module';
 import { validateEnv } from './config/env.schema';
 
 const REDACT_PATHS = [
@@ -92,6 +93,7 @@ const REDACT_PATHS = [
     ProfessionalDocumentModule,
     ReportModule,
     ParametersModule,
+    WorklistModule,
   ],
   controllers: [AppController],
   providers: [
