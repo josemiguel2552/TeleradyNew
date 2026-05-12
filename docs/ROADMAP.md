@@ -49,21 +49,29 @@ cuando los criterios de aceptación están verdes, no por calendario.
   cuando el contexto de usuario fluya por los handlers).
 - [ ] Postgres RLS — sigue diferido (ver `docs/RLS-PLAN.md`).
 
-## Sprint 3 — Ingesta + tenant context + agente local
+## Sprint 3 — Ingesta + tenant context + agente local (en curso)
 
-- Pipeline STOW-RS → ingesta a `report_study` con `hospital_id` derivado
-  del usuario que sube y `pat_*` cifrados.
-- `RequestContext` con `AuthenticatedUser` propagado a los handlers vía
-  `@CurrentUser()`, abriendo paso al uso real de `TenantScope` en cada
-  repositorio clínico y al middleware que setea `app.current_*` para RLS.
-- Activación de las policies RLS sobre `report_study`, `audit_log` y
-  tablas con `hospital_id`. Split de roles BD: `telerady_app` (sin
-  BYPASSRLS) y `telerady_migrator` (con BYPASSRLS).
-- Tests E2E de aislamiento entre tenants.
-- App Node/Electron empaquetada (agente local):
-  - Watcher de carpeta DICOM con cifrado local antes de subir.
-  - Auth por mTLS contra el backend.
-  - Gestión de reintentos y modo offline.
+- [x] `AuthenticatedUser` propagado por commands/queries vía
+  `@CurrentUser()`. `SaveReportDto` y `RegisterEventDto` ya no aceptan
+  `idProfessional`; el handler lo deriva del JWT y exige hospital scope
+  explícito para usuarios multi-tenant.
+- [x] `TenantScope` aplicado en `ReportRepository` (find/insert/update);
+  el resto de repos clínicos quedará cubierto cuando reescribamos sus
+  handlers en el Sprint 5.
+- [x] `POST /v1/pacs/studies/sync` consulta Orthanc por
+  `StudyInstanceUID`, encripta los tags PII y persiste `report_study`
+  con `hospital_id`. Cada ingestión emite un evento en `audit_log` con
+  el `pat_id` pseudonimizado, nunca en claro.
+- [x] Migración SQL de RLS en `infra/migrations/001-enable-rls.sql`
+  (roles `telerady_app`/`telerady_migrator` + policies por tabla) y
+  `RlsContextInterceptor` listo para activar con `RLS_ENABLED=true`.
+- [x] Agente local (`apps/agent`): watcher chokidar + cliente
+  STOW-RS con bearer JWT y/o mTLS, archive/quarantine folders y
+  reintentos. CI cubre build del agente.
+- [ ] Activación efectiva de RLS en staging + tests E2E de aislamiento
+  (Sprint 4 al refactorizar repos restantes).
+- [ ] Agente: post-call automático a `/v1/pacs/studies/sync` tras cada
+  upload exitoso (Sprint 5 cuando el flujo del radiólogo lo necesite).
 
 ## Sprint 4 — Portal radiólogo (refactor)
 
