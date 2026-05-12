@@ -1,0 +1,59 @@
+{
+  "title": "Telerady — API overview",
+  "uid": "telerady-api",
+  "tags": ["telerady"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "logs",
+      "title": "API logs (Loki)",
+      "datasource": "Loki",
+      "targets": [
+        {
+          "expr": "{container=\"/telerady-api\"} | json",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "type": "logs",
+      "title": "Postgres logs",
+      "datasource": "Loki",
+      "targets": [
+        {
+          "expr": "{container=\"/telerady-postgres\"}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 }
+    },
+    {
+      "type": "logs",
+      "title": "Orthanc logs",
+      "datasource": "Loki",
+      "targets": [
+        {
+          "expr": "{container=\"/telerady-orthanc\"}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 }
+    },
+    {
+      "type": "stat",
+      "title": "Prometheus targets",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "up",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 20 }
+    }
+  ]
+}
