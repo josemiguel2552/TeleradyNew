@@ -9,12 +9,14 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
+import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
+import { firstValueFrom } from 'rxjs';
 import { WorklistEntry, WorklistService } from '../../radiologist/services/worklist.service';
-import { AdminService } from '../services/admin.service';
+import { AdminService, ProfessionalSummary } from '../services/admin.service';
 
 @Component({
   selector: 'app-admin-assignments',
@@ -27,6 +29,7 @@ import { AdminService } from '../services/admin.service';
     TagModule,
     ButtonModule,
     DialogModule,
+    DropdownModule,
     InputTextModule,
   ],
   template: `
@@ -82,24 +85,34 @@ import { AdminService } from '../services/admin.service';
         </p>
         <div class="form">
           <label>
-            Primary radiologist (UUID)
-            <input
-              type="text"
-              pInputText
+            Primary radiologist
+            <p-dropdown
+              [options]="professionalOptions()"
+              optionLabel="label"
+              optionValue="value"
+              [filter]="true"
+              filterBy="label"
+              placeholder="Select a professional"
               [ngModel]="professionalId()"
               (ngModelChange)="professionalId.set($event)"
-              placeholder="b1c…"
-            />
+              (onFilter)="searchProfessionals($event)"
+              appendTo="body"
+            ></p-dropdown>
           </label>
           <label>
             Reviewer (optional)
-            <input
-              type="text"
-              pInputText
+            <p-dropdown
+              [options]="professionalOptions()"
+              optionLabel="label"
+              optionValue="value"
+              [filter]="true"
+              [showClear]="true"
+              filterBy="label"
+              placeholder="Skip second read"
               [ngModel]="reviewerId()"
               (ngModelChange)="reviewerId.set($event)"
-              placeholder="Leave empty to skip second read"
-            />
+              appendTo="body"
+            ></p-dropdown>
           </label>
         </div>
         <ng-template pTemplate="footer">
@@ -132,9 +145,27 @@ export class AdminAssignmentsComponent implements OnInit {
   readonly selected = signal<WorklistEntry | null>(null);
   readonly professionalId = signal<string>('');
   readonly reviewerId = signal<string>('');
+  readonly professionals = signal<ProfessionalSummary[]>([]);
+  readonly professionalOptions = signal<{ label: string; value: string }[]>([]);
 
   ngOnInit(): void {
     this.refresh();
+    void this.loadProfessionals();
+  }
+
+  async loadProfessionals(q?: string): Promise<void> {
+    const list = await firstValueFrom(this.admin.listProfessionals(q));
+    this.professionals.set(list.entries);
+    this.professionalOptions.set(
+      list.entries.map((p) => ({
+        label: `${p.lastName}, ${p.name} — ${p.email}${p.professionalLicense ? ` · ${p.professionalLicense}` : ''}`,
+        value: p.id,
+      })),
+    );
+  }
+
+  searchProfessionals(event: { filter?: string }): void {
+    void this.loadProfessionals(event.filter || undefined);
   }
 
   refresh(): void {

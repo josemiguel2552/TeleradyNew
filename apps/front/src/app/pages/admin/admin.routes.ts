@@ -16,6 +16,10 @@ export const ADMIN_ROUTES: Routes = [
           import('./assignments/assignments.component').then((m) => m.AdminAssignmentsComponent),
       },
       {
+        path: 'audit',
+        loadComponent: () => import('./audit/audit.component').then((m) => m.AdminAuditComponent),
+      },
+      {
         path: 'me',
         loadComponent: () => import('./me/admin-me.component').then((m) => m.AdminMeComponent),
       },

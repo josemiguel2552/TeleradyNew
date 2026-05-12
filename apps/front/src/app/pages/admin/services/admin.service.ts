@@ -24,6 +24,48 @@ export interface AssignStudyResponse {
   reviewerProfessionalId: string | null;
 }
 
+export interface AuditEntry {
+  id: string;
+  ts: string;
+  actorId: string | null;
+  actorRole: string | null;
+  hospitalId: string | null;
+  action: string;
+  targetKind: string;
+  targetId: string | null;
+  payload: unknown;
+  prevHash: string | null;
+  hash: string;
+}
+
+export interface AuditList {
+  entries: AuditEntry[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AuditVerifyResult {
+  ok: boolean;
+  firstInvalidId: string | null;
+  checkedRows: number;
+}
+
+export interface ProfessionalSummary {
+  id: string;
+  name: string;
+  lastName: string;
+  email: string;
+  professionalLicense: string | null;
+}
+
+export interface ProfessionalList {
+  entries: ProfessionalSummary[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private readonly http = inject(HttpClient);
@@ -46,5 +88,23 @@ export class AdminService {
         { professionalId, reviewerProfessionalId },
       ),
     );
+  }
+
+  listAudit(params: { offset?: number; limit?: number; action?: string }): Observable<AuditList> {
+    const query = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) {
+      if (v !== undefined && v !== null && v !== '') query.set(k, String(v));
+    }
+    const qs = query.toString();
+    return this.http.get<AuditList>(`${this.base}/audit${qs ? `?${qs}` : ''}`);
+  }
+
+  verifyAudit(): Promise<AuditVerifyResult> {
+    return firstValueFrom(this.http.post<AuditVerifyResult>(`${this.base}/audit/verify`, {}));
+  }
+
+  listProfessionals(q?: string): Observable<ProfessionalList> {
+    const url = q ? `${this.base}/professionals?q=${encodeURIComponent(q)}` : `${this.base}/professionals`;
+    return this.http.get<ProfessionalList>(url);
   }
 }
