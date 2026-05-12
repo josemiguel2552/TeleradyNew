@@ -74,6 +74,10 @@ export const envSchema = z.object({
 
   DEFAULT_RETENTION_DAYS: z.coerce.number().int().positive().default(3650),
 
+  RLS_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false'),
+
   SWAGGER_USER: z.string().optional(),
   SWAGGER_PASSWORD: z.string().optional(),
 });
