@@ -1,84 +1,60 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsArray, IsDateString, IsIn, IsNumber, IsString, IsUUID } from "class-validator";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsArray, IsDateString, IsIn, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class SaveReportDto {
-  @ApiProperty({
-    description: 'ID del profesional que crea o edita el informe',
-    example: '1b2e4567-e89b-12d3-a456-426614174000',
-  })
-  @IsUUID()
-  idProfessional: string;
-
-  @ApiProperty({
-    description: 'ID del estudio',
-    example: 'study-abc-123',
-  })
+  @ApiProperty({ description: 'DICOM StudyInstanceUID', example: '1.2.3.4.5' })
   @IsString()
-  studyId: string;
+  @MaxLength(150)
+  studyId!: string;
 
-  @ApiProperty({
-    description: 'Descripción del estudio',
-    example: 'TC de tórax sin contraste',
-  })
+  @ApiProperty({ example: 'TC de tórax sin contraste' })
   @IsString()
-  studyDesc: string;
+  @MaxLength(150)
+  studyDesc!: string;
 
-  @ApiProperty({
-    description: 'ID del paciente',
-    example: 'pat-123456',
-  })
+  @ApiProperty({ example: 'pat-123456' })
   @IsString()
-  patId: string;
+  @MaxLength(150)
+  patId!: string;
 
-  @ApiProperty({
-    description: 'Nombre del paciente',
-    example: 'Juan Pérez',
-  })
+  @ApiProperty({ example: 'Juan Pérez' })
   @IsString()
-  patName: string;
+  @MaxLength(150)
+  patName!: string;
 
-  @ApiProperty({
-    description: 'Sexo del paciente (M = Masculino, F = Femenino, O = Otro)',
-    example: 'M',
-  })
+  @ApiProperty({ enum: ['M', 'F', 'O'] })
   @IsString()
   @IsIn(['M', 'F', 'O'])
-  sex: string;
+  sex!: string;
 
-  @ApiProperty({
-    description: 'Fecha de nacimiento del paciente (formato ISO 8601)',
-    example: '1985-04-23',
-  })
+  @ApiProperty({ example: '1985-04-23', description: 'ISO 8601 date' })
   @IsDateString()
-  patBirthdate: string;
+  patBirthdate!: string;
 
-  @ApiProperty({
-    description: 'Modalidades del estudio (ej. ["CT", "MR"])',
-    example: ['CT', 'MR'],
-    type: [String],
-  })
+  @ApiProperty({ type: [String], example: ['CT'] })
   @IsArray()
   @IsString({ each: true })
-  modalities: string[];
+  modalities!: string[];
 
-  @ApiProperty({
-    description: 'Nombre de la institución donde se realizó el estudio',
-    example: 'Hospital Universitario de Madrid',
-  })
+  @ApiProperty({ example: 'Hospital Universitario de Madrid' })
   @IsString()
-  institution: string;
+  @MaxLength(150)
+  institution!: string;
 
-  @ApiProperty({
-    description: 'Fuente del estudio (ej. PACS, RIS)',
-    example: 'PACS',
-  })
+  @ApiProperty({ example: 'agent' })
   @IsString()
-  src: string;
+  @MaxLength(150)
+  src!: string;
 
-  @ApiProperty({
-    description: 'ID numérico del estado del informe',
-    example: 1,
-  })
+  @ApiProperty({ example: 1 })
   @IsNumber()
-  idReportState: number;
+  idReportState!: number;
+
+  @ApiProperty({
+    required: false,
+    description: 'Optional explicit hospital scope. Required for users that belong to several hospitals.',
+  })
+  @IsOptional()
+  @IsUUID()
+  hospitalId?: string;
 }

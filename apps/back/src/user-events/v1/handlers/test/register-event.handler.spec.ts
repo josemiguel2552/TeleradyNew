@@ -1,90 +1,91 @@
-
 import { Test, TestingModule } from '@nestjs/testing';
+import { ForbiddenException, InternalServerErrorException } from '@nestjs/common';
 import { RegisterEventHandler } from '../register-event.handler';
 import { RegisterEventCommand } from '../../commands/register-event.command';
 import { EventLogRepository } from '../../../../common/events/event-log.repository';
 import { I18nService } from '../../../../i18n/i18n.service';
 import { db } from '../../../../database/drizzle';
-import { InternalServerErrorException } from '@nestjs/common';
+import { Role } from '../../../../auth/roles';
+import type { AuthenticatedUser } from '../../../../auth/jwt.strategy';
 
 jest.mock('../../../../database/drizzle', () => ({
-    db: {
-        transaction: jest.fn(),
-    },
+  db: { transaction: jest.fn() },
 }));
+
+const radiologist: AuthenticatedUser = {
+  id: 'u-1',
+  email: 'r@x.es',
+  roles: [Role.Radiologist],
+  hospitalIds: ['h-1'],
+  hospitalId: 'h-1',
+  professionalId: 'prof-1',
+};
+
+const dto = {
+  eventType: 'report_finalize',
+  eventPayload: { studyId: 'STUDY-001', durationMs: 1284 },
+};
+
 describe('RegisterEventHandler', () => {
-    let handler: RegisterEventHandler;
-    let eventLogRepositoryMock: Partial<EventLogRepository>;
-    let i18nServiceMock: Partial<I18nService>;
+  let handler: RegisterEventHandler;
+  let eventLogRepositoryMock: Partial<EventLogRepository>;
+  let i18nMock: Partial<I18nService>;
 
-    beforeEach(async () => {
-        eventLogRepositoryMock = {
-            saveEvent: jest.fn(),
-        };
+  beforeEach(async () => {
+    eventLogRepositoryMock = { saveEvent: jest.fn() };
+    i18nMock = { translate: jest.fn().mockImplementation((key: string) => key) };
 
-        i18nServiceMock = {
-            translate: jest.fn().mockImplementation((key: string) => key),
-        };
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        RegisterEventHandler,
+        { provide: EventLogRepository, useValue: eventLogRepositoryMock },
+        { provide: I18nService, useValue: i18nMock },
+      ],
+    }).compile();
 
-        const module: TestingModule = await Test.createTestingModule({
-            providers: [RegisterEventHandler,
-                { provide: EventLogRepository, useValue: eventLogRepositoryMock },
-                { provide: I18nService, useValue: i18nServiceMock },
-            ],
-        }).compile();
+    handler = module.get<RegisterEventHandler>(RegisterEventHandler);
+  });
 
-        handler = module.get<RegisterEventHandler>(RegisterEventHandler);
-    });
+  afterEach(() => jest.clearAllMocks());
 
-    afterEach(() => {
-        jest.clearAllMocks();
-        jest.restoreAllMocks();
-    });
+  it('is defined', () => {
+    expect(handler).toBeDefined();
+  });
 
-    it('should be defined', () => {
-        expect(handler).toBeDefined();
-    });
+  it('persists the event with the actor professionalId', async () => {
+    (db.transaction as jest.Mock).mockImplementation(async (cb: any) => cb({}));
 
-    it('should save an event and return a success response', async () => {
-        const command = new RegisterEventCommand({
-            idProfessional: "1b2e4567-e89b-12d3-a456-426614174000",
-            eventType: "report_finalize",
-            eventPayload: {
-                studyId: "STUDY-001",
-                timestamp: "2024-05-09T12:00:00Z",
-                durationMs: 1284
-            }
-        });
+    const result = await handler.execute(new RegisterEventCommand(dto, radiologist));
 
-        (db.transaction as jest.Mock).mockImplementation(async (callback: any) => {
-            return await callback({});
-        });
+    expect(eventLogRepositoryMock.saveEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        idProfessional: 'prof-1',
+        eventType: 'report_finalize',
+        eventPayload: dto.eventPayload,
+      }),
+    );
+    expect(result.ok).toBe(true);
+  });
 
-        const result = await handler.execute(command);
+  it('refuses to save when the actor has no professionalId', async () => {
+    await expect(
+      handler.execute(
+        new RegisterEventCommand(dto, {
+          id: 'u-2',
+          email: 'a@x.es',
+          roles: [Role.Admin],
+          hospitalIds: [],
+        }),
+      ),
+    ).rejects.toThrow(ForbiddenException);
+  });
 
-        expect(db.transaction).toHaveBeenCalled();
-        expect(eventLogRepositoryMock.saveEvent).toHaveBeenCalledWith(expect.anything(), command.data);
-        expect(i18nServiceMock.translate).toHaveBeenCalledWith('userEvent.registerEvent.save');
-        expect(result).toEqual({ ok: true, message: 'userEvent.registerEvent.save' });
-    });
-
-    it('should throw an InternalServerErrorException if an error occurs', async () => {
-        const command = new RegisterEventCommand({
-            idProfessional: "1b2e4567-e89b-12d3-a456-426614174000",
-            eventType: "report_finalize",
-            eventPayload: {
-                studyId: "STUDY-001",
-                timestamp: "2024-05-09T12:00:00Z",
-                durationMs: 1284
-            }
-        });
-
-        const mockError = new Error('Database error');
-        (db.transaction as jest.Mock).mockRejectedValue(mockError);
-
-        await expect(handler.execute(command)).rejects.toThrow(InternalServerErrorException);
-
-        expect(db.transaction).toHaveBeenCalled();
-        expect(i18nServiceMock.translate).toHaveBeenCalledWith('userEvent.registerEvent.errorMessage');
-    });
+  it('rethrows as InternalServerErrorException on unexpected errors', async () => {
+    (db.transaction as jest.Mock).mockRejectedValue(new Error('boom'));
+    await expect(
+      handler.execute(new RegisterEventCommand(dto, radiologist)),
+    ).rejects.toThrow(InternalServerErrorException);
+    expect(i18nMock.translate).toHaveBeenCalledWith('userEvent.registerEvent.errorMessage');
+  });
 });

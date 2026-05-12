@@ -7,6 +7,9 @@ import { db, DBOrTx } from '../../../database/drizzle';
 import { AesGcmService } from '../../../common/crypto/aes-gcm.service';
 import { ColumnEncryptionService } from '../../../common/crypto/column-encryption.service';
 import { PseudonymService } from '../../../common/crypto/pseudonym.service';
+import { TenantScope } from '../../../common/tenant/tenant-scope';
+import { Role } from '../../../auth/roles';
+import type { AuthenticatedUser } from '../../../auth/jwt.strategy';
 
 jest.mock('../../../database/drizzle', () => ({
   db: {
@@ -27,15 +30,40 @@ const aes = new AesGcmService({ getOrThrow: () => masterKey } as unknown as Conf
 const pseudonym = new PseudonymService({ getOrThrow: () => pepper } as unknown as ConfigService);
 const enc = new ColumnEncryptionService(aes, pseudonym);
 
+const radiologist: AuthenticatedUser = {
+  id: 'u-1',
+  email: 'r@x.es',
+  roles: [Role.Radiologist],
+  hospitalIds: ['h-1'],
+  hospitalId: 'h-1',
+  professionalId: 'prof-1',
+};
+const admin: AuthenticatedUser = {
+  id: 'u-admin',
+  email: 'admin@x.es',
+  roles: [Role.Admin],
+  hospitalIds: [],
+};
+
+const dto: SaveReportDto = {
+  studyId: 's-1',
+  studyDesc: 'CT Brain',
+  patId: 'PAT-001',
+  patName: 'María García',
+  sex: 'F',
+  patBirthdate: '1985-04-23',
+  modalities: ['CT'],
+  institution: 'Hospital X',
+  src: 'agent',
+  idReportState: 1,
+};
+
 describe('ReportRepository', () => {
   let repository: ReportRepository;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ReportRepository,
-        { provide: ColumnEncryptionService, useValue: enc },
-      ],
+      providers: [ReportRepository, { provide: ColumnEncryptionService, useValue: enc }],
     }).compile();
     repository = module.get<ReportRepository>(ReportRepository);
   });
@@ -46,85 +74,88 @@ describe('ReportRepository', () => {
     expect(repository).toBeDefined();
   });
 
-  describe('getReport', () => {
+  describe('findForProfessionalAndStudy', () => {
     it('returns the report with decrypted patient fields', async () => {
-      const patId = 'PAT-001';
       const aad = 'report_study:prof-1';
-      const row = {
-        id: 'r-1',
-        professionalId: 'prof-1',
-        patId: null,
-        patName: null,
-        patBirthdate: null,
-        patIdEnc: enc.encrypt(patId, aad),
-        patIdHash: enc.lookupHash(patId),
-        patNameEnc: enc.encrypt('María García', aad),
-        patBirthdateEnc: enc.encrypt('1985-04-23', aad),
-      };
-      (db.execute as jest.Mock).mockResolvedValue([row]);
+      (db.execute as jest.Mock).mockResolvedValue([
+        {
+          id: 'r-1',
+          professionalId: 'prof-1',
+          patId: null,
+          patName: null,
+          patBirthdate: null,
+          patIdEnc: enc.encrypt('PAT-001', aad),
+          patNameEnc: enc.encrypt('María García', aad),
+          patBirthdateEnc: enc.encrypt('1985-04-23', aad),
+          hospitalId: 'h-1',
+        },
+      ]);
 
-      const result = await repository.getReport(db as DBOrTx, 'prof-1', 's-1');
+      const result = await repository.findForProfessionalAndStudy(
+        db as DBOrTx,
+        TenantScope.for(radiologist),
+        'prof-1',
+        's-1',
+      );
 
-      expect(result?.patId).toBe(patId);
+      expect(result?.patId).toBe('PAT-001');
       expect(result?.patName).toBe('María García');
       expect(result?.patBirthdate).toBe('1985-04-23');
     });
 
-    it('returns null if no report exists', async () => {
+    it('returns null when there is no match', async () => {
       (db.execute as jest.Mock).mockResolvedValue([]);
-      const result = await repository.getReport(db as DBOrTx, '123', 's-1');
+      const result = await repository.findForProfessionalAndStudy(
+        db as DBOrTx,
+        TenantScope.for(radiologist),
+        'prof-1',
+        's-1',
+      );
       expect(result).toBeNull();
     });
   });
 
   describe('insertReport', () => {
-    it('persists encrypted fields and a lookup hash, never the plaintext columns', async () => {
-      const data: SaveReportDto = {
-        idProfessional: 'prof-1',
-        studyId: 's-1',
-        studyDesc: 'CT Brain',
-        patId: 'PAT-001',
-        patName: 'María García',
-        sex: 'F',
-        patBirthdate: '1985-04-23',
-        modalities: ['CT'],
-        institution: 'Hospital X',
-        src: 'agent',
-        idReportState: 1,
-      };
+    it('persists encrypted fields, lookup hash and tenant id', async () => {
       (db.execute as jest.Mock).mockResolvedValue(undefined);
 
-      await repository.insertReport(db as DBOrTx, data);
+      await repository.insertReport(db as DBOrTx, dto, {
+        professionalId: 'prof-1',
+        hospitalId: 'h-1',
+      });
 
       expect(db.insert).toHaveBeenCalledWith(reportStudyInTelerady);
       const values = (db.values as jest.Mock).mock.calls[0][0];
       expect(values.patId).toBeNull();
       expect(values.patName).toBeNull();
       expect(values.patBirthdate).toBeNull();
-      expect(typeof values.patIdEnc).toBe('string');
       expect(values.patIdEnc.startsWith('gcm:v1:')).toBe(true);
       expect(values.patIdHash).toBe(enc.lookupHash('PAT-001'));
+      expect(values.hospitalId).toBe('h-1');
+      expect(values.professionalId).toBe('prof-1');
+    });
+
+    it('accepts a null hospitalId for privileged actors', async () => {
+      (db.execute as jest.Mock).mockResolvedValue(undefined);
+
+      await repository.insertReport(db as DBOrTx, dto, {
+        professionalId: 'prof-1',
+        hospitalId: null,
+      });
+
+      const values = (db.values as jest.Mock).mock.calls[0][0];
+      expect(values.hospitalId).toBeNull();
     });
   });
 
   describe('updateReport', () => {
-    it('encrypts the fields on update too', async () => {
-      const data: SaveReportDto = {
-        idProfessional: 'prof-1',
-        studyId: 's-1',
-        studyDesc: 'CT Brain',
-        patId: 'PAT-001',
-        patName: 'María García',
-        sex: 'F',
-        patBirthdate: '1985-04-23',
-        modalities: ['CT'],
-        institution: 'Hospital X',
-        src: 'agent',
-        idReportState: 2,
-      };
+    it('writes encrypted fields on update too', async () => {
       (db.execute as jest.Mock).mockResolvedValue(undefined);
 
-      await repository.updateReport(db as DBOrTx, data, 'r-1');
+      await repository.updateReport(db as DBOrTx, dto, 'r-1', {
+        professionalId: 'prof-1',
+        hospitalId: 'h-1',
+      });
 
       expect(db.update).toHaveBeenCalledWith(reportStudyInTelerady);
       const set = (db.set as jest.Mock).mock.calls[0][0];

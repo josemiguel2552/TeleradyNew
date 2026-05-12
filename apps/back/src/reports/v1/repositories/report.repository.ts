@@ -3,46 +3,62 @@ import { and, eq } from 'drizzle-orm';
 import { DBOrTx } from '../../../database/drizzle';
 import { reportStudyInTelerady } from '../../../database/schema';
 import { ColumnEncryptionService } from '../../../common/crypto/column-encryption.service';
+import { TenantScope } from '../../../common/tenant/tenant-scope';
 import { SaveReportDto } from '../models/save-report.dto';
+
+export interface ReportPersistenceContext {
+  professionalId: string;
+  hospitalId: string | null;
+}
 
 @Injectable()
 export class ReportRepository {
   constructor(private readonly enc: ColumnEncryptionService) {}
 
-  async getReport(db: DBOrTx, idProfessional: string, studyId: string) {
+  async findForProfessionalAndStudy(
+    db: DBOrTx,
+    scope: TenantScope,
+    professionalId: string,
+    studyId: string,
+  ) {
+    const tenant = scope.whereHospital(reportStudyInTelerady.hospitalId);
+    const conditions = [
+      eq(reportStudyInTelerady.professionalId, professionalId),
+      eq(reportStudyInTelerady.studyIuid, studyId),
+    ];
+    if (tenant) conditions.push(tenant);
+
     const rows = await db
       .select()
       .from(reportStudyInTelerady)
-      .where(
-        and(
-          eq(reportStudyInTelerady.professionalId, idProfessional),
-          eq(reportStudyInTelerady.studyIuid, studyId),
-        ),
-      )
+      .where(and(...conditions))
       .execute();
     return rows.length > 0 ? this.decryptRow(rows[0]) : null;
   }
 
-  async insertReport(db: DBOrTx, data: SaveReportDto) {
-    await db
-      .insert(reportStudyInTelerady)
-      .values(this.toEncryptedValues(data))
-      .execute();
+  async insertReport(db: DBOrTx, data: SaveReportDto, ctx: ReportPersistenceContext) {
+    await db.insert(reportStudyInTelerady).values(this.toEncryptedValues(data, ctx)).execute();
   }
 
-  async updateReport(db: DBOrTx, data: SaveReportDto, id: string) {
+  async updateReport(
+    db: DBOrTx,
+    data: SaveReportDto,
+    id: string,
+    ctx: ReportPersistenceContext,
+  ) {
     await db
       .update(reportStudyInTelerady)
-      .set(this.toEncryptedValues(data))
+      .set(this.toEncryptedValues(data, ctx))
       .where(eq(reportStudyInTelerady.id, id))
       .execute();
   }
 
-  private toEncryptedValues(data: SaveReportDto) {
-    const aad = `report_study:${data.idProfessional}`;
+  private toEncryptedValues(data: SaveReportDto, ctx: ReportPersistenceContext) {
+    const aad = `report_study:${ctx.professionalId}`;
     return {
       institution: data.institution,
-      // Plaintext columns intentionally left null. Drop in Sprint 2.
+      hospitalId: ctx.hospitalId,
+      // Legacy plaintext columns intentionally left null.
       patBirthdate: null,
       patId: null,
       patName: null,
@@ -50,7 +66,7 @@ export class ReportRepository {
       patIdHash: data.patId ? this.enc.lookupHash(data.patId) : null,
       patNameEnc: this.enc.encryptIfPresent(data.patName, aad),
       patBirthdateEnc: this.enc.encryptIfPresent(data.patBirthdate, aad),
-      professionalId: data.idProfessional,
+      professionalId: ctx.professionalId,
       reportStateId: data.idReportState,
       sex: data.sex,
       src: data.src,
