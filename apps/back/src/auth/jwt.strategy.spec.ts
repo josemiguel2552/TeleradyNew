@@ -2,7 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { AuthRepository } from './auth.repository';
+import { AuthRepository } from './v1/auth.repository';
 import { JwtStrategy } from './jwt.strategy';
 import { db } from '../database/drizzle';
 
@@ -13,7 +13,7 @@ describe('JwtStrategy', () => {
   let authRepositoryMock: Partial<AuthRepository>;
 
   beforeEach(async () => {
-    authRepositoryMock = { getUserByIdEmail: jest.fn() };
+    authRepositoryMock = { findUserById: jest.fn() };
 
     const config = {
       getOrThrow: (key: string) => {
@@ -39,9 +39,7 @@ describe('JwtStrategy', () => {
     strategy = module.get<JwtStrategy>(JwtStrategy);
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  afterEach(() => jest.clearAllMocks());
 
   it('is defined', () => {
     expect(strategy).toBeDefined();
@@ -52,25 +50,22 @@ describe('JwtStrategy', () => {
       sub: 'user-id',
       email: 'test@example.com',
       roles: ['radiologist'],
-      hospitalId: 'h-1',
+      hospitalIds: ['h-1', 'h-2'],
       professionalId: 'p-1',
     };
-    (authRepositoryMock.getUserByIdEmail as jest.Mock).mockResolvedValueOnce({
+    (authRepositoryMock.findUserById as jest.Mock).mockResolvedValueOnce({
       id: 'user-id',
       email: 'test@example.com',
     });
 
     const result = await strategy.validate(payload);
 
-    expect(authRepositoryMock.getUserByIdEmail).toHaveBeenCalledWith(
-      db,
-      'user-id',
-      'test@example.com',
-    );
+    expect(authRepositoryMock.findUserById).toHaveBeenCalledWith(db, 'user-id');
     expect(result).toEqual({
       id: 'user-id',
       email: 'test@example.com',
       roles: ['radiologist'],
+      hospitalIds: ['h-1', 'h-2'],
       hospitalId: 'h-1',
       professionalId: 'p-1',
     });
@@ -83,7 +78,21 @@ describe('JwtStrategy', () => {
   });
 
   it('throws when the user no longer exists', async () => {
-    (authRepositoryMock.getUserByIdEmail as jest.Mock).mockResolvedValueOnce(null);
+    (authRepositoryMock.findUserById as jest.Mock).mockResolvedValueOnce(null);
+    await expect(
+      strategy.validate({
+        sub: 'user-id',
+        email: 'test@example.com',
+        roles: [],
+      }),
+    ).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('throws when the email in the token no longer matches the user record', async () => {
+    (authRepositoryMock.findUserById as jest.Mock).mockResolvedValueOnce({
+      id: 'user-id',
+      email: 'someone-else@example.com',
+    });
     await expect(
       strategy.validate({
         sub: 'user-id',
