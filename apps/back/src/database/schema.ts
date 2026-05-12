@@ -510,7 +510,12 @@ export const professionalDocumentInTelerady = telerady.table("professional_docum
 	professionalId: uuid("professional_id"),
 	documentId: integer("document_id").notNull(),
 	nameDocument: varchar("name_document", { length: 150 }).default(sql`NULL`),
+	// Legacy Drive identifier, deprecated. New uploads write storage_key /
+	// storage_bucket and the reader falls back to drive_id only for rows
+	// that pre-date the S3 migration.
 	driveId: varchar("drive_id", { length: 50 }).default(sql`NULL`),
+	storageBucket: varchar("storage_bucket", { length: 50 }),
+	storageKey: varchar("storage_key", { length: 250 }),
 });
 
 export const freelancerDataInTelerady = telerady.table("freelancer_data", {

@@ -81,20 +81,6 @@ export class PersonalDataRepository {
         }
     }
 
-    async saveOrUpdateProfessionalDocument(db: DBOrTx, professionalId: string, documentId: number, nameDocument: string, driveId: string,) {
-        const whereClause = and(
-            eq(professionalDocumentInTelerady.professionalId, professionalId),
-            eq(professionalDocumentInTelerady.documentId, documentId)
-        )
-        const existing = await db.select().from(professionalDocumentInTelerady).where(whereClause).execute();
-        if (existing.length > 0) {
-            await db.update(professionalDocumentInTelerady)
-                .set({ nameDocument, driveId, }).where(whereClause).execute();
-        } else {
-            await db.insert(professionalDocumentInTelerady).values({ professionalId, documentId, nameDocument, driveId, }).execute();
-        }
-    }
-
     async getUploadedDocument(db: DBOrTx, professionalId: string, documentId: number) {
         const documents = await db
             .select()
@@ -102,31 +88,59 @@ export class PersonalDataRepository {
             .where(
                 and(
                     eq(professionalDocumentInTelerady.professionalId, professionalId),
-                    eq(professionalDocumentInTelerady.documentId, documentId)
-                )
-            ).execute();
+                    eq(professionalDocumentInTelerady.documentId, documentId),
+                ),
+            )
+            .execute();
         return documents.length > 0 ? documents[0] : null;
     }
 
-    async uploadDocument(db: DBOrTx, data: { professionalId: string, documentId: number, nameDocument: string, driveId: string }) {
+    async uploadDocument(
+        db: DBOrTx,
+        data: {
+            professionalId: string;
+            documentId: number;
+            nameDocument: string;
+            storageBucket: string;
+            storageKey: string;
+        },
+    ) {
         await db
             .update(professionalDocumentInTelerady)
-            .set({ nameDocument: data.nameDocument, driveId: data.driveId })
+            .set({
+                nameDocument: data.nameDocument,
+                storageBucket: data.storageBucket,
+                storageKey: data.storageKey,
+                driveId: null,
+            })
             .where(
                 and(
                     eq(professionalDocumentInTelerady.professionalId, data.professionalId),
-                    eq(professionalDocumentInTelerady.documentId, data.documentId)
-                )
+                    eq(professionalDocumentInTelerady.documentId, data.documentId),
+                ),
             )
             .execute();
     }
 
-    async insertDocument(db: DBOrTx, data: { professionalId: string, documentId: number, nameDocument: string, driveId: string }) {
-        await db.insert(professionalDocumentInTelerady).values({
-            professionalId: data.professionalId,
-            documentId: data.documentId,
-            nameDocument: data.nameDocument,
-            driveId: data.driveId,
-        }).execute();
+    async insertDocument(
+        db: DBOrTx,
+        data: {
+            professionalId: string;
+            documentId: number;
+            nameDocument: string;
+            storageBucket: string;
+            storageKey: string;
+        },
+    ) {
+        await db
+            .insert(professionalDocumentInTelerady)
+            .values({
+                professionalId: data.professionalId,
+                documentId: data.documentId,
+                nameDocument: data.nameDocument,
+                storageBucket: data.storageBucket,
+                storageKey: data.storageKey,
+            })
+            .execute();
     }
 }

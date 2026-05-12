@@ -211,3 +211,9 @@ CREATE INDEX report_study_pat_id_hash_idx ON telerady.report_study (pat_id_hash)
 ALTER TABLE telerady.freelancer_data
     ADD COLUMN bank_account_enc TEXT,
     ALTER COLUMN bank_account DROP NOT NULL;
+
+ALTER TABLE telerady.professional_document
+    ADD COLUMN storage_bucket VARCHAR(50),
+    ADD COLUMN storage_key VARCHAR(250);
+CREATE INDEX professional_document_storage_key_idx
+    ON telerady.professional_document (storage_key);

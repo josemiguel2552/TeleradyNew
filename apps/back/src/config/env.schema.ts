@@ -69,10 +69,6 @@ export const envSchema = z.object({
   OHIF_URL: z.string().url().optional(),
   OHIF_VIEWER_PATH: z.string().default('/viewer'),
 
-  GOOGLE_CLIENT_EMAIL: z.string().email().optional(),
-  GOOGLE_PRIVATE_KEY: z.string().optional(),
-  FOLDER_TELERADY_DOC_ID: z.string().optional(),
-
   THROTTLE_TTL: z.coerce.number().int().positive().default(60),
   THROTTLE_LIMIT: z.coerce.number().int().positive().default(120),
 

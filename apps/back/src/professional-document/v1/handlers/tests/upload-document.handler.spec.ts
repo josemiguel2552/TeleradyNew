@@ -1,22 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { InternalServerErrorException } from '@nestjs/common';
 import { UploadDocumentHandler } from '../upload-document.handler';
 import { UploadDocumentCommand } from '../../commands/upload-document.command';
 import { ProfessionalDocumentRepository } from '../../repositories/professional-document.repository';
-import { DriveService } from '../../../../integrations/google/drive.service';
+import { StorageService } from '../../../../integrations/storage/storage.service';
 import { I18nService } from '../../../../i18n/i18n.service';
-import { InternalServerErrorException } from '@nestjs/common';
 import { db } from '../../../../database/drizzle';
 
 jest.mock('../../../../database/drizzle', () => ({
-  db: {
-    transaction: jest.fn(),
-  },
+  db: { transaction: jest.fn() },
 }));
+
 describe('UploadDocumentHandler', () => {
   let handler: UploadDocumentHandler;
   let repositoryMock: Partial<ProfessionalDocumentRepository>;
-  let driveServiceMock: Partial<DriveService>;
-  let i18nServiceMock: Partial<I18nService>;
+  let storageMock: Partial<StorageService>;
+  let i18nMock: Partial<I18nService>;
 
   beforeEach(async () => {
     repositoryMock = {
@@ -25,191 +24,137 @@ describe('UploadDocumentHandler', () => {
       uploadDocument: jest.fn(),
       insertDocument: jest.fn(),
     };
-
-    driveServiceMock = {
-      getIdFolder: jest.fn(),
-      saveFile: jest.fn(),
-      listFilesInFolder: jest.fn(),
-      deleteFile: jest.fn(),
+    storageMock = {
+      put: jest.fn().mockResolvedValue({ bucket: 'telerady-documents', key: 'key' }),
     };
+    i18nMock = { translate: jest.fn().mockImplementation((key: string) => key) };
 
-    i18nServiceMock = {
-      translate: jest.fn().mockImplementation((key: string) => key),
-    };
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UploadDocumentHandler,
+      providers: [
+        UploadDocumentHandler,
         { provide: ProfessionalDocumentRepository, useValue: repositoryMock },
-        { provide: DriveService, useValue: driveServiceMock },
-        { provide: I18nService, useValue: i18nServiceMock },
+        { provide: StorageService, useValue: storageMock },
+        { provide: I18nService, useValue: i18nMock },
       ],
     }).compile();
 
     handler = module.get<UploadDocumentHandler>(UploadDocumentHandler);
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-    jest.restoreAllMocks();
-  });
+  afterEach(() => jest.clearAllMocks());
 
-  it('should be defined', () => {
+  it('is defined', () => {
     expect(handler).toBeDefined();
   });
 
-  describe('execute', () => {
-    it('should return an error if the file extension is invalid', async () => {
-      const command = new UploadDocumentCommand({
-        email: 'test@example.com',
-        fileName: 'invalid-file.txt',
-        documentTypeId: 1,
-        fileBase64: 'mock-base64',
-      });
-
-      (db.transaction as jest.Mock).mockImplementation(async (callback: any) => {
-        return await callback({});
-      });
-
-      const result = await handler.execute(command);
-
-      expect(result).toEqual({
-        ok: false,
-        message: 'professionalDocument.uploadDocument.errorExt',
-        response: undefined,
-      });
-      expect(repositoryMock.getPersonalDataByEmail).not.toHaveBeenCalled();
+  it('rejects unsupported file extensions before touching the DB', async () => {
+    const command = new UploadDocumentCommand({
+      email: 'a@b.es',
+      fileName: 'invalid.txt',
+      documentTypeId: 1,
+      fileBase64: 'AAA=',
     });
+    (db.transaction as jest.Mock).mockImplementation(async (cb: any) => cb({}));
 
-    it('should return an error if the user does not exist', async () => {
-      const command = new UploadDocumentCommand({
-        email: 'test@example.com',
-        fileName: 'valid-file.pdf',
-        documentTypeId: 1,
-        fileBase64: 'mock-base64',
-      });
+    const result = await handler.execute(command);
 
-      (repositoryMock.getPersonalDataByEmail as jest.Mock).mockResolvedValue(null);
-      (db.transaction as jest.Mock).mockImplementation(async (callback: any) => {
-        return await callback({});
-      });
+    expect(result.ok).toBe(false);
+    expect(result.message).toBe('professionalDocument.uploadDocument.errorExt');
+    expect(repositoryMock.getPersonalDataByEmail).not.toHaveBeenCalled();
+    expect(storageMock.put).not.toHaveBeenCalled();
+  });
 
-      const result = await handler.execute(command);
-
-      expect(repositoryMock.getPersonalDataByEmail).toHaveBeenCalledWith(expect.anything(), command.data.email);
-      expect(result).toEqual({
-        ok: false,
-        message: 'professionalDocument.uploadDocument.errorMessage',
-        response: undefined,
-      });
+  it('returns an error when the user does not exist', async () => {
+    const command = new UploadDocumentCommand({
+      email: 'unknown@b.es',
+      fileName: 'valid.pdf',
+      documentTypeId: 1,
+      fileBase64: 'AAA=',
     });
+    (repositoryMock.getPersonalDataByEmail as jest.Mock).mockResolvedValue(null);
+    (db.transaction as jest.Mock).mockImplementation(async (cb: any) => cb({}));
 
-    it('should upload a document if the user exists and the file is valid', async () => {
-      const command = new UploadDocumentCommand({
-        email: 'test@example.com',
-        fileName: 'valid-file.pdf',
-        documentTypeId: 1,
-        fileBase64: 'mock-base64',
-      });
+    const result = await handler.execute(command);
 
-      const mockUser = { id: 1, name: 'John', lastName: 'Doe', professionalLicense: '12345' };
-      const mockDriveResponse = { id: 'mock-drive-id', normalizedName: 'valid-file.pdf' };
+    expect(result.ok).toBe(false);
+    expect(storageMock.put).not.toHaveBeenCalled();
+  });
 
-      (repositoryMock.getPersonalDataByEmail as jest.Mock).mockResolvedValue(mockUser);
-      (driveServiceMock.getIdFolder as jest.Mock).mockResolvedValue('mock-folder-id');
-      (driveServiceMock.saveFile as jest.Mock).mockResolvedValue(mockDriveResponse);
-      (repositoryMock.getUploadedDocument as jest.Mock).mockResolvedValue(null);
-      (repositoryMock.insertDocument as jest.Mock).mockResolvedValue(undefined);
-      (db.transaction as jest.Mock).mockImplementation(async (callback: any) => {
-        return await callback({});
-      });
-
-      const result = await handler.execute(command);
-
-      expect(repositoryMock.getPersonalDataByEmail).toHaveBeenCalledWith(expect.anything(), command.data.email);
-      expect(driveServiceMock.getIdFolder).toHaveBeenCalledWith(
-        `${mockUser.name}_${mockUser.lastName}`.replace(/\s+/g, '') + `_${mockUser.professionalLicense}`,
-        process.env.FOLDER_TELERADY_DOC_ID
-      );
-      expect(driveServiceMock.saveFile).toHaveBeenCalledWith(
-        expect.anything(),
-        'mock-folder-id'
-      );
-      expect(repositoryMock.insertDocument).toHaveBeenCalledWith(expect.anything(), {
-        documentId: command.data.documentTypeId,
-        driveId: mockDriveResponse.id,
-        nameDocument: 'titulo-especialista_12345.pdf',
-        professionalId: mockUser.id,
-      });
-      expect(result).toEqual({
-        ok: true,
-        message: '',
-        response: { driveId: mockDriveResponse.id },
-      });
+  it('uploads to S3 and inserts a new document row when none exists', async () => {
+    const command = new UploadDocumentCommand({
+      email: 'a@b.es',
+      fileName: 'valid.pdf',
+      documentTypeId: 1,
+      fileBase64: 'AAA=',
     });
-
-    it('should call uploadDocument if the document already exists and the file is a PNG', async () => {
-      const command = new UploadDocumentCommand({
-        email: 'test@example.com',
-        fileName: 'signature.png',
-        documentTypeId: 7,
-        fileBase64: 'mock-base64',
-      });
-
-      const mockUser = { id: 1, name: 'John', lastName: 'Doe', professionalLicense: '12345' };
-      const mockDriveResponse = { id: 'mock-drive-id', normalizedName: 'Signature_12345.png' };
-      const mockExistingDocument = { documentTypeId: 7, driveId: 'existing-drive-id' };
-
-      (repositoryMock.getPersonalDataByEmail as jest.Mock).mockResolvedValue(mockUser);
-      (driveServiceMock.getIdFolder as jest.Mock).mockResolvedValue('mock-folder-id');
-      (driveServiceMock.saveFile as jest.Mock).mockResolvedValue(mockDriveResponse);
-      (driveServiceMock.listFilesInFolder as jest.Mock).mockResolvedValue([{ id: 'id-mock-file', name: 'Signature_12345.png' }]);
-      (driveServiceMock.deleteFile as jest.Mock).mockResolvedValue({});
-      (repositoryMock.getUploadedDocument as jest.Mock).mockResolvedValue(mockExistingDocument);
-      (repositoryMock.uploadDocument as jest.Mock).mockResolvedValue(undefined);
-      (db.transaction as jest.Mock).mockImplementation(async (callback: any) => {
-        return await callback({});
-      });
-
-      const result = await handler.execute(command);
-
-      expect(repositoryMock.getPersonalDataByEmail).toHaveBeenCalledWith(expect.anything(), command.data.email);
-      expect(driveServiceMock.getIdFolder).toHaveBeenCalledWith(
-        `${mockUser.name}_${mockUser.lastName}`.replace(/\s+/g, '') + `_${mockUser.professionalLicense}`,
-        process.env.FOLDER_TELERADY_DOC_ID
-      );
-      expect(driveServiceMock.saveFile).toHaveBeenCalledWith(
-        expect.objectContaining({ name: mockDriveResponse.normalizedName }),
-        'mock-folder-id'
-      );
-      expect(driveServiceMock.listFilesInFolder).toHaveBeenCalledWith('mock-folder-id');
-      expect(driveServiceMock.deleteFile).toHaveBeenCalledWith('id-mock-file');
-      expect(driveServiceMock.deleteFile).toHaveBeenCalledTimes(1);
-      expect(repositoryMock.uploadDocument).toHaveBeenCalledWith(expect.anything(), {
-        documentId: command.data.documentTypeId,
-        driveId: mockDriveResponse.id,
-        nameDocument: mockDriveResponse.normalizedName,
-        professionalId: mockUser.id,
-      });
-      expect(result).toEqual({
-        ok: true,
-        message: '',
-        response: { driveId: mockDriveResponse.id },
-      });
+    const user = { id: 'prof-1', professionalLicense: '12345' };
+    (repositoryMock.getPersonalDataByEmail as jest.Mock).mockResolvedValue(user);
+    (repositoryMock.getUploadedDocument as jest.Mock).mockResolvedValue(null);
+    (storageMock.put as jest.Mock).mockResolvedValue({
+      bucket: 'telerady-documents',
+      key: 'professionals/prof-1/1/titulo-especialista_12345.pdf',
     });
+    (db.transaction as jest.Mock).mockImplementation(async (cb: any) => cb({}));
 
-    it('should throw an InternalServerErrorException if an error occurs', async () => {
-      const command = new UploadDocumentCommand({
-        email: 'test@example.com',
-        fileName: 'valid-file.pdf',
-        documentTypeId: 1,
-        fileBase64: 'mock-base64',
-      });
+    const result = await handler.execute(command);
 
-      (repositoryMock.getPersonalDataByEmail as jest.Mock).mockRejectedValue(new Error('Database error'));
+    expect(storageMock.put).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bucket: 'documents',
+        contentType: 'application/pdf',
+        key: 'professionals/prof-1/1/titulo-especialista_12345.pdf',
+      }),
+    );
+    expect(repositoryMock.insertDocument).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        professionalId: 'prof-1',
+        documentId: 1,
+        storageBucket: 'telerady-documents',
+        storageKey: 'professionals/prof-1/1/titulo-especialista_12345.pdf',
+      }),
+    );
+    expect(result.ok).toBe(true);
+  });
 
-      await expect(handler.execute(command)).rejects.toThrow(InternalServerErrorException);
-
-      expect(repositoryMock.getPersonalDataByEmail).toHaveBeenCalledWith(expect.anything(), command.data.email);
-      expect(i18nServiceMock.translate).toHaveBeenCalledWith('professionalDocument.uploadDocument.errorMessage');
+  it('updates the row when the document already exists', async () => {
+    const command = new UploadDocumentCommand({
+      email: 'a@b.es',
+      fileName: 'signature.png',
+      documentTypeId: 7,
+      fileBase64: 'AAA=',
     });
-  })
+    const user = { id: 'prof-1', professionalLicense: '12345' };
+    (repositoryMock.getPersonalDataByEmail as jest.Mock).mockResolvedValue(user);
+    (repositoryMock.getUploadedDocument as jest.Mock).mockResolvedValue({});
+    (storageMock.put as jest.Mock).mockResolvedValue({
+      bucket: 'telerady-documents',
+      key: 'professionals/prof-1/7/firma_12345.png',
+    });
+    (db.transaction as jest.Mock).mockImplementation(async (cb: any) => cb({}));
+
+    await handler.execute(command);
+
+    expect(repositoryMock.uploadDocument).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ storageKey: 'professionals/prof-1/7/firma_12345.png' }),
+    );
+    expect(repositoryMock.insertDocument).not.toHaveBeenCalled();
+  });
+
+  it('translates and rethrows on unexpected errors', async () => {
+    const command = new UploadDocumentCommand({
+      email: 'a@b.es',
+      fileName: 'valid.pdf',
+      documentTypeId: 1,
+      fileBase64: 'AAA=',
+    });
+    (repositoryMock.getPersonalDataByEmail as jest.Mock).mockRejectedValue(new Error('boom'));
+    (db.transaction as jest.Mock).mockImplementation(async (cb: any) => cb({}));
+
+    await expect(handler.execute(command)).rejects.toThrow(InternalServerErrorException);
+    expect(i18nMock.translate).toHaveBeenCalledWith(
+      'professionalDocument.uploadDocument.errorMessage',
+    );
+  });
 });

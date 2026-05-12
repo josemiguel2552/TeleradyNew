@@ -1,11 +1,18 @@
-import { Injectable } from "@nestjs/common";
-import { DBOrTx } from "../../../database/drizzle";
-import { professionalInTelerady, professionalDocumentInTelerady } from "../../../database/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { Injectable } from '@nestjs/common';
+import { DBOrTx } from '../../../database/drizzle';
+import { professionalInTelerady, professionalDocumentInTelerady } from '../../../database/schema';
+import { eq, and, sql } from 'drizzle-orm';
+
+export interface UploadedDocumentRow {
+  documentTypeId: number;
+  driveId: string | null;
+  storageBucket: string | null;
+  storageKey: string | null;
+  nameDocument: string | null;
+}
 
 @Injectable()
 export class ProfessionalDocumentRepository {
-
   async getPersonalDataByEmail(db: DBOrTx, email: string) {
     const personalData = await db
       .select()
@@ -22,42 +29,74 @@ export class ProfessionalDocumentRepository {
       .where(
         and(
           eq(professionalDocumentInTelerady.professionalId, professionalId),
-          eq(professionalDocumentInTelerady.documentId, documentId)
-        )
-      ).execute();
+          eq(professionalDocumentInTelerady.documentId, documentId),
+        ),
+      )
+      .execute();
     return documents.length > 0 ? documents[0] : null;
   }
 
-  async uploadDocument(db: DBOrTx, data: { professionalId: string, documentId: number, nameDocument: string, driveId: string }) {
+  async uploadDocument(
+    db: DBOrTx,
+    data: {
+      professionalId: string;
+      documentId: number;
+      nameDocument: string;
+      storageBucket: string;
+      storageKey: string;
+    },
+  ) {
     await db
       .update(professionalDocumentInTelerady)
-      .set({ nameDocument: data.nameDocument, driveId: data.driveId })
+      .set({
+        nameDocument: data.nameDocument,
+        storageBucket: data.storageBucket,
+        storageKey: data.storageKey,
+        driveId: null,
+      })
       .where(
         and(
           eq(professionalDocumentInTelerady.professionalId, data.professionalId),
-          eq(professionalDocumentInTelerady.documentId, data.documentId)
-        )
+          eq(professionalDocumentInTelerady.documentId, data.documentId),
+        ),
       )
       .execute();
   }
 
-  async insertDocument(db: DBOrTx, data: { professionalId: string, documentId: number, nameDocument: string, driveId: string }) {
-    await db.insert(professionalDocumentInTelerady).values({
-      professionalId: data.professionalId,
-      documentId: data.documentId,
-      nameDocument: data.nameDocument,
-      driveId: data.driveId,
-    }).execute();
+  async insertDocument(
+    db: DBOrTx,
+    data: {
+      professionalId: string;
+      documentId: number;
+      nameDocument: string;
+      storageBucket: string;
+      storageKey: string;
+    },
+  ) {
+    await db
+      .insert(professionalDocumentInTelerady)
+      .values({
+        professionalId: data.professionalId,
+        documentId: data.documentId,
+        nameDocument: data.nameDocument,
+        storageBucket: data.storageBucket,
+        storageKey: data.storageKey,
+      })
+      .execute();
   }
 
-  async getUploadedDocuments(db: DBOrTx, professionalId: string) {
-    return await db
+  async getUploadedDocuments(db: DBOrTx, professionalId: string): Promise<UploadedDocumentRow[]> {
+    const rows = await db
       .select({
         documentTypeId: professionalDocumentInTelerady.documentId,
-        driveId: professionalDocumentInTelerady.driveId
+        driveId: professionalDocumentInTelerady.driveId,
+        storageBucket: professionalDocumentInTelerady.storageBucket,
+        storageKey: professionalDocumentInTelerady.storageKey,
+        nameDocument: professionalDocumentInTelerady.nameDocument,
       })
       .from(professionalDocumentInTelerady)
       .where(eq(professionalDocumentInTelerady.professionalId, professionalId))
       .execute();
+    return rows;
   }
 }
