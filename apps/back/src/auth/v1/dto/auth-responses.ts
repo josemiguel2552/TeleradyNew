@@ -1,16 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class LoginResponseDto {
-  @ApiProperty()
-  accessToken!: string;
-
-  @ApiProperty({ description: 'Seconds until the access token expires.' })
-  expiresIn!: number;
-
-  @ApiProperty({ type: () => UserSummaryDto })
-  user!: UserSummaryDto;
-}
-
 export class UserSummaryDto {
   @ApiProperty()
   id!: string;
@@ -29,6 +18,17 @@ export class UserSummaryDto {
 
   @ApiProperty()
   mfaEnabled!: boolean;
+}
+
+export class LoginResponseDto {
+  @ApiProperty()
+  accessToken!: string;
+
+  @ApiProperty({ description: 'Seconds until the access token expires.' })
+  expiresIn!: number;
+
+  @ApiProperty({ type: () => UserSummaryDto })
+  user!: UserSummaryDto;
 }
 
 export class RegisterHospitalResponseDto {

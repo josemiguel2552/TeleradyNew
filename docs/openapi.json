@@ -1,0 +1,3326 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "API start message",
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/healthz": {
+      "get": {
+        "operationId": "AppController_healthz",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Liveness probe",
+        "tags": [
+          "App",
+          "infra"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Authenticate a user and start a session",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "tr_refresh": []
+          }
+        ],
+        "summary": "Exchange a refresh cookie for a new access token",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke the current refresh token",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/register-hospital": {
+      "post": {
+        "operationId": "AuthController_registerHospital",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterHospitalDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterHospitalResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Admin: create a new hospital and its admin user",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "operationId": "AuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSummaryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Return the authenticated user",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/mfa/setup": {
+      "post": {
+        "operationId": "AuthController_mfaSetup",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MfaSetupResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Generate a TOTP secret + QR for the current user",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/mfa/confirm": {
+      "post": {
+        "operationId": "AuthController_mfaConfirm",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MfaTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Activate MFA by confirming the first TOTP code",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/mfa/disable": {
+      "post": {
+        "operationId": "AuthController_mfaDisable",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Disable MFA for the current user",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/fhir/Patient/{id}": {
+      "get": {
+        "operationId": "FhirController_getPatient",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "FHIR R4 Patient read",
+        "tags": [
+          "fhir"
+        ]
+      }
+    },
+    "/fhir/ImagingStudy": {
+      "get": {
+        "operationId": "FhirController_searchImagingStudies",
+        "parameters": [
+          {
+            "name": "patient",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "modality",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "FHIR R4 ImagingStudy search",
+        "tags": [
+          "fhir"
+        ]
+      }
+    },
+    "/fhir/DiagnosticReport/{id}": {
+      "get": {
+        "operationId": "FhirController_getDiagnosticReport",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "FHIR R4 DiagnosticReport read",
+        "tags": [
+          "fhir"
+        ]
+      }
+    },
+    "/fhir/DiagnosticReport": {
+      "get": {
+        "operationId": "FhirController_searchDiagnosticReports",
+        "parameters": [
+          {
+            "name": "patient",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "FHIR R4 DiagnosticReport search",
+        "tags": [
+          "fhir"
+        ]
+      },
+      "post": {
+        "operationId": "FhirController_createDiagnosticReport",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "FHIR R4 DiagnosticReport create",
+        "tags": [
+          "fhir"
+        ]
+      }
+    },
+    "/fhir/metadata": {
+      "get": {
+        "operationId": "FhirController_capabilityStatement",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "FHIR R4 CapabilityStatement",
+        "tags": [
+          "fhir"
+        ]
+      }
+    },
+    "/mwl": {
+      "get": {
+        "operationId": "MwlController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List MWL entries scoped to the actor",
+        "tags": [
+          "mwl"
+        ]
+      },
+      "post": {
+        "operationId": "MwlController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MwlCreateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a MWL entry manually (the HL7 listener creates them too)",
+        "tags": [
+          "mwl"
+        ]
+      }
+    },
+    "/mwl/{id}/cancel": {
+      "post": {
+        "operationId": "MwlController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a scheduled MWL entry",
+        "tags": [
+          "mwl"
+        ]
+      }
+    },
+    "/integrations/orthanc/mpps": {
+      "post": {
+        "operationId": "MppsController_ingest",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MppsEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MppsEventResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "x-api-key": []
+          }
+        ],
+        "summary": "Ingest a DICOM MPPS event (N-CREATE / N-SET) forwarded by Orthanc. Server-to-server: requires the shared INTEGRATION_API_KEY in x-api-key.",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/pacs/studies/search": {
+      "post": {
+        "operationId": "PacsController_searchStudies",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudySearchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StudySearchResultDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Search studies in the PACS by filters (returns a normalised list)",
+        "tags": [
+          "pacs"
+        ]
+      }
+    },
+    "/pacs/viewer/{studyInstanceUid}": {
+      "get": {
+        "operationId": "PacsController_viewerUrl",
+        "parameters": [
+          {
+            "name": "studyInstanceUid",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Build the OHIF viewer URL for the given study (signed query string)",
+        "tags": [
+          "pacs"
+        ]
+      }
+    },
+    "/pacs/studies/sync": {
+      "post": {
+        "operationId": "PacsController_syncStudy",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncStudyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStudyResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ingest a study from PACS into telerady.report_study (encrypted columns + hospital_id)",
+        "tags": [
+          "pacs"
+        ]
+      }
+    },
+    "/admin/assignment-rules": {
+      "get": {
+        "operationId": "WorkflowController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssignmentRuleResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List assignment rules visible to the actor",
+        "tags": [
+          "workflows"
+        ]
+      },
+      "post": {
+        "operationId": "WorkflowController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignmentRuleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentRuleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create an assignment rule",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/admin/assignment-rules/{id}": {
+      "delete": {
+        "operationId": "WorkflowController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete an assignment rule",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/admin/sla/escalate": {
+      "post": {
+        "operationId": "WorkflowController_escalate",
+        "parameters": [
+          {
+            "name": "minutes",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Audit-log SLA breaches as escalated (called by cron or by an operator)",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/reports/{reportStudyId}/review": {
+      "post": {
+        "operationId": "WorkflowController_review",
+        "parameters": [
+          {
+            "name": "reportStudyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Second-read review of a report (approve / reject)",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/push/public-key": {
+      "get": {
+        "operationId": "PushPublicController_publicKey",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushPublicKeyResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "VAPID public key the SPA passes to PushManager.subscribe(). Public on purpose: the private key never leaves the back.",
+        "tags": [
+          "push"
+        ]
+      }
+    },
+    "/me/push/subscriptions": {
+      "post": {
+        "operationId": "PushMeController_subscribe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePushSubscriptionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushSubscriptionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register the current device's push subscription. Idempotent: same endpoint refreshes the keys / revokedAt instead of duplicating.",
+        "tags": [
+          "push"
+        ]
+      }
+    },
+    "/me/push/subscriptions/{id}": {
+      "delete": {
+        "operationId": "PushMeController_unsubscribe",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke this device. Soft-delete: sets revoked_at.",
+        "tags": [
+          "push"
+        ]
+      }
+    },
+    "/user-events": {
+      "put": {
+        "operationId": "UserEventsController_registerEvent",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Base"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "save event of user",
+        "tags": [
+          "user-events"
+        ]
+      }
+    },
+    "/personal-data": {
+      "put": {
+        "operationId": "PersonalDataController_saveProfessional",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveProfessionalDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveProfessionalResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "save info user",
+        "tags": [
+          "PersonalData"
+        ]
+      }
+    },
+    "/personal-data/validate": {
+      "get": {
+        "operationId": "PersonalDataController_validateProfessional",
+        "parameters": [
+          {
+            "name": "email",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Validate user",
+        "tags": [
+          "PersonalData"
+        ]
+      }
+    },
+    "/documents": {
+      "post": {
+        "operationId": "ProfessionalDocumentController_uploadDocument",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadDocumentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadDocumentResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload document",
+        "tags": [
+          "ProfessionalDocument"
+        ]
+      },
+      "get": {
+        "operationId": "ProfessionalDocumentController_getUploadedDocuments",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUploadedDocumentsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get uploaded documents",
+        "tags": [
+          "ProfessionalDocument"
+        ]
+      }
+    },
+    "/report": {
+      "put": {
+        "operationId": "ReportController_saveReport",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Base"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "save and upload report",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/reports/{reportStudyId}": {
+      "get": {
+        "operationId": "ReportV2Controller_get",
+        "parameters": [
+          {
+            "name": "reportStudyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the structured report (decrypted) for a study",
+        "tags": [
+          "reports-v2"
+        ]
+      },
+      "put": {
+        "operationId": "ReportV2Controller_save",
+        "parameters": [
+          {
+            "name": "reportStudyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveReportV2Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Autosave the report draft (encrypted at rest)",
+        "tags": [
+          "reports-v2"
+        ]
+      }
+    },
+    "/reports/{reportStudyId}/sign": {
+      "post": {
+        "operationId": "ReportV2Controller_sign",
+        "parameters": [
+          {
+            "name": "reportStudyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Sign the report using the hospital policy",
+        "tags": [
+          "reports-v2"
+        ]
+      }
+    },
+    "/reports/{reportStudyId}/send": {
+      "post": {
+        "operationId": "ReportV2Controller_send",
+        "parameters": [
+          {
+            "name": "reportStudyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark the report as sent to the hospital",
+        "tags": [
+          "reports-v2"
+        ]
+      }
+    },
+    "/reports/{reportStudyId}/ai-draft": {
+      "post": {
+        "operationId": "ReportV2Controller_aiDraft",
+        "parameters": [
+          {
+            "name": "reportStudyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiDraftRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiDraftResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Generate an AI draft (RadiogenAI). Requires hospital opt-in and user consent.",
+        "tags": [
+          "reports-v2"
+        ]
+      }
+    },
+    "/reports/{reportStudyId}/ai-draft/stream": {
+      "post": {
+        "operationId": "ReportV2Controller_aiDraftStream",
+        "parameters": [
+          {
+            "name": "reportStudyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiDraftRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Streaming AI draft (RadiogenAI). Same gate as /ai-draft; emits SSE chunks.",
+        "tags": [
+          "reports-v2"
+        ]
+      }
+    },
+    "/parameters/subspecialties": {
+      "get": {
+        "operationId": "ParametersController_getSubspecialties",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetParameterResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Subspecialties list",
+        "tags": [
+          "Parameters"
+        ]
+      }
+    },
+    "/worklist": {
+      "get": {
+        "operationId": "WorklistController_list",
+        "parameters": [
+          {
+            "name": "modality",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stateId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "studyDateFrom",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "20240101",
+              "type": "string"
+            }
+          },
+          {
+            "name": "studyDateTo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "20241231",
+              "type": "string"
+            }
+          },
+          {
+            "name": "hospitalId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 50,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorklistResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List worklist entries scoped to the actor",
+        "tags": [
+          "worklist"
+        ]
+      }
+    },
+    "/worklist/{id}": {
+      "get": {
+        "operationId": "WorklistController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorklistEntryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Return one worklist entry (decrypted patient fields)",
+        "tags": [
+          "worklist"
+        ]
+      }
+    },
+    "/admin/studies/{id}/assign": {
+      "put": {
+        "operationId": "AdminController_assign",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignStudyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignStudyResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Assign a study to a primary radiologist (and an optional reviewer)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/dashboard/sla": {
+      "get": {
+        "operationId": "AdminController_sla",
+        "parameters": [
+          {
+            "name": "hospitalId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by hospital (admin/coordinator only)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlaDashboardDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "SLA dashboard scoped to the actor (counts + averages + overdue)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/audit": {
+      "get": {
+        "operationId": "AdminController_listAudit",
+        "parameters": [
+          {
+            "name": "hospitalId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "report.signed",
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 50,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditListDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List audit log entries (paginated, scoped by tenant)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/audit/verify": {
+      "post": {
+        "operationId": "AdminController_verifyAudit",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditVerifyResultDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replay the audit log hash chain and report tampering",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/professionals": {
+      "get": {
+        "operationId": "AdminController_listProfessionals",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Free-text search over name/lastName/email",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 25,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfessionalListDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Search professionals to use in assignments",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/me/dicom-export": {
+      "get": {
+        "operationId": "MeController_dicomExport",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "RGPD art. 20 — download a ZIP with your DICOM studies",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/data-export": {
+      "get": {
+        "operationId": "MeController_export",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "application/json file download"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "RGPD art. 15 — download a copy of your personal data",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/processing-restriction": {
+      "patch": {
+        "operationId": "MeController_setRestriction",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcessingRestrictionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "RGPD art. 18 — toggle processing restriction",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me": {
+      "delete": {
+        "operationId": "MeController_delete",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "RGPD art. 17 — delete your account (logical tombstone)",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/admin/jobs": {
+      "get": {
+        "operationId": "JobsHealthController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Per-queue counts to diagnose stuck jobs",
+        "tags": [
+          "jobs"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Telerady API",
+    "description": "Telerady — teleradiology platform API (v1)",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http",
+        "name": "Authorization",
+        "in": "header"
+      }
+    },
+    "schemas": {
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@telerady.es"
+          },
+          "password": {
+            "type": "string",
+            "example": "long random passphrase"
+          },
+          "totp": {
+            "type": "string",
+            "description": "6-digit TOTP code if MFA is enabled"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "UserSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hospitals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "professionalId": {
+            "type": "object",
+            "nullable": true
+          },
+          "mfaEnabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "roles",
+          "hospitals",
+          "mfaEnabled"
+        ]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "number",
+            "description": "Seconds until the access token expires."
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserSummaryDto"
+          }
+        },
+        "required": [
+          "accessToken",
+          "expiresIn",
+          "user"
+        ]
+      },
+      "RegisterHospitalDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Hospital Clínico San Carlos"
+          },
+          "taxId": {
+            "type": "string",
+            "example": "A12345678"
+          },
+          "signaturePolicy": {
+            "type": "string",
+            "enum": [
+              "name_collegiate",
+              "drawn_hash_tsa"
+            ],
+            "default": "name_collegiate"
+          },
+          "retentionDays": {
+            "type": "number",
+            "default": 3650,
+            "description": "Days the platform keeps tenant data by default"
+          },
+          "adminEmail": {
+            "type": "string",
+            "example": "admin@hospital.es"
+          },
+          "adminPassword": {
+            "type": "string",
+            "example": "long random passphrase"
+          }
+        },
+        "required": [
+          "name",
+          "signaturePolicy",
+          "retentionDays",
+          "adminEmail",
+          "adminPassword"
+        ]
+      },
+      "RegisterHospitalResponseDto": {
+        "type": "object",
+        "properties": {
+          "hospitalId": {
+            "type": "string"
+          },
+          "adminUserId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "hospitalId",
+          "adminUserId"
+        ]
+      },
+      "MfaSetupResponseDto": {
+        "type": "object",
+        "properties": {
+          "otpauthUrl": {
+            "type": "string"
+          },
+          "qrCodeDataUrl": {
+            "type": "string",
+            "description": "Data URL (image/png) for the QR code"
+          }
+        },
+        "required": [
+          "otpauthUrl",
+          "qrCodeDataUrl"
+        ]
+      },
+      "MfaTokenDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "6-digit TOTP code from the authenticator app"
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "MwlCreateDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "MppsEventDto": {
+        "type": "object",
+        "properties": {
+          "performedProcedureStepId": {
+            "type": "string",
+            "description": "DICOM PerformedProcedureStepID (0040,0253). Stable across N-CREATE / N-SET."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "IN PROGRESS",
+              "COMPLETED",
+              "DISCONTINUED"
+            ]
+          },
+          "accessionNumber": {
+            "type": "string",
+            "description": "AccessionNumber from the original MWL entry (joins MPPS to ORM/MWL)."
+          },
+          "studyInstanceUid": {
+            "type": "string"
+          },
+          "modality": {
+            "type": "string"
+          },
+          "stationName": {
+            "type": "string"
+          },
+          "startDateTime": {
+            "type": "string",
+            "description": "ISO 8601"
+          },
+          "endDateTime": {
+            "type": "string",
+            "description": "ISO 8601 (only for status=COMPLETED|DISCONTINUED)"
+          }
+        },
+        "required": [
+          "performedProcedureStepId",
+          "status"
+        ]
+      },
+      "MppsEventResponseDto": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "description": "\"new\" if first time we see this PPS, \"update\" otherwise"
+          },
+          "mwlEntryId": {
+            "type": "object",
+            "nullable": true,
+            "description": "mwl_entry.id matched by accession_number, null otherwise"
+          },
+          "reportStudyId": {
+            "type": "object",
+            "nullable": true,
+            "description": "report_study.id matched by study_iuid, null otherwise"
+          }
+        },
+        "required": [
+          "eventId",
+          "outcome",
+          "mwlEntryId",
+          "reportStudyId"
+        ]
+      },
+      "StudySearchDto": {
+        "type": "object",
+        "properties": {
+          "modality": {
+            "type": "string",
+            "example": "CT"
+          },
+          "studyDateFrom": {
+            "type": "string",
+            "example": "20240101"
+          },
+          "studyDateTo": {
+            "type": "string",
+            "example": "20241231"
+          },
+          "accessionNumber": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "number",
+            "default": 0
+          },
+          "limit": {
+            "type": "number",
+            "default": 50
+          }
+        }
+      },
+      "StudySearchResultDto": {
+        "type": "object",
+        "properties": {
+          "studyInstanceUid": {
+            "type": "string"
+          },
+          "studyDescription": {
+            "type": "object",
+            "nullable": true
+          },
+          "studyDate": {
+            "type": "object",
+            "nullable": true
+          },
+          "modalities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "accessionNumber": {
+            "type": "object",
+            "nullable": true
+          },
+          "institution": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "studyInstanceUid",
+          "studyDescription",
+          "studyDate",
+          "modalities",
+          "accessionNumber",
+          "institution"
+        ]
+      },
+      "SyncStudyDto": {
+        "type": "object",
+        "properties": {
+          "studyInstanceUid": {
+            "type": "string",
+            "description": "DICOM StudyInstanceUID of the study to ingest from Orthanc",
+            "example": "1.2.840.113619.2.55.3.604688119.971.1693501800.123"
+          },
+          "hospitalId": {
+            "type": "string",
+            "description": "Optional explicit hospital scope (required for multi-hospital users)."
+          },
+          "professionalId": {
+            "type": "string",
+            "description": "Optional professional override (admins/coordinators only). Defaults to the actor."
+          }
+        },
+        "required": [
+          "studyInstanceUid"
+        ]
+      },
+      "SyncStudyResponseDto": {
+        "type": "object",
+        "properties": {
+          "reportStudyId": {
+            "type": "string"
+          },
+          "studyInstanceUid": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string",
+            "description": "\"created\" or \"updated\""
+          },
+          "hospitalId": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "reportStudyId",
+          "studyInstanceUid",
+          "action",
+          "hospitalId"
+        ]
+      },
+      "AssignmentRuleResponseDto": {
+        "type": "object",
+        "properties": {
+          "hospitalId": {
+            "type": "object",
+            "nullable": true
+          },
+          "modality": {
+            "type": "object",
+            "nullable": true,
+            "example": "CT"
+          },
+          "subspecialtyId": {
+            "type": "object",
+            "nullable": true
+          },
+          "targetProfessionalId": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "number",
+            "default": 100
+          },
+          "requiresReview": {
+            "type": "boolean",
+            "default": false
+          },
+          "active": {
+            "type": "boolean",
+            "default": true
+          },
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "targetProfessionalId",
+          "priority",
+          "requiresReview",
+          "active",
+          "id",
+          "createdAt"
+        ]
+      },
+      "AssignmentRuleDto": {
+        "type": "object",
+        "properties": {
+          "hospitalId": {
+            "type": "object",
+            "nullable": true
+          },
+          "modality": {
+            "type": "object",
+            "nullable": true,
+            "example": "CT"
+          },
+          "subspecialtyId": {
+            "type": "object",
+            "nullable": true
+          },
+          "targetProfessionalId": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "number",
+            "default": 100
+          },
+          "requiresReview": {
+            "type": "boolean",
+            "default": false
+          },
+          "active": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "targetProfessionalId",
+          "priority",
+          "requiresReview",
+          "active"
+        ]
+      },
+      "ReviewReportDto": {
+        "type": "object",
+        "properties": {
+          "approved": {
+            "type": "boolean",
+            "description": "true = approved, false = rejected (changes requested)"
+          },
+          "comments": {
+            "type": "string",
+            "description": "Optional reviewer comments stored in audit log"
+          }
+        },
+        "required": [
+          "approved"
+        ]
+      },
+      "PushPublicKeyResponseDto": {
+        "type": "object",
+        "properties": {
+          "publicKey": {
+            "type": "object",
+            "description": "VAPID public key, base64url-encoded"
+          }
+        },
+        "required": [
+          "publicKey"
+        ]
+      },
+      "PushSubscriptionKeysDto": {
+        "type": "object",
+        "properties": {
+          "p256dh": {
+            "type": "string"
+          },
+          "auth": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "p256dh",
+          "auth"
+        ]
+      },
+      "CreatePushSubscriptionDto": {
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "description": "Push service endpoint (FCM / Apple / Mozilla)"
+          },
+          "keys": {
+            "$ref": "#/components/schemas/PushSubscriptionKeysDto"
+          },
+          "userAgent": {
+            "type": "string",
+            "description": "navigator.userAgent at subscription time"
+          }
+        },
+        "required": [
+          "endpoint",
+          "keys"
+        ]
+      },
+      "PushSubscriptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "userAgent": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "userAgent"
+        ]
+      },
+      "RegisterEventDto": {
+        "type": "object",
+        "properties": {
+          "eventType": {
+            "type": "string",
+            "description": "Tipo de evento (ej: report_start, report_view_img, report_finalize, etc.)",
+            "example": "report_finalize"
+          },
+          "eventPayload": {
+            "type": "object",
+            "description": "Payload del evento (estructura flexible y serializable)",
+            "example": {
+              "studyId": "STUDY-001",
+              "durationMs": 1284
+            }
+          }
+        },
+        "required": [
+          "eventType",
+          "eventPayload"
+        ]
+      },
+      "Base": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "showMessagePlan": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok",
+          "message"
+        ]
+      },
+      "OtherDocumentDto": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string"
+          },
+          "fileBase64": {
+            "type": "string"
+          },
+          "documentTypeId": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "fileName",
+          "fileBase64",
+          "documentTypeId"
+        ]
+      },
+      "SaveProfessionalDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "cityResidence": {
+            "type": "string"
+          },
+          "titleStatusId": {
+            "type": "number"
+          },
+          "professionalLicense": {
+            "type": "string"
+          },
+          "subspecialties": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "otherDocuments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OtherDocumentDto"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "lastName",
+          "phone",
+          "email",
+          "cityResidence",
+          "titleStatusId",
+          "professionalLicense",
+          "subspecialties"
+        ]
+      },
+      "SaveProfessional": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "SaveProfessionalResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "showMessagePlan": {
+            "type": "boolean"
+          },
+          "response": {
+            "$ref": "#/components/schemas/SaveProfessional"
+          }
+        },
+        "required": [
+          "ok",
+          "message"
+        ]
+      },
+      "Validate": {
+        "type": "object",
+        "properties": {
+          "exists": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "exists"
+        ]
+      },
+      "ValidateResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "showMessagePlan": {
+            "type": "boolean"
+          },
+          "response": {
+            "$ref": "#/components/schemas/Validate"
+          }
+        },
+        "required": [
+          "ok",
+          "message",
+          "response"
+        ]
+      },
+      "UploadDocumentDto": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string"
+          },
+          "fileBase64": {
+            "type": "string"
+          },
+          "documentTypeId": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "fileName",
+          "fileBase64",
+          "documentTypeId"
+        ]
+      },
+      "UploadDocumentResult": {
+        "type": "object",
+        "properties": {
+          "driveId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "driveId"
+        ]
+      },
+      "UploadDocumentResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "showMessagePlan": {
+            "type": "boolean"
+          },
+          "response": {
+            "$ref": "#/components/schemas/UploadDocumentResult"
+          }
+        },
+        "required": [
+          "ok",
+          "message"
+        ]
+      },
+      "UploadedDocument": {
+        "type": "object",
+        "properties": {
+          "documentTypeId": {
+            "type": "number"
+          },
+          "driveId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "documentTypeId",
+          "driveId"
+        ]
+      },
+      "GetUploadedDocumentsResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "showMessagePlan": {
+            "type": "boolean"
+          },
+          "response": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UploadedDocument"
+            }
+          }
+        },
+        "required": [
+          "ok",
+          "message",
+          "response"
+        ]
+      },
+      "SaveReportDto": {
+        "type": "object",
+        "properties": {
+          "studyId": {
+            "type": "string",
+            "description": "DICOM StudyInstanceUID",
+            "example": "1.2.3.4.5"
+          },
+          "studyDesc": {
+            "type": "string",
+            "example": "TC de tórax sin contraste"
+          },
+          "patId": {
+            "type": "string",
+            "example": "pat-123456"
+          },
+          "patName": {
+            "type": "string",
+            "example": "Juan Pérez"
+          },
+          "sex": {
+            "type": "string",
+            "enum": [
+              "M",
+              "F",
+              "O"
+            ]
+          },
+          "patBirthdate": {
+            "type": "string",
+            "example": "1985-04-23",
+            "description": "ISO 8601 date"
+          },
+          "modalities": {
+            "example": [
+              "CT"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "institution": {
+            "type": "string",
+            "example": "Hospital Universitario de Madrid"
+          },
+          "src": {
+            "type": "string",
+            "example": "agent"
+          },
+          "idReportState": {
+            "type": "number",
+            "example": 1
+          },
+          "hospitalId": {
+            "type": "string",
+            "description": "Optional explicit hospital scope. Required for users that belong to several hospitals."
+          }
+        },
+        "required": [
+          "studyId",
+          "studyDesc",
+          "patId",
+          "patName",
+          "sex",
+          "patBirthdate",
+          "modalities",
+          "institution",
+          "src",
+          "idReportState"
+        ]
+      },
+      "ReportResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reportStudyId": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "finalized",
+              "signed",
+              "sent"
+            ]
+          },
+          "version": {
+            "type": "number"
+          },
+          "hospitalId": {
+            "type": "object",
+            "nullable": true
+          },
+          "professionalId": {
+            "type": "string"
+          },
+          "contents": {
+            "type": "object",
+            "nullable": true
+          },
+          "signature": {
+            "type": "object",
+            "nullable": true
+          },
+          "signedAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "sentAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "pdfUrl": {
+            "type": "object",
+            "nullable": true,
+            "description": "Short-lived signed URL to the rendered PDF"
+          }
+        },
+        "required": [
+          "id",
+          "reportStudyId",
+          "state",
+          "version",
+          "hospitalId",
+          "professionalId",
+          "contents",
+          "signature",
+          "signedAt",
+          "sentAt",
+          "pdfUrl"
+        ]
+      },
+      "ReportSectionDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "findings"
+          },
+          "title": {
+            "type": "string",
+            "example": "Findings"
+          },
+          "body": {
+            "type": "string",
+            "description": "Plain-text body for the section"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "body"
+        ]
+      },
+      "ReportContentsDto": {
+        "type": "object",
+        "properties": {
+          "modality": {
+            "type": "string",
+            "enum": [
+              "CT",
+              "MR",
+              "RX",
+              "US",
+              "OTHER"
+            ],
+            "example": "CT"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportSectionDto"
+            }
+          },
+          "metadata": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "modality",
+          "sections"
+        ]
+      },
+      "SaveReportV2Dto": {
+        "type": "object",
+        "properties": {
+          "contents": {
+            "$ref": "#/components/schemas/ReportContentsDto"
+          }
+        },
+        "required": [
+          "contents"
+        ]
+      },
+      "DrawnSignatureDto": {
+        "type": "object",
+        "properties": {
+          "drawingBase64": {
+            "type": "string",
+            "description": "Base64-encoded PNG of the drawn signature"
+          }
+        },
+        "required": [
+          "drawingBase64"
+        ]
+      },
+      "SignReportDto": {
+        "type": "object",
+        "properties": {
+          "policy": {
+            "type": "string",
+            "enum": [
+              "name_collegiate",
+              "drawn_hash_tsa"
+            ]
+          },
+          "drawn": {
+            "$ref": "#/components/schemas/DrawnSignatureDto"
+          },
+          "displayedName": {
+            "type": "string",
+            "description": "Override the displayed name (defaults to the professional record)."
+          },
+          "collegiate": {
+            "type": "string",
+            "description": "Override the collegiate number (defaults to the professional record)."
+          }
+        },
+        "required": [
+          "policy"
+        ]
+      },
+      "AiDraftRequestDto": {
+        "type": "object",
+        "properties": {
+          "findings": {
+            "type": "string",
+            "description": "Plain-text findings the radiologist already wrote"
+          },
+          "reportTitle": {
+            "type": "string",
+            "example": "TC torax sin contraste"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "es",
+              "en"
+            ]
+          },
+          "acceptConsent": {
+            "type": "boolean",
+            "description": "Set true on the first call to record the consent timestamp on the user. Subsequent calls do not need it."
+          }
+        },
+        "required": [
+          "findings",
+          "reportTitle"
+        ]
+      },
+      "AiDraftResponseDto": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Markdown / plain-text draft from the upstream"
+          },
+          "latencyMs": {
+            "type": "number"
+          },
+          "charCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "text",
+          "latencyMs",
+          "charCount"
+        ]
+      },
+      "GetParameter": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "GetParameterResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "showMessagePlan": {
+            "type": "boolean"
+          },
+          "response": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetParameter"
+            }
+          }
+        },
+        "required": [
+          "ok",
+          "message",
+          "response"
+        ]
+      },
+      "WorklistEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "studyInstanceUid": {
+            "type": "string"
+          },
+          "studyDescription": {
+            "type": "object",
+            "nullable": true
+          },
+          "studyCreatedAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "modalities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "institution": {
+            "type": "object",
+            "nullable": true
+          },
+          "hospitalId": {
+            "type": "object",
+            "nullable": true
+          },
+          "reportStateId": {
+            "type": "number"
+          },
+          "patName": {
+            "type": "object"
+          },
+          "patBirthdate": {
+            "type": "object"
+          },
+          "patIdHash": {
+            "type": "object",
+            "description": "HMAC of pat_id (deterministic, not reversible)"
+          }
+        },
+        "required": [
+          "id",
+          "studyInstanceUid",
+          "studyDescription",
+          "studyCreatedAt",
+          "modalities",
+          "institution",
+          "hospitalId",
+          "reportStateId",
+          "patName",
+          "patBirthdate",
+          "patIdHash"
+        ]
+      },
+      "WorklistResponseDto": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorklistEntryDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "offset": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "entries",
+          "total",
+          "limit",
+          "offset"
+        ]
+      },
+      "AssignStudyDto": {
+        "type": "object",
+        "properties": {
+          "professionalId": {
+            "type": "string",
+            "description": "Professional that takes the case",
+            "example": "b1..."
+          },
+          "reviewerProfessionalId": {
+            "type": "string",
+            "description": "Optional second professional that will perform a verification read."
+          }
+        },
+        "required": [
+          "professionalId"
+        ]
+      },
+      "AssignStudyResponseDto": {
+        "type": "object",
+        "properties": {
+          "reportStudyId": {
+            "type": "string"
+          },
+          "professionalId": {
+            "type": "string"
+          },
+          "reviewerProfessionalId": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "reportStudyId",
+          "professionalId",
+          "reviewerProfessionalId"
+        ]
+      },
+      "SlaCountByStateDto": {
+        "type": "object",
+        "properties": {
+          "draft": {
+            "type": "number"
+          },
+          "finalized": {
+            "type": "number"
+          },
+          "signed": {
+            "type": "number"
+          },
+          "sent": {
+            "type": "number"
+          },
+          "unreported": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "draft",
+          "finalized",
+          "signed",
+          "sent",
+          "unreported"
+        ]
+      },
+      "SlaDashboardDto": {
+        "type": "object",
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/SlaCountByStateDto"
+          },
+          "avgMinutesToSign": {
+            "type": "object",
+            "description": "Average minutes from study creation to report signed"
+          },
+          "avgMinutesSignToSent": {
+            "type": "object",
+            "description": "Average minutes from signed to sent"
+          },
+          "pendingCount": {
+            "type": "number"
+          },
+          "overSlaCount": {
+            "type": "number"
+          },
+          "slaMinutes": {
+            "type": "number",
+            "description": "SLA threshold in minutes used to compute overSla"
+          }
+        },
+        "required": [
+          "counts",
+          "avgMinutesToSign",
+          "avgMinutesSignToSent",
+          "pendingCount",
+          "overSlaCount",
+          "slaMinutes"
+        ]
+      },
+      "AuditEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ts": {
+            "type": "string"
+          },
+          "actorId": {
+            "type": "object",
+            "nullable": true
+          },
+          "actorRole": {
+            "type": "object",
+            "nullable": true
+          },
+          "hospitalId": {
+            "type": "object",
+            "nullable": true
+          },
+          "action": {
+            "type": "string"
+          },
+          "targetKind": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "object",
+            "nullable": true
+          },
+          "payload": {
+            "type": "object"
+          },
+          "prevHash": {
+            "type": "object",
+            "nullable": true
+          },
+          "hash": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ts",
+          "actorId",
+          "actorRole",
+          "hospitalId",
+          "action",
+          "targetKind",
+          "targetId",
+          "payload",
+          "prevHash",
+          "hash"
+        ]
+      },
+      "AuditListDto": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "offset": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "entries",
+          "total",
+          "limit",
+          "offset"
+        ]
+      },
+      "AuditVerifyResultDto": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "firstInvalidId": {
+            "type": "object",
+            "nullable": true
+          },
+          "checkedRows": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "ok",
+          "firstInvalidId",
+          "checkedRows"
+        ]
+      },
+      "ProfessionalSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "professionalLicense": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "lastName",
+          "email",
+          "professionalLicense"
+        ]
+      },
+      "ProfessionalListDto": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfessionalSummaryDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "offset": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "entries",
+          "total",
+          "limit",
+          "offset"
+        ]
+      },
+      "ProcessingRestrictionDto": {
+        "type": "object",
+        "properties": {
+          "restricted": {
+            "type": "boolean",
+            "description": "Enable or disable processing restriction (RGPD art. 18)"
+          }
+        },
+        "required": [
+          "restricted"
+        ]
+      }
+    }
+  }
+}

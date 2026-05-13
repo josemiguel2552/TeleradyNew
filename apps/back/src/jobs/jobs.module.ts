@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Hl7v2Module } from '../integrations/hl7v2/hl7v2.module';
 import { AuditQueueWorker } from './workers/audit-queue.worker';
 import { OruSenderWorker } from './workers/oru-sender.worker';
 import { SlaEscalationWorker } from './workers/sla-escalation.worker';
@@ -34,6 +35,10 @@ const QUEUES = ['sla-escalation', 'oru-sender', 'webhook-delivery', 'audit-verif
       },
     }),
     ...QUEUES.map((name) => BullModule.registerQueue({ name })),
+    // OruSenderWorker depends on Hl7MllpClient — without this import
+    // the DI graph fails to build at boot (caught when running the
+    // OpenAPI export script in Sprint 36).
+    Hl7v2Module,
   ],
   controllers: [JobsHealthController],
   providers: [
