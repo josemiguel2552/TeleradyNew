@@ -831,6 +831,26 @@ DELETE con id, disable() no-op sin id.
 decorate, SSE chunk routing, error frame routing, Bearer +
 Accept headers. Duck-types ReadableStream para jsdom.
 
+## Sprint 55 — Cover PdfService (cerrado)
+
+`pdf.service.spec.ts` (5 tests) ejecuta el `PdfService` real con
+`pdfkit` y un `StorageService` mock:
+
+- Render normal: bucket=`reports`, key=`reports/<study>/v<n>.pdf`,
+  contentType=`application/pdf`, metadata `{reportId, version}`,
+  body es un Buffer con magic-bytes `%PDF`.
+- Contents sin secciones → fallback "(Informe vacío)" sin
+  petar.
+- `signatureData=null` → sin bloque de firma.
+- `policy='drawn_hash_tsa'` con `tsa` → footer TSA presente.
+- `policy='name_collegiate'` produce un PDF **estrictamente más
+  corto** que el equivalente `drawn_hash_tsa` (no podemos grepear
+  el texto: pdfkit escribe deflate streams; comparamos tamaños).
+
+Coverage back 44.92 → 46.44 statements, 35.30 → 35.81 branches.
+PdfService 100% statements / branches / functions / lines. Total
+259 → 264 tests.
+
 ## Sprint 54 — Cover TsaService + SignatureService (cerrado)
 
 Dos suites nuevas en `apps/back/src/reports/v2/`:
