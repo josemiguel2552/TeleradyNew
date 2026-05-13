@@ -633,12 +633,42 @@ Resultado: nest build green, jest 196/196 (45 suites, +7).
 Backlog IA cerrado: SaaS + dos runtimes locales con dos
 contratos diferentes ya cubren todos los casos típicos.
 
+## Sprint 32 — Hot-path indexes (cerrado)
+
+Auditoría de las queries más calientes y añadidos los índices
+que faltaban. Todo `IF NOT EXISTS`, idempotente.
+
+- `report_study_worklist_idx`
+  ON `(hospital_id, report_state_id, study_created_time DESC)`
+  — composite que el worklist usa en todos los renders.
+- `report_study_professional_idx` ON `professional_id` —
+  drives el DICOM export + "asignados a mí".
+- `report_study_study_iuid_idx` ON `study_iuid` — lookup en
+  PacsIngest antes de upsert (antes era seq scan).
+- `report_professional_idx` ON `report.professional_id`.
+- `report_signed_at_idx` (parcial, WHERE signed_at IS NOT NULL)
+  — alimenta el SLA dashboard sin cargar las filas sin firmar.
+- `audit_log_action_idx` ON `audit_log.action` — admin verb filter.
+- `event_log_professional_type_idx`
+  ON `(professional_id, event_type, created_at)` — composite
+  del query natural per-professional.
+
+Entregables:
+- [x] DDL appendeado a `db-seed.sql` (sin CONCURRENTLY, IF NOT EXISTS).
+- [x] Migración separada
+  `infra/migrations/002-hot-path-indexes.sql` con
+  `CREATE INDEX CONCURRENTLY IF NOT EXISTS` para producción
+  (no bloquea writes; documentado que CONCURRENTLY no puede ir
+  en transacción).
+
+Resultado: jest sigue 196/196 (sólo DDL). El operator aplica
+`psql -f infra/migrations/002-hot-path-indexes.sql` en
+producción sin downtime.
+
 ## Backlog y futuro
 
 - Wiring opcional de `study.urgent` y
-  `report.review_required` al `PushService` (los hooks
-  viven; sólo falta la rule de workflow que dispare "urgent").
+  `report.review_required` al `PushService`.
 - Observabilidad: dashboards Grafana de las métricas que la
   plataforma ya expone (push, ai_draft, mpps, http rates).
-- Performance: revisar índices del worklist y de la búsqueda
-  por `patIdHash`.
+- Security review interno (rate limits, headers, JWT TTL).
