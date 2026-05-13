@@ -665,10 +665,66 @@ Resultado: jest sigue 196/196 (sólo DDL). El operator aplica
 `psql -f infra/migrations/002-hot-path-indexes.sql` en
 producción sin downtime.
 
+## Sprint 33 — Grafana dashboards + Prometheus alerts (cerrado)
+
+Métricas expuestas pero solo había un dashboard de logs. Esta
+sprint añade:
+
+- `infra/observability/grafana/dashboards/telerady-metrics.json`
+  con 12 paneles (HTTP rate/p95, reports signed/sent, SLA pending
+  con thresholds, AI draft rate + latency p50/p95/p99, MPPS,
+  push, errors).
+- `infra/observability/telerady-alerts.yml` con 7 reglas
+  recomendadas; `prometheus.yml` las carga vía `rule_files:`.
+
+## Sprint 34 — Security review pass (cerrado)
+
+OWASP API Top 10 walk-through, dos fixes low:
+
+- MFA confirm con `@Throttle({ limit: 10, ttl: 60_000 })` para
+  cerrar el brute-force window del TOTP de 6 dígitos.
+- `/v1/me/data-export` y `/v1/me/dicom-export` con
+  `@Throttle({ limit: 5, ttl: 3_600_000 })` — RGPD exports
+  pesados, fácil DoS de bolsillo.
+- Inventario completo de controles + residual risks en
+  `docs/SECURITY-FINDINGS-SPRINT34.md`.
+
+## Sprint 35 — HL7 priority propagation + study.urgent push (cerrado)
+
+Cierra el wire-in del PushService al evento "estudio urgente":
+
+- `mwl_entry` y `report_study` ganan columna `priority`
+  (ROUTINE | URGENT | STAT). `report_study` además gana
+  `accession_number` (la clave de join entre MWL y DICOM).
+  DDL idempotente en `db-seed.sql` + migración separada
+  `infra/migrations/003-priority-propagation.sql` con
+  `ALTER TABLE ADD COLUMN IF NOT EXISTS`.
+- `hl7-mapper.ts` extrae el priority code de
+  `OBR-27.6 → ORC-7.6 → OBR-5` (en ese orden) y lo normaliza:
+  `S → STAT`, `A/T/P → URGENT`, resto → `ROUTINE`. Spec
+  cubre los 9 casos.
+- `MllpServer.upsertMwlEntry()` persiste la prioridad junto
+  con el resto del ORM.
+- `PacsIngestService.sync()`:
+    - Extrae `AccessionNumber` del estudio DICOM.
+    - Hace lookup de `mwl_entry` por accession para heredar
+      prioridad; si la modalidad-walk-in no tiene MWL, se
+      queda ROUTINE.
+    - Persiste `accession_number` + `priority` en
+      `report_study`.
+    - Cuando emite push, si la prioridad es STAT/URGENT cambia
+      el `title` ("Estudio STAT"/"Estudio URGENT"), el
+      `body` ("Atender ahora") y la `category` a
+      `study_urgent` con un tag distinto para que el SW no
+      deduplique con notificaciones de routine.
+
+Resultado: nest build green, jest 205/205 (46 suites,
++9 mapper tests).
+
 ## Backlog y futuro
 
-- Wiring opcional de `study.urgent` y
-  `report.review_required` al `PushService`.
-- Observabilidad: dashboards Grafana de las métricas que la
-  plataforma ya expone (push, ai_draft, mpps, http rates).
-- Security review interno (rate limits, headers, JWT TTL).
+- OpenAPI export al repo (sólo el JSON sin secrets) para que
+  los clientes de integración puedan generar SDKs.
+- README badges (CI, coverage) + screenshots del editor.
+- Dev seed que añade un usuario con push activo para que el
+  flujo se pueda probar sin VAPID keys reales.

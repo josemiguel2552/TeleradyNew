@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { db } from '../../database/drizzle';
-import { reportStudyInTelerady } from '../../database/schema';
+import { mwlEntryInTelerady, reportStudyInTelerady } from '../../database/schema';
 import { AuditLogService } from '../../common/audit/audit-log.service';
 import { ColumnEncryptionService } from '../../common/crypto/column-encryption.service';
 import { TenantScope } from '../../common/tenant/tenant-scope';
@@ -73,6 +73,20 @@ export class PacsIngestService {
         .where(eq(reportStudyInTelerady.studyIuid, input.studyInstanceUid))
         .limit(1);
 
+      // Inherit priority from the matching MWL entry (HL7 ORM brought
+      // it in earlier). When the radiology lab also schedules WALK-INs
+      // without HL7 there's no MWL → priority stays ROUTINE.
+      let priority: 'ROUTINE' | 'URGENT' | 'STAT' = 'ROUTINE';
+      if (dicomFields.accessionNumber) {
+        const mwl = await tx
+          .select({ priority: mwlEntryInTelerady.priority })
+          .from(mwlEntryInTelerady)
+          .where(eq(mwlEntryInTelerady.accessionNumber, dicomFields.accessionNumber))
+          .limit(1);
+        const fromMwl = mwl[0]?.priority;
+        if (fromMwl === 'STAT' || fromMwl === 'URGENT') priority = fromMwl;
+      }
+
       const values = {
         hospitalId,
         professionalId,
@@ -91,6 +105,8 @@ export class PacsIngestService {
         patBirthdateEnc: this.enc.encryptIfPresent(dicomFields.patientBirthDate, aad),
         studyCreatedTime: dicomFields.studyCreatedAt ?? null,
         reportStateId: DEFAULT_PENDING_STATE_ID,
+        accessionNumber: dicomFields.accessionNumber,
+        priority,
       };
 
       let reportStudyId: string;
@@ -152,14 +168,21 @@ export class PacsIngestService {
       // Notify the matched primary out-of-band. The push is fire &
       // forget — it never blocks the ingest transaction and a missing
       // device just leaves the worklist as the canonical surface.
+      // STAT / URGENT priorities flip the category so the SW can
+      // present a more attention-grabbing notification on the
+      // device (different tag → no dedupe with routine ones).
       if (assignedProfessionalId) {
+        const isUrgent = priority === 'STAT' || priority === 'URGENT';
+        const modalityLabel = dicomFields.modalities.join('/') || '—';
         void this.push
           .sendToProfessional(assignedProfessionalId, {
-            title: 'Estudio nuevo',
-            body: `Modalidad ${dicomFields.modalities.join('/') || '—'} en tu worklist.`,
+            title: isUrgent ? `Estudio ${priority}` : 'Estudio nuevo',
+            body: isUrgent
+              ? `Prioridad ${priority} (${modalityLabel}). Atender ahora.`
+              : `Modalidad ${modalityLabel} en tu worklist.`,
             url: `/radiologist/study/${reportStudyId}`,
-            tag: `study-ingested-${reportStudyId}`,
-            category: 'study_ingested',
+            tag: isUrgent ? `study-urgent-${reportStudyId}` : `study-ingested-${reportStudyId}`,
+            category: isUrgent ? 'study_urgent' : 'study_ingested',
           })
           .catch(() => undefined);
       }
@@ -216,6 +239,7 @@ interface ExtractedFields {
   sex: string | null;
   modalities: string[];
   studyCreatedAt: string | null;
+  accessionNumber: string | null;
 }
 
 function extractFields(study: OrthancStudy): ExtractedFields {
@@ -230,6 +254,7 @@ function extractFields(study: OrthancStudy): ExtractedFields {
     sex: patient.PatientSex ?? null,
     modalities: study.ModalitiesInStudy ?? [],
     studyCreatedAt: buildIsoTimestamp(main.StudyDate, main.StudyTime),
+    accessionNumber: main.AccessionNumber ?? null,
   };
 }
 

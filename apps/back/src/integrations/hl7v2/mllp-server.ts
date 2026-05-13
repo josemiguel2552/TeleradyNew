@@ -151,6 +151,7 @@ export class Hl7MllpServer implements OnApplicationBootstrap, OnApplicationShutd
         scheduledDate: orm.scheduledDate,
         scheduledTime: orm.scheduledTime,
         modality: orm.modality,
+        priority: orm.priority,
         requestingPhysician: orm.requestingPhysician,
         state: orm.orderControl === 'CA' ? 'cancelled' : 'scheduled',
       })

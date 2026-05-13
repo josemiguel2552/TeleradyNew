@@ -396,3 +396,16 @@ CREATE INDEX IF NOT EXISTS audit_log_action_idx
 -- (professional, event_type, ts) composite the queries need.
 CREATE INDEX IF NOT EXISTS event_log_professional_type_idx
     ON telerady.event_log (professional_id, event_type, created_at);
+
+-- =====================================================================
+-- Sprint 35 — HL7 priority propagation (MWL → report_study)
+-- =====================================================================
+ALTER TABLE telerady.mwl_entry
+    ADD COLUMN IF NOT EXISTS priority VARCHAR(16);
+
+ALTER TABLE telerady.report_study
+    ADD COLUMN IF NOT EXISTS accession_number VARCHAR(64),
+    ADD COLUMN IF NOT EXISTS priority VARCHAR(16);
+
+CREATE INDEX IF NOT EXISTS report_study_accession_idx
+    ON telerady.report_study (accession_number);

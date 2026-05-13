@@ -610,6 +610,8 @@ export const reportStudyInTelerady = telerady.table("report_study", {
 	reportRegisteredTime: timestamp("report_registered_time", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	reportSentTime: timestamp("report_sent_time", { withTimezone: true, mode: 'string' }),
 	reportIdApi: varchar("report_id_api", { length: 150 }),
+	accessionNumber: varchar("accession_number", { length: 64 }),
+	priority: varchar({ length: 16 }),
 });
 
 export const eventLogInTelerady = telerady.table("event_log", {
@@ -749,6 +751,7 @@ export const mwlEntryInTelerady = telerady.table("mwl_entry", {
 	scheduledDate: varchar("scheduled_date", { length: 8 }),
 	scheduledTime: varchar("scheduled_time", { length: 6 }),
 	modality: varchar({ length: 16 }),
+	priority: varchar({ length: 16 }),
 	requestingPhysician: varchar("requesting_physician", { length: 150 }),
 	state: varchar({ length: 20 }).default('scheduled').notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),

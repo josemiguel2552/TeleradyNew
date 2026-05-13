@@ -15,6 +15,26 @@ export interface OrmOrder {
   scheduledTime: string;
   requestingPhysician: string;
   orderControl: string;
+  /**
+   * Normalised priority: ROUTINE | URGENT | STAT. STAT means "this
+   * one is screaming"; URGENT is the catch-all for ASAP / timing
+   * critical / preop; ROUTINE is the default.
+   */
+  priority: 'ROUTINE' | 'URGENT' | 'STAT';
+}
+
+/**
+ * Map a raw HL7 v2 priority code (OBR-27.6 / ORC-7.6 / OBR-5) onto
+ * the small enum Telerady cares about. HL7 alphabet:
+ *   S = stat                                 → STAT
+ *   A = asap, T = timing critical, P = preop → URGENT
+ *   R = routine (or empty)                   → ROUTINE
+ */
+export function normalisePriority(raw: string): 'ROUTINE' | 'URGENT' | 'STAT' {
+  const c = (raw ?? '').trim().toUpperCase().slice(0, 1);
+  if (c === 'S') return 'STAT';
+  if (c === 'A' || c === 'T' || c === 'P') return 'URGENT';
+  return 'ROUTINE';
 }
 
 /**
@@ -57,6 +77,13 @@ export function mapOrm(message: Hl7Message): OrmOrder | null {
   const scheduled = getField(obr, 7);
   const scheduledDate = scheduled.slice(0, 8);
   const scheduledTime = scheduled.slice(8, 14);
+  // OBR-27 is "Quantity/Timing"; the 6th component is the HL7
+  // Priority code. Older messages put the priority on OBR-5 or
+  // ORC-7.6 — we accept whichever first non-empty value we find.
+  const priorityRaw =
+    getComponent(obr, 27, 5) ||
+    getComponent(orc, 7, 5) ||
+    getField(obr, 5);
   const modality = getField(obr, 24);
 
   return {
@@ -74,6 +101,7 @@ export function mapOrm(message: Hl7Message): OrmOrder | null {
     scheduledTime,
     requestingPhysician,
     orderControl,
+    priority: normalisePriority(priorityRaw),
   };
 }
 
