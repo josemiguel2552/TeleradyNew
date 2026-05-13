@@ -35,21 +35,49 @@ export interface Hl7Message {
   byName: Map<string, Hl7Segment[]>;
 }
 
+/**
+ * Indexing convention (HL7 §2.7): `fields[0]` is the segment name and
+ * `fields[i]` is the i-th HL7 field, so callers can write
+ * `getField(pid, 3)` to read PID-3 and `getField(msh, 3)` to read
+ * MSH-3 (sending application) uniformly.
+ *
+ * MSH carries two "synthetic" fields:
+ *   MSH-1 = the field separator (always `|`)
+ *   MSH-2 = the encoding characters (`^~\&`)
+ * In the raw `|`-split these are at positions 0 and 1, so the rest of
+ * the fields (MSH-3, MSH-4, …) live at fieldsRaw[2..end]. We
+ * reconstruct the canonical indexing here.
+ *
+ * NOTE — Sprint 41 fix: the previous implementation was off-by-one on
+ * MSH, so `getField(msh, 3)` was returning MSH-4 (sending facility)
+ * instead of MSH-3 (sending application). hl7-mapper.ts and the ACK
+ * builder were affected; the codec spec now pins the contract.
+ */
 export function parseHl7(raw: string): Hl7Message {
   const segments: Hl7Segment[] = [];
   const byName = new Map<string, Hl7Segment[]>();
   const lines = raw.replace(/\r\n|\n/g, '\r').split(SEGMENT_SEP);
+  const wrapLiteral = (text: string): Hl7Field => ({
+    raw: text,
+    rep: [[[text]]],
+  });
   for (const line of lines) {
     if (!line) continue;
     const segName = line.slice(0, 3);
     if (segName.length !== 3 || !/^[A-Z][A-Z0-9]{2}$/.test(segName)) continue;
     const fieldsRaw = line.split(FIELD_SEP);
-    // For MSH, field 1 is the field separator itself; shift accordingly.
-    const fieldsStart = segName === 'MSH' ? 2 : 1;
-    const fields: Hl7Field[] = [];
-    // Prepend a placeholder so callers can do msh.fields[1] for MSH-1.
-    if (segName === 'MSH') fields.push({ raw: FIELD_SEP, rep: [[[FIELD_SEP]]] });
-    for (let i = fieldsStart - (segName === 'MSH' ? 1 : 1); i < fieldsRaw.length; i += 1) {
+    const fields: Hl7Field[] = [wrapLiteral(segName)];
+
+    let rawStart: number;
+    if (segName === 'MSH') {
+      fields.push(wrapLiteral(FIELD_SEP));         // MSH-1
+      fields.push(wrapLiteral(fieldsRaw[1] ?? '')); // MSH-2 = encoding chars
+      rawStart = 2;
+    } else {
+      rawStart = 1;
+    }
+
+    for (let i = rawStart; i < fieldsRaw.length; i += 1) {
       const fraw = fieldsRaw[i];
       const reps = fraw.split(REPETITION_SEP).map((r) =>
         r.split(COMPONENT_SEP).map((c) => c.split(SUBCOMPONENT_SEP)),
