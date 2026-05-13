@@ -53,6 +53,52 @@ describe('validateEnv', () => {
     ).toThrow(/REDIS_URL/);
   });
 
+  // ---- Sprint 21 onwards: AI provider envs ---------------------------------
+  it('AI_DRAFT_PROVIDER defaults to radiogenai when unset', () => {
+    expect(validateEnv(validBase).AI_DRAFT_PROVIDER).toBe('radiogenai');
+  });
+
+  it('rejects an unknown AI_DRAFT_PROVIDER value', () => {
+    expect(() =>
+      validateEnv({ ...validBase, AI_DRAFT_PROVIDER: 'gpt-magic' }),
+    ).toThrow(/AI_DRAFT_PROVIDER/);
+  });
+
+  it('rejects a non-URL OLLAMA_URL', () => {
+    expect(() =>
+      validateEnv({ ...validBase, AI_DRAFT_PROVIDER: 'ollama', OLLAMA_URL: 'not-a-url' }),
+    ).toThrow(/OLLAMA_URL/);
+  });
+
+  // ---- Sprint 27 / 29: server-to-server secrets ----------------------------
+  it('rejects an INTEGRATION_API_KEY shorter than 32 chars', () => {
+    expect(() =>
+      validateEnv({ ...validBase, INTEGRATION_API_KEY: 'short' }),
+    ).toThrow(/INTEGRATION_API_KEY/);
+  });
+
+  it('accepts a 64-char hex INTEGRATION_API_KEY', () => {
+    const env = validateEnv({ ...validBase, INTEGRATION_API_KEY: 'a'.repeat(64) });
+    expect(env.INTEGRATION_API_KEY).toHaveLength(64);
+  });
+
+  it('rejects a malformed VAPID_SUBJECT (must be mailto: or https:)', () => {
+    expect(() =>
+      validateEnv({
+        ...validBase,
+        VAPID_PUBLIC_KEY: 'B'.repeat(80),
+        VAPID_PRIVATE_KEY: 'p'.repeat(40),
+        VAPID_SUBJECT: 'ops@telerady.es', // missing mailto:
+      }),
+    ).toThrow(/VAPID_SUBJECT/);
+  });
+
+  it('VAPID keys are optional (push self-disables when missing)', () => {
+    // Just asserting the schema does not require them; the runtime
+    // surfaces the disabled state via PushService.configured.
+    expect(() => validateEnv(validBase)).not.toThrow();
+  });
+
   it('requires COOKIE_SECURE=true in production', () => {
     expect(() =>
       validateEnv({
