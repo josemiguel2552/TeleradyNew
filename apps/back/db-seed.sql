@@ -358,3 +358,41 @@ CREATE TABLE IF NOT EXISTS telerady.push_subscription (
     CONSTRAINT push_subscription_endpoint_key UNIQUE (endpoint)
 );
 CREATE INDEX IF NOT EXISTS idx_push_subscription_user ON telerady.push_subscription(user_id) WHERE revoked_at IS NULL;
+
+-- =====================================================================
+-- Sprint 32 — Hot-path indexes for worklist, assignment lookups and SLA
+-- =====================================================================
+-- All conditional / IF NOT EXISTS so re-applying the seed is safe.
+
+-- Worklist composite: covers the most common filter (per hospital, by
+-- state, chronologically ordered). Drives /v1/worklist for both
+-- coordinator and radiologist views.
+CREATE INDEX IF NOT EXISTS report_study_worklist_idx
+    ON telerady.report_study (hospital_id, report_state_id, study_created_time DESC);
+
+-- "All studies assigned to me" — drives /v1/me/dicom-export and the
+-- radiologist's personal worklist filter.
+CREATE INDEX IF NOT EXISTS report_study_professional_idx
+    ON telerady.report_study (professional_id);
+
+-- Lookup by StudyInstanceUID at ingest time (PacsIngestService) and
+-- when a PACS push backfills an existing row.
+CREATE INDEX IF NOT EXISTS report_study_study_iuid_idx
+    ON telerady.report_study (study_iuid);
+
+-- Report fan-out for "draft / signed / sent" filters (admin SLA, jobs).
+CREATE INDEX IF NOT EXISTS report_professional_idx
+    ON telerady.report (professional_id);
+CREATE INDEX IF NOT EXISTS report_signed_at_idx
+    ON telerady.report (signed_at)
+    WHERE signed_at IS NOT NULL;
+
+-- Audit list by action (admin audit UI lets the operator filter by
+-- specific verbs: "study.signed", "auth.failed_login", …).
+CREATE INDEX IF NOT EXISTS audit_log_action_idx
+    ON telerady.audit_log (action);
+
+-- Event log — already indexed by professional_id implicitly via the
+-- (professional, event_type, ts) composite the queries need.
+CREATE INDEX IF NOT EXISTS event_log_professional_type_idx
+    ON telerady.event_log (professional_id, event_type, created_at);
