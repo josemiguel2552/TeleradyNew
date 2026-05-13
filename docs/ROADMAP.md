@@ -831,6 +831,22 @@ DELETE con id, disable() no-op sin id.
 decorate, SSE chunk routing, error frame routing, Bearer +
 Accept headers. Duck-types ReadableStream para jsdom.
 
+## Sprint 59 — Subir thresholds anti-regresión (cerrado)
+
+Tras Sprints 54-58 el back está en 50.08 / 42.06 / 47.42 / 50.10
+(statements / branches / functions / lines). El threshold de
+Sprint 39 (30 / 25 / 30 / 30) queda obsoleto. Nuevo gate justo por
+debajo del baseline actual para dejar margen ante refactors:
+
+- statements 30 → 45  (baseline 50.08)
+- branches   25 → 38  (baseline 42.06)
+- functions  30 → 42  (baseline 47.42)
+- lines      30 → 45  (baseline 50.10)
+
+Misma política Sprint 39: nunca tocar el threshold al alza en el
+mismo commit que añade tests; subir el listón en un commit
+dedicado para que el rationale quede legible en el log.
+
 ## Sprint 58 — Extender cobertura de WorklistRepository (cerrado)
 
 3 tests nuevos en `worklist.repository.spec.ts`:
