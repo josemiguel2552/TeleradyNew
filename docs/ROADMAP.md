@@ -831,6 +831,27 @@ DELETE con id, disable() no-op sin id.
 decorate, SSE chunk routing, error frame routing, Bearer +
 Accept headers. Duck-types ReadableStream para jsdom.
 
+## Sprint 56 — Cover SrPusherService (cerrado)
+
+`sr-pusher.service.spec.ts` (5 tests) con db + dicom-sr-builder
+mockeados y `ColumnEncryptionService` / `OrthancClient` como fakes:
+
+- Study lookup vacío → `{ orthancId: null }` sin tocar Orthanc.
+- Happy path: descifra patIdEnc/patNameEnc/patBirthdateEnc con la
+  AAD `report_study:<professionalId>`, ensambla `reportText` con
+  los títulos en MAYÚSCULAS, signedBy de `signature.displayedName`,
+  signedAt heredado del report, y orthanc.pushDicomFromJson recibe
+  el JSON construido.
+- Fallbacks: campos null → `UNKNOWN` / `UNKNOWN^`, signature null
+  → `Telerady`, signedAt null → ISO timestamp válido (now).
+- Orthanc devuelve null → `{ orthancId: null }` (logger.warn).
+- Excepción aguas arriba (db boom) → swallow + `{ orthancId: null }`
+  (logger.warn). El SR push es best-effort, jamás aborta la firma.
+
+Coverage back 46.44 → 47.55 statements, 35.81 → 37.50 branches.
+SrPusherService 100% statements/branches/functions/lines. Total
+264 → 269 tests.
+
 ## Sprint 55 — Cover PdfService (cerrado)
 
 `pdf.service.spec.ts` (5 tests) ejecuta el `PdfService` real con
