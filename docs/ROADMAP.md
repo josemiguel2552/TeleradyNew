@@ -361,10 +361,51 @@ generado, `jest` 124/124 (front) + 166/166 (back). El SPA por fin
 arranca y los Sprints 21-23 (RadiogenAI integration + SSE) son
 testeables en navegador.
 
+## Sprint 25 — RLS efectivo + E2E con testcontainers (cerrado)
+
+Último Sprint 7 leftover real. La infra ya existía desde Sprint 7
+(migración `infra/migrations/001-enable-rls.sql`,
+`RlsContextInterceptor` con auto-gating, runbook), pero faltaba
+cobertura completa y verificación end-to-end.
+
+- [x] Migración RLS extendida a `telerady.report`,
+  `telerady.mwl_entry` y `telerady.hl7_message` (tablas tenant-scoped
+  que estaban fuera de las primeras policies). Cada una con `USING`
+  + `WITH CHECK` referenciando el helper `_current_hospital_ids()`
+  con escape a `_is_privileged()`.
+- [x] `RlsContextInterceptor` registrado como `APP_INTERCEPTOR`
+  global. El propio interceptor se auto-desactiva cuando
+  `RLS_ENABLED !== 'true'`, así que dev y los tests jest unitarios
+  siguen inalterados.
+- [x] E2E setup reescrito (`test/e2e/setup-db.ts`): el container
+  ahora aplica el seed canónico **y** la migración RLS, provisiona
+  un password para `telerady_app`, expone un factory
+  `connectAsApp()` con un cliente autenticado bajo ese rol y
+  preserva el `migratorClient` superuser para arrange/teardown.
+  Tipos de Drizzle y `pg` saneados (`@types/pg` añadido).
+- [x] E2E spec (`test/e2e/tenant-isolation.spec.ts`) reescrito para
+  cubrir seis escenarios contra el role RLS-forced:
+    1) Sin ningún GUC: 0 filas (fail closed).
+    2) GUC `app.current_hospital_ids = {A}`: sólo el estudio de A.
+    3) GUC `app.is_privileged = true`: ambos estudios.
+    4) `WITH CHECK` bloquea un INSERT cross-tenant
+       (`row-level security` en el mensaje del error).
+    5) `audit_log` SELECT respeta el filtro de hospital.
+    6) `hospital_membership` sólo expone la fila del usuario actual.
+  Helper `withTenant(client, guc, fn)` envuelve cada test en una
+  transacción y ejecuta los cuatro `set_config(...)` que el
+  interceptor hace en producción.
+- [x] `RLS-ACTIVATION-RUNBOOK.md`: rollback ampliado a todas las
+  tablas, sección "Day-2 operations" apunta al spec real
+  (`test/e2e/tenant-isolation.spec.ts` con `E2E=1`) y se documenta
+  el wiring global del interceptor.
+
+Gating: los E2E necesitan Docker (testcontainers). `npm test` sigue
+no tocándolos (`it.skip` sin `E2E=1`). Build, type-check y suite
+estándar siguen 39/39, 166/166 verdes.
+
 ## Backlog y futuro
 
-- Activación efectiva de RLS en staging + tests E2E con
-  testcontainers (último Sprint 7 leftover).
 - Modelos IA locales (cuando RadiogenAI deje de ser la opción única).
 - Workflows DICOM avanzados (Modality Performed Procedure Step).
 - App móvil para alertas urgentes.

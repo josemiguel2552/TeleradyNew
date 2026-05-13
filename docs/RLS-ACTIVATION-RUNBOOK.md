@@ -66,20 +66,47 @@ professional_id, hospital_ids and is_privileged into the PG session as
 Set `RLS_ENABLED=false`, restart the API, and run:
 
 ```sql
-ALTER TABLE telerady.report_study DISABLE ROW LEVEL SECURITY;
--- Same for hospital_membership, refresh_token, event_log, audit_log
+ALTER TABLE telerady.report_study     DISABLE ROW LEVEL SECURITY;
+ALTER TABLE telerady.report           DISABLE ROW LEVEL SECURITY;
+ALTER TABLE telerady.mwl_entry        DISABLE ROW LEVEL SECURITY;
+ALTER TABLE telerady.hl7_message      DISABLE ROW LEVEL SECURITY;
+ALTER TABLE telerady.event_log        DISABLE ROW LEVEL SECURITY;
+ALTER TABLE telerady.audit_log        DISABLE ROW LEVEL SECURITY;
+ALTER TABLE telerady.hospital_membership DISABLE ROW LEVEL SECURITY;
+ALTER TABLE telerady.refresh_token    DISABLE ROW LEVEL SECURITY;
 ```
 
 You don't need to drop the policies; only the ENABLE flag matters.
 
 ## Day-2 operations
 
-- Drizzle migrations always run with `DATABASE_URL_MIGRATOR` and never with
-  the application role.
-- When you add a new tenant-scoped table, add `ENABLE ROW LEVEL SECURITY`
-  and a policy to `infra/migrations/00X-*.sql`. The CI gitleaks step also
-  warns if a new table appears without a policy (regex on
-  `CREATE TABLE telerady.*` + check for matching `ENABLE ROW LEVEL SECURITY`).
+- Drizzle migrations always run with `DATABASE_URL_MIGRATOR` and never
+  with the application role.
+- When you add a new tenant-scoped table, add `ENABLE ROW LEVEL
+  SECURITY` and a policy to `infra/migrations/00X-*.sql`.
 - Test isolation between tenants is automated in
-  `apps/back/test/integration/tenant-isolation.spec.ts` (Sprint 7 wires
-  testcontainers).
+  `apps/back/test/e2e/tenant-isolation.spec.ts`. The suite boots a
+  real Postgres testcontainer, applies the seed and the RLS migration,
+  then exercises six scenarios (gate closed without GUC, hospital
+  tenant filter, admin bypass, WITH CHECK on cross-tenant INSERT,
+  audit_log read scoping, hospital_membership self-row visibility).
+  Run it with:
+
+  ```bash
+  cd apps/back
+  E2E=1 ./node_modules/.bin/jest --config test/e2e/jest.e2e.config.js
+  ```
+
+  The default `npm test` skips it (the specs use `it.skip` when
+  `E2E !== '1'`) so contributors without Docker do not pay the boot
+  cost.
+
+## Interceptor wiring
+
+`RlsContextInterceptor` is registered globally in
+`apps/back/src/app.module.ts` as an `APP_INTERCEPTOR`. It self-gates on
+`RLS_ENABLED`: when the flag is anything but `'true'` it short-circuits
+to `next.handle()`, so dev environments are unaffected. Once the env
+flips to `'true'` every request wraps its handler in a transaction
+that issues `set_config('app.*', …, true)` for the four GUCs the
+policies read.

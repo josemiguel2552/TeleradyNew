@@ -95,6 +95,59 @@ CREATE POLICY rs_tenant ON telerady.report_study
     OR hospital_id = ANY (telerady._current_hospital_ids())
   );
 
+-- Reports inherit the report_study hospital, but we double-protect them
+-- because the encrypted contents live here. Null hospital_id is allowed
+-- in privileged inserts (admin tooling) but invisible to tenants.
+ALTER TABLE telerady.report ENABLE ROW LEVEL SECURITY;
+ALTER TABLE telerady.report FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS r_tenant ON telerady.report;
+CREATE POLICY r_tenant ON telerady.report
+  FOR ALL
+  USING (
+    telerady._is_privileged()
+    OR hospital_id = ANY (telerady._current_hospital_ids())
+  )
+  WITH CHECK (
+    telerady._is_privileged()
+    OR hospital_id = ANY (telerady._current_hospital_ids())
+  );
+
+-- MWL entries: the inbound HL7 worklist scheduled per hospital. Same
+-- contract as report_study.
+ALTER TABLE telerady.mwl_entry ENABLE ROW LEVEL SECURITY;
+ALTER TABLE telerady.mwl_entry FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS mwl_tenant ON telerady.mwl_entry;
+CREATE POLICY mwl_tenant ON telerady.mwl_entry
+  FOR ALL
+  USING (
+    telerady._is_privileged()
+    OR hospital_id IS NULL
+    OR hospital_id = ANY (telerady._current_hospital_ids())
+  )
+  WITH CHECK (
+    telerady._is_privileged()
+    OR hospital_id = ANY (telerady._current_hospital_ids())
+  );
+
+-- Raw HL7 traffic per hospital. Inserts come from the MLLP server which
+-- runs as the privileged role; reads stay per-tenant.
+ALTER TABLE telerady.hl7_message ENABLE ROW LEVEL SECURITY;
+ALTER TABLE telerady.hl7_message FORCE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS hl7_tenant ON telerady.hl7_message;
+CREATE POLICY hl7_tenant ON telerady.hl7_message
+  FOR ALL
+  USING (
+    telerady._is_privileged()
+    OR hospital_id = ANY (telerady._current_hospital_ids())
+  )
+  WITH CHECK (
+    telerady._is_privileged()
+    OR hospital_id = ANY (telerady._current_hospital_ids())
+  );
+
 ALTER TABLE telerady.event_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE telerady.event_log FORCE ROW LEVEL SECURITY;
 

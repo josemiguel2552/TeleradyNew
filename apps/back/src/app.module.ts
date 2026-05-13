@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 
 import { AppController } from './app.controller';
+import { RlsContextInterceptor } from './common/tenant/rls-context.interceptor';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { AuditLogModule } from './common/audit/audit-log.module';
@@ -118,6 +119,15 @@ const REDACT_PATHS = [
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    // RlsContextInterceptor self-gates on RLS_ENABLED — registered
+    // globally is safe in dev (it short-circuits to next.handle()) and
+    // becomes the production tenant gate once the migration in
+    // infra/migrations/001-enable-rls.sql is applied and the env flips
+    // RLS_ENABLED to "true". See docs/RLS-ACTIVATION-RUNBOOK.md.
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RlsContextInterceptor,
     },
   ],
 })
