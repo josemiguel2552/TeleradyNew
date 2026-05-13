@@ -76,19 +76,48 @@ Modelo STRIDE aplicado a la plataforma. Actualizar tras cada sprint mayor.
 
 | ID | Riesgo | Estado actual |
 |---|---|---|
-| API1 | BOLA | Pendiente: añadir `tenant_id` en todas las queries (Sprint 1) |
-| API2 | Broken Authentication | Sprint 0: JWT v2, refresh rotation, MFA stub |
-| API3 | BOPLA | Pendiente: DTOs estrictos con whitelist en class-validator |
-| API4 | Resource Consumption | Sprint 0: Throttler básico; Sprint 7: quotas avanzadas |
-| API5 | Broken Function Auth | Sprint 0: CASL + guards; Sprint 1: cobertura completa |
-| API6 | Sensitive Business Flows | Sprint 5: firmar/enviar informe |
-| API7 | SSRF | Validar URLs en config y proxies (Sprint 2 con OHIF) |
-| API8 | Security Misconfiguration | Sprint 0: Helmet, CORS, Swagger guard, env Zod |
-| API9 | Improper Inventory | Sprint 0: gitleaks; Sprint 8: ROPA |
-| API10 | Unsafe API Consumption | Sprint 2: clientes con timeouts + retries acotados |
+| API1 | BOLA | Sprint 7: `TenantScope` en todos los repos; Sprint 25: RLS forzado en Postgres con `telerady_app` (BYPASSRLS=off) |
+| API2 | Broken Authentication | Sprint 0: JWT, refresh rotation, MFA stub; Sprint 34: MFA confirm throttled; lockout por usuario |
+| API3 | BOPLA | DTOs con `whitelist: true, forbidNonWhitelisted: true` en main.ts ValidationPipe |
+| API4 | Resource Consumption | ThrottlerGuard global; Sprint 34: throttles dedicados a MFA + RGPD exports |
+| API5 | Broken Function Auth | CASL `AbilityFactory` + RolesGuard; cobertura ampliada en Sprint 22 |
+| API6 | Sensitive Business Flows | Sprint 5: firma; Sprint 7: revisión; Sprint 21: AI draft con triple opt-in |
+| API7 | SSRF | OrthancClient hace URL fija desde env; RadiogenAIClient idem |
+| API8 | Security Misconfiguration | helmet + CSP estricto + HSTS preload + CORS allowlist + env Zod |
+| API9 | Improper Inventory | gitleaks en CI; Sprint 36: `docs/openapi.json` + drift check |
+| API10 | Unsafe API Consumption | Todos los clientes externos con AbortController + timeout; Sprint 23: error mid-stream surface |
+
+## Cambios desde Sprint 0 (resumen por sprint)
+
+| Sprint | Adición o cambio relevante para el modelo |
+|---|---|
+| 17 | `/metrics` Prometheus añade superficie nueva; protegida por basic-auth en prod |
+| 21 | AI draft → RadiogenAI: nuevo "encargado de tratamiento" externo (RGPD art. 28). Triple opt-in (env + hospital flag + user consent) |
+| 22 | Métricas inyectadas correctamente; fix latente CASL types |
+| 25 | RLS forzado en Postgres; interceptor pushea GUCs por request; suite E2E con testcontainers |
+| 27 | MPPS receiver: webhook server-to-server protegido con `ApiKeyGuard` + `timingSafeEqual` |
+| 28 | AI provider abstraction: ahora Ollama / vLLM locales son opción → datos pueden no salir del perímetro |
+| 29 | Web Push (VAPID): VAPID private key se queda en el back; payload audit log sin PHI |
+| 34 | Security review pass; throttles añadidos; residual risks documentados |
+| 35 | HL7 priority propagation (STAT/URGENT). Push categorías separadas |
+| 41 | parseHl7 off-by-one fix; ACK respondía con sender/receiver incorrectos |
+
+## Invariantes que NUNCA deben romperse
+
+- El **JWT access** viaja en `Authorization: Bearer`. El **refresh** viaja en
+  cookie `httpOnly + Secure + SameSite`. Mutaciones (`POST`, `PUT`, `DELETE`)
+  usan el header, no la cookie → no hay surface CSRF mientras se respete esto.
+- Los `pat_id` / `pat_name` / `pat_birthdate` salen del back **sólo** descifrados
+  con el AAD `report_study:<professionalId>`. Ningún provider externo (Radiogen,
+  Ollama, vLLM, push, mpps, oru) los recibe.
+- El `audit_log` se escribe **dentro** de la transacción que origina el evento.
+  El hash chain se verifica diariamente (`scripts/audit-verify.sh`).
+- `RLS_ENABLED=true` en producción + role `telerady_app` (BYPASSRLS=off). Los
+  scripts de admin / migración usan `telerady_migrator` (BYPASSRLS=on).
 
 ## Asunciones
 
 - El proveedor cloud cumple ENS y firma DPA conforme art. 28 RGPD.
 - HashiCorp Vault se opera con unseal multi-key.
-- Backups cifrados se prueban al menos trimestralmente (DR drill).
+- Backups cifrados se prueban al menos trimestralmente (DR drill —
+  ahora también semanalmente vía `.github/workflows/backup-restore.yml`).
