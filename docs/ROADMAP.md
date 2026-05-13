@@ -568,11 +568,49 @@ infra está lista y testeada.
 Resultado: nest build green, jest 187/187 (43 suites, +5 from
 Sprint 28's 182).
 
+## Sprint 30 — Wire PushService + SPA Service Worker (cerrado)
+
+Cierra el loop end-to-end: el back ya envía pushes cuando ocurre
+algo relevante, y la SPA tiene cómo suscribirse al sistema.
+
+- [x] **Back wiring** (best-effort, fire-and-forget — un push
+  caído nunca aborta la transacción que lo originó):
+    - `admin.assignStudy()` → `push.sendToProfessional()` con
+      categoría `study_assigned` y deep-link
+      `/radiologist/study/:id`.
+    - `pacs-ingest.sync()` cuando el `WorkflowEngine` auto-asigna
+      → push categoría `study_ingested` (texto incluye la
+      modalidad).
+- [x] `PushService.sendToProfessional(professionalId, payload)`
+  resuelve `app_user.professional_id` y delega a `sendToUser`.
+- [x] **SPA Service Worker** (`apps/front/src/sw.js`) minimal:
+  handler `push`, `notificationclick` que reusa una pestaña
+  existente si la hay (mejor UX). Sin caching agresivo —
+  contexto clínico, no queremos lecturas stale.
+- [x] `angular.json` empaqueta `sw.js` en el root del bundle.
+- [x] `PushSubscriptionService` Angular: signals
+  `supported`/`permission`/`enabled`/`subscriptionId`,
+  `enable()` (pide permiso, registra SW, llama
+  `/v1/push/public-key`, suscribe vía PushManager y POSTea al
+  back), `disable()` (DELETE en el back + `unsubscribe()`
+  local). Convierte base64url → Uint8Array para
+  `applicationServerKey`.
+- [x] UI en `/admin/me`: card "Push notifications" con estado
+  del permiso, botón activar/desactivar, hint cuando el
+  navegador tiene Telerady en deny.
+- [x] Tests: 2 en `admin.service.spec` (assign dispatch push,
+  fallo de push no aborta assign).
+
+Resultado: back nest build green, jest 189/189 (44 suites,
++2). Front ng build prod green, jest 124/124. La operativa
+real ya tiene push: cuando un admin reasigna un estudio, el
+nuevo primario lo nota en su navegador / móvil al instante.
+
 ## Backlog y futuro
 
-- App móvil PWA: Service Worker en la SPA + UI de gestión de
-  suscripciones en `/admin/me`.
-- vLLM / Text Generation Inference como tercer provider (mismo
-  contrato, basta con un `VllmProvider` y añadirlo a la factory).
-- Wiring del PushService a los disparadores de la app
-  (`study.assigned`, `study.urgent`, `report.signed_by_reviewer`).
+- vLLM / Text Generation Inference como tercer provider IA
+  (mismo contrato, basta con un `VllmProvider` y añadirlo a
+  la factory).
+- Wiring opcional de `study.urgent` y
+  `report.review_required` al `PushService` (los hooks
+  viven; sólo falta la rule de workflow que dispare "urgent").
