@@ -721,10 +721,124 @@ Cierra el wire-in del PushService al evento "estudio urgente":
 Resultado: nest build green, jest 205/205 (46 suites,
 +9 mapper tests).
 
+## Sprint 36 — OpenAPI export al repo (cerrado)
+
+- `apps/back/scripts/export-openapi.ts` con dummies de env →
+  Nest build sin DB → `docs/openapi.json` 77 KB.
+- npm script `export:openapi`.
+- Fix lateral: JobsModule no importaba Hl7v2Module → DI runtime
+  fail oculto que sólo se manifestaba al construir el grafo.
+
+## Sprint 37 — README badges + CI OpenAPI drift check (cerrado)
+
+- Cinco badges (CI, license, Node 22, Nest 11, Angular 19, PG 16).
+- Sección "OpenAPI" con el regenerate command.
+- CI job back: `npm run export:openapi` + `git diff --quiet`.
+  PR que mueva un controller sin regenerar el snapshot falla con
+  mensaje claro.
+
+## Sprint 38 — Web App Manifest (cerrado)
+
+- `apps/front/src/manifest.webmanifest` con name / start_url /
+  display=standalone / theme_color / dos shortcuts (Worklist + Mi
+  cuenta) accesibles desde long-press del icono.
+- `index.html` con `<link rel="manifest">` + theme-color.
+- angular.json emite el manifest al bundle root junto a sw.js.
+- Icon pendiente: PNG set (192/512/maskable) cuando exista
+  artwork real; el manifest pasa Lighthouse short of icons.
+
+## Sprint 39 — Jest coverage thresholds (cerrado)
+
+- `coveragePathIgnorePatterns` excluye módulos / DTOs / scripts /
+  schema.ts (signal noise).
+- Thresholds anti-regresión (justo por debajo del baseline):
+    statements 30 (baseline 38.20%)
+    branches   25 (baseline 29.19%)
+    functions  30 (baseline 36.58%)
+    lines      30 (baseline 38.47%)
+
+## Sprint 40 — Cover MfaService + NotificationsService (cerrado)
+
+- 7 tests del MFA (setup encrypt secret, confirm valid/invalid,
+  verifyForLogin, disable).
+- 5 tests del webhook signer (HMAC, retries, secret no
+  configurado).
+- Coverage statements 38.20 → 40.08, branches 29.19 → 30.21.
+
+## Sprint 41 — Fix hl7-codec parseHl7 MSH off-by-one (cerrado)
+
+Bug encontrado al escribir el spec del codec: `getField(msh, 3)`
+devolvía MSH-4 en vez de MSH-3. Producción enviaba ACKs con
+sender/receiver flipped y guardaba el sender app incorrecto en
+`mwl_entry`. Reescrito el branch MSH del parser para que el
+indexing coincida con HL7 §2.7 en todos los segmentos.
+
+## Sprint 42 — Cover MeService (cerrado)
+
+- 4 tests de los endpoints RGPD: export con/sin professional,
+  setProcessingRestriction, deleteAccount (tombstone + redact +
+  audit dentro de la tx).
+- Coverage 40.08 → 42.57 statements / 32.93 branches.
+
+## Sprint 43 — DR ops: audit-verify.sh + CI backup/restore (cerrado)
+
+- `scripts/audit-verify.sh` que llama a `POST
+  /v1/admin/audit/verify` con jq + PagerDuty-friendly exit codes.
+- Workflow `backup-restore.yml`: dos postgres services, GPG
+  encrypt/decrypt, pg_dump | pg_restore, row-count parity
+  check. PR-triggered + cron semanal.
+
+## Sprint 44 — THREAT-MODEL refresh (cerrado)
+
+- OWASP API Top 10 actualizado a Sprint 41.
+- Nueva sección "Cambios desde Sprint 0" con timeline.
+- Nueva sección "Invariantes que NUNCA deben romperse"
+  (header vs cookie, PII never leaves the back, audit in tx,
+  RLS_ENABLED+telerady_app).
+
+## Sprint 45 — ARCHITECTURE refresh (cerrado)
+
+Diagrama de componentes con PWA + SW + push + HL7 MLLP + MPPS
+webhook + AI provider abstraction. Nuevas §9 (AI provider) y
+§10 (Notificaciones push) con detalle operativo.
+
+## Sprint 46 — env.schema spec extended (cerrado)
+
+7 tests nuevos: AI_DRAFT_PROVIDER default + invalid value +
+OLLAMA_URL validation, INTEGRATION_API_KEY length, VAPID_SUBJECT
+mailto/https format, VAPID keys opcionales.
+
+## Sprint 47 — PushService.sendToProfessional spec (cerrado)
+
+2 tests del helper de Sprint 30: resolución professional →
+user, no-op cuando no hay app_user mapping. Drizzle mock
+extendido con thenable en `.where()`.
+
+## Sprint 48 — WorkflowEngine spec (cerrado)
+
+8 tests del decision engine: sin reglas, prioridad ascendente,
+modality filter, subspecialty match, requiresReview surfacing,
+applyToStudy con/sin match.
+
+## Sprint 49 — Front PushSubscriptionService spec (cerrado)
+
+4 tests: supported=false en jsdom, enable() bail-out, disable()
+DELETE con id, disable() no-op sin id.
+
+## Sprint 50 — Front AiDraftService spec (cerrado)
+
+6 tests: generate() POST, url-encode, generateStream() 403
+decorate, SSE chunk routing, error frame routing, Bearer +
+Accept headers. Duck-types ReadableStream para jsdom.
+
 ## Backlog y futuro
 
-- OpenAPI export al repo (sólo el JSON sin secrets) para que
-  los clientes de integración puedan generar SDKs.
-- README badges (CI, coverage) + screenshots del editor.
-- Dev seed que añade un usuario con push activo para que el
-  flujo se pueda probar sin VAPID keys reales.
+- PNG icon set (192/512/maskable) para que Chrome ofrezca
+  "Install Telerady" automáticamente.
+- Dev seed `seed:push` que monta un usuario + suscripción para
+  smoke-testing local sin un navegador real.
+- i18n del front (ES por defecto, EN para integración
+  internacional).
+- Probar el flujo full E2E (login → ingest → assign → push →
+  open editor → AI draft → sign → send) en un staging con
+  containers reales.
