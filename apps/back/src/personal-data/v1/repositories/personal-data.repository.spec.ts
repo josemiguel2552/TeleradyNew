@@ -192,38 +192,6 @@ describe('PersonalDataRepository', () => {
             expect(db.insert).not.toHaveBeenCalled();
         });
     });
-    describe('saveOrUpdateProfessionalDocument', () => {
-        it('should insert a new document if none exists', async () => {
-            (db.execute as jest.Mock).mockResolvedValueOnce([]); // no existing document
-
-            await repository.saveOrUpdateProfessionalDocument(
-                db,
-                'prof-123',
-                1,
-                'doc.pdf',
-                'drive123'
-            );
-
-            expect(db.insert).toHaveBeenCalledWith(expect.anything());
-            expect(db.execute).toHaveBeenCalled();
-        });
-
-        it('should update document if it already exists', async () => {
-            (db.execute as jest.Mock).mockResolvedValueOnce([{ id: 'existing' }]); // doc exists
-
-            await repository.saveOrUpdateProfessionalDocument(
-                db,
-                'prof-123',
-                1,
-                'doc.pdf',
-                'drive456'
-            );
-
-            expect(db.update).toHaveBeenCalledWith(expect.anything());
-            expect(db.execute).toHaveBeenCalled();
-        });
-    });
-
     describe('getUploadedDocument', () => {
         it('should return the document if it exists', async () => {
             const mockProfessionalId = '1';
@@ -257,7 +225,8 @@ describe('PersonalDataRepository', () => {
                 professionalId: '1',
                 documentId: 7,
                 nameDocument: 'test-document.pdf',
-                driveId: 'drive-id',
+                storageBucket: 'telerady-documents',
+                storageKey: 'doc/key',
             };
 
             (db.execute as jest.Mock).mockResolvedValue(undefined);
@@ -275,7 +244,8 @@ describe('PersonalDataRepository', () => {
                 professionalId: '1',
                 documentId: 7,
                 nameDocument: 'test-document.pdf',
-                driveId: 'drive-id',
+                storageBucket: 'telerady-documents',
+                storageKey: 'doc/key',
             };
 
             (db.execute as jest.Mock).mockResolvedValue({});

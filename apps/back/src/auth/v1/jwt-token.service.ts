@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 
 export interface AccessTokenClaims {
   sub: string;
@@ -26,13 +26,17 @@ export class JwtTokenService {
   }
 
   signAccessToken(claims: AccessTokenClaims): { token: string; expiresIn: number } {
-    const token = this.jwt.sign(claims, {
+    // `expiresIn` is typed as `number | StringValue`; the StringValue
+    // brand collides with our env-typed `string`. We trust the env
+    // schema (already validated) and pass the value through.
+    const options = {
       secret: this.accessSecret,
       expiresIn: this.accessTtl,
       issuer: this.issuer,
       audience: this.audience,
       algorithm: 'HS256',
-    });
+    } as JwtSignOptions;
+    const token = this.jwt.sign(claims, options);
     return { token, expiresIn: ttlToSeconds(this.accessTtl) };
   }
 }

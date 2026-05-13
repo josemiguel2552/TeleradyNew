@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InternalServerErrorException } from '@nestjs/common';
+
+jest.mock('../../../../database/drizzle', () => ({ db: {} }));
+
 import { GetUploadedDocumentsHandler } from '../get-uploaded-documents.handler';
 import { ProfessionalDocumentRepository } from '../../repositories/professional-document.repository';
 import { StorageService } from '../../../../integrations/storage/storage.service';

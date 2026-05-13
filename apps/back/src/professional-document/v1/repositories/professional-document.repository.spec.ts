@@ -96,7 +96,8 @@ describe('ProfessionalDocumentRepository', () => {
         professionalId: '1',
         documentId: 7,
         nameDocument: 'test-document.pdf',
-        driveId: 'drive-id',
+        storageBucket: 'telerady-documents',
+        storageKey: 'doc/key',
       };
 
       (db.execute as jest.Mock).mockResolvedValue(undefined);
@@ -114,7 +115,8 @@ describe('ProfessionalDocumentRepository', () => {
         professionalId: '1',
         documentId: 7,
         nameDocument: 'test-document.pdf',
-        driveId: 'drive-id',
+        storageBucket: 'telerady-documents',
+        storageKey: 'doc/key',
       };
 
       (db.execute as jest.Mock).mockResolvedValue({});

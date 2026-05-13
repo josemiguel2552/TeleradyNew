@@ -125,7 +125,7 @@ describe('ReportRepository', () => {
       });
 
       expect(db.insert).toHaveBeenCalledWith(reportStudyInTelerady);
-      const values = (db.values as jest.Mock).mock.calls[0][0];
+      const values = ((db as any).values as jest.Mock).mock.calls[0][0];
       expect(values.patId).toBeNull();
       expect(values.patName).toBeNull();
       expect(values.patBirthdate).toBeNull();
@@ -143,7 +143,7 @@ describe('ReportRepository', () => {
         hospitalId: null,
       });
 
-      const values = (db.values as jest.Mock).mock.calls[0][0];
+      const values = ((db as any).values as jest.Mock).mock.calls[0][0];
       expect(values.hospitalId).toBeNull();
     });
   });
@@ -158,7 +158,7 @@ describe('ReportRepository', () => {
       });
 
       expect(db.update).toHaveBeenCalledWith(reportStudyInTelerady);
-      const set = (db.set as jest.Mock).mock.calls[0][0];
+      const set = ((db as any).set as jest.Mock).mock.calls[0][0];
       expect(set.patIdEnc.startsWith('gcm:v1:')).toBe(true);
     });
   });

@@ -1,4 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
+jest.mock('../../../../database/drizzle', () => ({ db: {} }));
+
 import { GetSubspecialtiesHandler } from '../get-subspecialties.handler';
 import { ParametersRepository } from '../../repositories/parameters.repository';
 import { I18nService } from '../../../../i18n/i18n.service';

@@ -1,5 +1,8 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+
+jest.mock('../../database/drizzle', () => ({ db: {} }));
+
 import { WorklistRepository } from './worklist.repository';
 import { AesGcmService } from '../../common/crypto/aes-gcm.service';
 import { ColumnEncryptionService } from '../../common/crypto/column-encryption.service';

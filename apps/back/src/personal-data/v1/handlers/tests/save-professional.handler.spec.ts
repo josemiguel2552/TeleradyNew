@@ -92,7 +92,7 @@ describe('SaveProfessionalHandler', () => {
     (repositoryMock.getUploadedDocument as jest.Mock).mockResolvedValue(null);
     (storageMock.put as jest.Mock).mockResolvedValue({
       bucket: 'telerady-documents',
-      key: 'professionals/prof-1/7/firma_lic-1.png',
+      key: 'professionals/prof-1/7/Signature_lic-1.png',
     });
     (db.transaction as jest.Mock).mockImplementation(async (cb: any) => cb({}));
 
@@ -106,14 +106,14 @@ describe('SaveProfessionalHandler', () => {
 
     expect(storageMock.put).toHaveBeenCalledWith(
       expect.objectContaining({
-        key: 'professionals/prof-1/7/firma_lic-1.png',
+        key: 'professionals/prof-1/7/Signature_lic-1.png',
         contentType: 'image/png',
       }),
     );
     expect(repositoryMock.insertDocument).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        storageKey: 'professionals/prof-1/7/firma_lic-1.png',
+        storageKey: 'professionals/prof-1/7/Signature_lic-1.png',
         storageBucket: 'telerady-documents',
       }),
     );
@@ -125,7 +125,7 @@ describe('SaveProfessionalHandler', () => {
     (repositoryMock.getUploadedDocument as jest.Mock).mockResolvedValue({});
     (storageMock.put as jest.Mock).mockResolvedValue({
       bucket: 'telerady-documents',
-      key: 'professionals/prof-1/7/firma_lic-1.png',
+      key: 'professionals/prof-1/7/Signature_lic-1.png',
     });
     (db.transaction as jest.Mock).mockImplementation(async (cb: any) => cb({}));
 

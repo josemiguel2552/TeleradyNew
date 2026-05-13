@@ -7,6 +7,7 @@ import * as bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import basicAuth from 'express-basic-auth';
+import type { Express } from 'express';
 
 import { AppModule } from './app.module';
 
@@ -18,7 +19,9 @@ async function bootstrap() {
   const env = config.getOrThrow<'development' | 'test' | 'production'>('NODE_ENV');
   const isProd = env === 'production';
 
-  app.set('trust proxy', 1);
+  // Behind nginx / a load balancer, so trust the immediate proxy hop
+  // for client IP, X-Forwarded-* and protocol detection.
+  (app.getHttpAdapter().getInstance() as Express).set('trust proxy', 1);
 
   app.use(
     helmet({

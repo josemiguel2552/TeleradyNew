@@ -25,12 +25,9 @@ describe('AesGcmService', () => {
   it('rejects tampered ciphertext', () => {
     const svc = makeService();
     const payload = svc.encrypt('top secret');
-    const tampered = {
-      ...payload,
-      ciphertext: Buffer.from(payload.ciphertext, 'base64')
-        .map((b, i) => (i === 0 ? b ^ 1 : b))
-        .toString('base64'),
-    };
+    const bytes = Buffer.from(payload.ciphertext, 'base64');
+    bytes[0] = bytes[0] ^ 1;
+    const tampered = { ...payload, ciphertext: bytes.toString('base64') };
     expect(() => svc.decrypt(tampered as never)).toThrow();
   });
 

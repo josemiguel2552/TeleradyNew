@@ -54,7 +54,7 @@ describe('EventLogRepository', () => {
     await repository.saveEvent(db as DBOrTx, event);
 
     expect(db.insert).toHaveBeenCalledWith(eventLogInTelerady);
-    const values = (db.values as jest.Mock).mock.calls[0][0];
+    const values = ((db as any).values as jest.Mock).mock.calls[0][0];
     expect(values.eventType).toBe('report_finalize');
     expect(values.eventPayload.patId).toBe(pseudonym.hash('12345678A'));
     expect(values.eventPayload.patName).toBe('[REDACTED]');

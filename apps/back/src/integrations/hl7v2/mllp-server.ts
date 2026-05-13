@@ -60,9 +60,10 @@ export class Hl7MllpServer implements OnApplicationBootstrap, OnApplicationShutd
     let buffer = Buffer.alloc(0);
     socket.on('data', async (chunk) => {
       buffer = Buffer.concat([buffer, chunk]);
-      let framed: Buffer | null;
-      while ((framed = this.takeFramedMessage()(buffer)).message) {
-        buffer = framed.rest!;
+      while (true) {
+        const framed = this.takeFramedMessage()(buffer);
+        if (!framed.message) break;
+        buffer = framed.rest ?? Buffer.alloc(0);
         const ack = await this.handleMessage(framed.message.toString('utf8'));
         socket.write(this.frame(ack));
       }

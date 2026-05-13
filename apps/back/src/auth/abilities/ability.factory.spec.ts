@@ -6,6 +6,7 @@ const make = (overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser => 
   id: 'u',
   email: 'u@example.com',
   roles: [],
+  hospitalIds: [],
   ...overrides,
 });
 

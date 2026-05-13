@@ -5,6 +5,17 @@ import { I18nService } from '../../../i18n/i18n.service';
 import { RegisterEventDto } from '../models/register-event.dto';
 import { RegisterEventCommand } from '../commands/register-event.command';
 import { Request } from 'express';
+import { Role } from '../../../auth/roles';
+import type { AuthenticatedUser } from '../../../auth/jwt.strategy';
+
+const radiologist: AuthenticatedUser = {
+    id: 'u-1',
+    email: 'r@x.es',
+    roles: [Role.Radiologist],
+    hospitalIds: ['h-1'],
+    hospitalId: 'h-1',
+    professionalId: '1b2e4567-e89b-12d3-a456-426614174000',
+};
 
 describe('UserEventsController', () => {
     let controller: UserEventsController;
@@ -53,7 +64,6 @@ describe('UserEventsController', () => {
             } as Request;
 
             const mockData: RegisterEventDto = {
-                idProfessional: "1b2e4567-e89b-12d3-a456-426614174000",
                 eventType: "report_finalize",
                 eventPayload: {
                     studyId: "STUDY-001",
@@ -65,10 +75,12 @@ describe('UserEventsController', () => {
             const mockResponse = { ok: true, message: 'Event registered successfully' };
             (commandBusMock.execute as jest.Mock).mockResolvedValue(mockResponse);
 
-            const result = await controller.registerEvent(mockRequest, mockData);
+            const result = await controller.registerEvent(mockRequest, mockData, radiologist);
 
             expect(i18nServiceMock.setLang).toHaveBeenCalledWith(mockRequest);
-            expect(commandBusMock.execute).toHaveBeenCalledWith(new RegisterEventCommand(mockData));
+            expect(commandBusMock.execute).toHaveBeenCalledWith(
+                new RegisterEventCommand(mockData, radiologist),
+            );
             expect(result).toEqual(mockResponse);
         });
     });

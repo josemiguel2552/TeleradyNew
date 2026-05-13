@@ -5,6 +5,17 @@ import { I18nService } from '../../../i18n/i18n.service';
 import { SaveReportDto } from '../models/save-report.dto';
 import { SaveReportCommand } from '../commands/save-report.command';
 import { Request } from 'express';
+import { Role } from '../../../auth/roles';
+import type { AuthenticatedUser } from '../../../auth/jwt.strategy';
+
+const radiologist: AuthenticatedUser = {
+    id: 'u-1',
+    email: 'r@x.es',
+    roles: [Role.Radiologist],
+    hospitalIds: ['h-1'],
+    hospitalId: 'h-1',
+    professionalId: '1b2e4567-e89b-12d3-a456-426614174000',
+};
 
 describe('ReportController', () => {
     let controller: ReportController;
@@ -53,7 +64,6 @@ describe('ReportController', () => {
             } as Request;
 
             const mockData: SaveReportDto = {
-                idProfessional: "1b2e4567-e89b-12d3-a456-426614174000",
                 studyId: "study-abc-123",
                 studyDesc: "TC de tórax sin contraste",
                 patId: "pat-123456",
@@ -69,10 +79,12 @@ describe('ReportController', () => {
             const mockResponse = { ok: true, message: 'Report saved successfully' };
             (commandBusMock.execute as jest.Mock).mockResolvedValue(mockResponse);
 
-            const result = await controller.saveReport(mockRequest, mockData);
+            const result = await controller.saveReport(mockRequest, mockData, radiologist);
 
             expect(i18nServiceMock.setLang).toHaveBeenCalledWith(mockRequest);
-            expect(commandBusMock.execute).toHaveBeenCalledWith(new SaveReportCommand(mockData));
+            expect(commandBusMock.execute).toHaveBeenCalledWith(
+                new SaveReportCommand(mockData, radiologist),
+            );
             expect(result).toEqual(mockResponse);
         });
     });

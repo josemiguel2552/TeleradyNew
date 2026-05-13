@@ -122,10 +122,13 @@ cuando los criterios de aceptación están verdes, no por calendario.
   (lista + diálogo de reassign) y "My data" RGPD.
 - [x] Docs: `docs/RLS-ACTIVATION-RUNBOOK.md` con el procedimiento
   paso a paso para activar RLS en producción.
+- [x] Limitación de tratamiento (art. 18) entregado en sprints
+  intermedios — `PATCH /v1/me/processing-restriction` (`me.controller.ts:52`).
+- [x] Portabilidad DICOM zip (art. 20) entregada en Sprint 14 —
+  `GET /v1/me/dicom-export` (`me.controller.ts:30`,
+  `me/v1/dicom-export.service.ts`).
 - [ ] Activación efectiva de RLS en staging + tests E2E con
   testcontainers (Sprint 7).
-- [ ] Limitación de tratamiento (art. 18) + portabilidad DICOM zip
-  (Sprint 7).
 
 ## Sprint 7 — Audit UI + notificaciones + RGPD restante (en curso)
 
@@ -255,6 +258,51 @@ preparar producción. Todos ya pusheados.
   "Conclusion" + autosave inmediato.
 - [x] `docs/AI-INTEGRATION.md` (topología, contrato de privacidad,
   controles, resiliencia, RGPD art. 22 y 28).
+- [x] Tests Jest del cliente (5) y del servicio (7) — `nest build`
+  verde, suite global 161/161.
+
+## Sprint 22 — Limpieza de deuda técnica (cerrado)
+
+Sprint puente disparado al ejecutar `nest build` con `node_modules`
+por primera vez en esta workspace. Destapó bugs introducidos en
+sprints anteriores que el harness de la sandbox no podía detectar
+sin dependencias instaladas:
+
+- [x] `OrthancClient.pushDicomFromJson(body)` no existía aunque
+  `SrPusherService` ya lo invocaba desde Sprint 14. Añadido contra
+  `/tools/create-dicom` con tipo `OrthancCreateDicomBody`.
+- [x] `MetricsService` no estaba inyectado en `ReportV2Service` aunque
+  `report.signed` / `report.sent` ya pretendían incrementar contadores
+  desde Sprint 17. Inyectado y operativo.
+- [x] `MllpServer.onConnection` declaraba `framed: Buffer | null` y
+  llamaba `.message`/`.rest` en él — el tipo del retorno del helper
+  no compilaba. Reescrito con `while(true)`.
+- [x] `AbilityFactory` (CASL): `MongoQuery<never>` rechazaba nuestras
+  condiciones ad-hoc; helper `can` re-tipado en el factory boundary.
+- [x] `JwtTokenService.signAccessToken` con `expiresIn` typed-string
+  conflictivo: `JwtSignOptions` cast en una sola línea.
+- [x] `main.ts` `app.set('trust proxy', 1)`: usa
+  `getHttpAdapter().getInstance()` (Express) — necesario detrás de
+  nginx / load balancer.
+- [x] `ReportStartEvent.data` extiende ahora
+  `SaveReportDto & { idProfessional: string }` (la columna salió del
+  DTO público, pero el handler la sigue necesitando para el event log).
+- [x] Specs v1 actualizados: `ability.factory.spec`, `aes-gcm.spec`,
+  `event-log.spec`, `report.repository.spec`, `report.controller.spec`,
+  `user-events.controller.spec`, `personal-data.repository.spec`,
+  `professional-document.repository.spec`,
+  `validate.handler.spec`, `get-uploaded-documents.handler.spec`,
+  `get-subspecialties.handler.spec`, `worklist.repository.spec`,
+  `save-professional.handler.spec`. Todos por desfase con el schema
+  (`driveId` → `storageBucket`/`storageKey`), con la API
+  (`SaveReportDto` perdió `idProfessional`, controllers ganaron
+  `@CurrentUser`) o por importar `database/drizzle` sin mock (el
+  módulo arroja en import si `DATABASE_URL` no está definido).
+- [x] `tsconfig.json`: `ignoreDeprecations: "5.0"` para silenciar el
+  aviso de `baseUrl` en TS 5.8.
+
+Resultado: `nest build` verde, `ng build --configuration=production`
+verde, `jest` 161/161.
 
 ## Backlog y futuro
 

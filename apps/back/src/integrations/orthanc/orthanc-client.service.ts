@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { OrthancCreateDicomBody } from './dicom-sr-builder';
 
 export interface ProxyResponse {
   status: number;
@@ -73,6 +74,39 @@ export class OrthancClient implements OnModuleInit {
   ): Promise<ProxyResponse> {
     const cleanSuffix = suffix.startsWith('/') ? suffix : `/${suffix}`;
     return this.proxy(method, `${this.dicomWebRoot}${cleanSuffix}`, headers, body);
+  }
+
+  /**
+   * Builds a DICOM instance from a JSON description and uploads it via
+   * Orthanc's /tools/create-dicom endpoint (the same path the SR builder
+   * targets in its docstring). Returns the new instance + parent IDs as
+   * Orthanc reports them, or null when the upload is rejected.
+   * Best-effort: callers (sr-pusher) swallow failures so the signing
+   * flow stays untouched.
+   */
+  async pushDicomFromJson(
+    body: OrthancCreateDicomBody,
+  ): Promise<{ id: string; parentStudy?: string; parentSeries?: string } | null> {
+    this.assertConfigured();
+    const res = await fetch(`${this.baseUrl}/tools/create-dicom`, {
+      method: 'POST',
+      headers: {
+        Authorization: this.authHeader,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      ID: string;
+      ParentStudy?: string;
+      ParentSeries?: string;
+    };
+    return {
+      id: data.ID,
+      parentStudy: data.ParentStudy,
+      parentSeries: data.ParentSeries,
+    };
   }
 
   async findStudyByUid(studyInstanceUid: string): Promise<OrthancStudy | null> {

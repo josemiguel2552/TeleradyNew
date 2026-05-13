@@ -4,6 +4,9 @@ import { I18nService } from "../../../../i18n/i18n.service";
 import { ValidateHandler } from "../validate.handler";
 import { PersonalDataRepository } from "../../repositories/personal-data.repository";
 import { ValidateQuery } from "../../queries/validate.query";
+
+jest.mock('../../../../database/drizzle', () => ({ db: {} }));
+
 import { db } from "../../../../database/drizzle";
 
 describe('ValidateHandler', () => {

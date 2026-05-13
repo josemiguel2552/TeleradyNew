@@ -1,4 +1,9 @@
-import { AbilityBuilder, createMongoAbility, MongoAbility, MongoQuery } from '@casl/ability';
+import {
+  AbilityBuilder,
+  createMongoAbility,
+  MongoAbility,
+  MongoQuery,
+} from '@casl/ability';
 import { Injectable } from '@nestjs/common';
 import type { AuthenticatedUser } from '../jwt.strategy';
 import { Role } from '../roles';
@@ -17,13 +22,22 @@ export type Subject =
 
 export type Action = 'manage' | 'read' | 'create' | 'update' | 'delete' | 'sign';
 
-export type AppAbility = MongoAbility<[Action, Subject]>;
+export type AppAbility = MongoAbility<[Action, Subject], MongoQuery>;
 
 @Injectable()
 export class AbilityFactory {
   forUser(user: AuthenticatedUser): AppAbility {
-    const { can, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
-    const tenant: MongoQuery = user.hospitalId ? { hospitalId: user.hospitalId } : {};
+    const builder = new AbilityBuilder<AppAbility>(createMongoAbility);
+    // CASL `MongoQuery<never>` cannot be satisfied with our open-ended
+    // condition objects, so we narrow the helper signature at the
+    // factory boundary. The actual runtime check is unaffected.
+    const can = builder.can as (
+      action: Action | Action[],
+      subject: Subject | Subject[],
+      conditions?: Record<string, unknown>,
+    ) => unknown;
+
+    const tenant = user.hospitalId ? { hospitalId: user.hospitalId } : {};
 
     if (user.roles.includes(Role.Admin)) {
       can('manage', 'all');
@@ -49,11 +63,12 @@ export class AbilityFactory {
     }
 
     if (user.roles.includes(Role.Radiologist) && user.professionalId) {
-      can('read', 'Study', { professionalId: user.professionalId });
-      can('update', 'Report', { professionalId: user.professionalId });
-      can('sign', 'Report', { professionalId: user.professionalId });
+      const own = { professionalId: user.professionalId };
+      can('read', 'Study', own);
+      can('update', 'Report', own);
+      can('sign', 'Report', own);
     }
 
-    return build();
+    return builder.build();
   }
 }

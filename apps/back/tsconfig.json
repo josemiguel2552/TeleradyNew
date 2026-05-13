@@ -22,5 +22,6 @@
     "noFallthroughCasesInSwitch": false,
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "ignoreDeprecations": "5.0",
   }
 }

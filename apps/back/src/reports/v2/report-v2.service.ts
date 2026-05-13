@@ -12,6 +12,7 @@ import { AuditLogService } from '../../common/audit/audit-log.service';
 import { ColumnEncryptionService } from '../../common/crypto/column-encryption.service';
 import { StorageService } from '../../integrations/storage/storage.service';
 import { NotificationsService } from '../../integrations/notifications/notifications.service';
+import { MetricsService } from '../../metrics/metrics.service';
 import { TenantScope } from '../../common/tenant/tenant-scope';
 import type { AuthenticatedUser } from '../../auth/jwt.strategy';
 import { Role } from '../../auth/roles';
@@ -37,6 +38,7 @@ export class ReportV2Service {
     private readonly enc: ColumnEncryptionService,
     private readonly notifications: NotificationsService,
     private readonly srPusher: SrPusherService,
+    private readonly metrics: MetricsService,
   ) {}
 
   async get(reportStudyId: string, user: AuthenticatedUser): Promise<ReportResponseDto> {

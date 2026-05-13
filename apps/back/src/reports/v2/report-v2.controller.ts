@@ -26,7 +26,7 @@ import { ReportV2Service } from './report-v2.service';
 export class ReportV2Controller {
   constructor(
     private readonly service: ReportV2Service,
-    private readonly aiDraft: AiDraftService,
+    private readonly aiDraftService: AiDraftService,
   ) {}
 
   @Get(':reportStudyId')
@@ -83,6 +83,6 @@ export class ReportV2Controller {
     @Body() body: AiDraftRequestDto,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<AiDraftResponseDto> {
-    return this.aiDraft.generate(reportStudyId, body, user);
+    return this.aiDraftService.generate(reportStudyId, body, user);
   }
 }
