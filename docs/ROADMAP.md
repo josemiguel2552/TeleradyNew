@@ -831,6 +831,27 @@ DELETE con id, disable() no-op sin id.
 decorate, SSE chunk routing, error frame routing, Bearer +
 Accept headers. Duck-types ReadableStream para jsdom.
 
+## Sprint 52 — Vercel deploy del front + fix NG8107 (cerrado)
+
+- `vercel.json` en la raíz del monorepo:
+    - `buildCommand` instala deps con `npm ci` dentro de
+      `apps/front` y corre `ng build` production.
+    - `outputDirectory` apunta a
+      `apps/front/dist/telerady-front/browser` (Angular 19 con
+      output `application` mete el bundle en `browser/`).
+    - `rewrites` SPA-fallback (`/(.*) → /index.html`) para que
+      las rutas de Angular Router carguen al refrescar.
+    - `headers`: las mismas de seguridad que el nginx.conf
+      (X-Frame-Options, X-Content-Type-Options, Referrer-Policy,
+      Permissions-Policy) + cache `no-store` para `index.html` y
+      `max-age=31536000 immutable` para los assets fingerprinted.
+- README §Deploy: importar en Vercel y back NO va en Vercel
+  (usar Dockerfile + Fly/Render/k8s).
+- Fix lateral: warning Angular NG8107 en
+  `study-viewer.component.ts:51` (`modalities?.join` con tipo
+  `string[]` no-nullable) → reemplazado por
+  `modalities.length ? modalities.join(', ') : '—'`. Build limpio.
+
 ## Backlog y futuro
 
 - PNG icon set (192/512/maskable) para que Chrome ofrezca

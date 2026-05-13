@@ -48,7 +48,7 @@ import { WorklistEntry, WorklistService } from '../services/worklist.service';
           <dt>Description</dt>
           <dd>{{ e.studyDescription ?? '—' }}</dd>
           <dt>Modalities</dt>
-          <dd>{{ e.modalities?.join(', ') ?? '—' }}</dd>
+          <dd>{{ e.modalities.length ? e.modalities.join(', ') : '—' }}</dd>
           <dt>Institution</dt>
           <dd>{{ e.institution ?? '—' }}</dd>
         </dl>

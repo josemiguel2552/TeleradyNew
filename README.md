@@ -72,6 +72,19 @@ La spec completa está commiteada en
 SDKs de clientes con `openapi-generator` y como contrato versionado
 en cada PR.
 
+## Deploy
+
+- **Front (SPA)** en Vercel: importar el repo en
+  [`vercel.com/new`](https://vercel.com/new). El `vercel.json` de la
+  raíz fija `buildCommand`, `outputDirectory` y rewrites SPA → no
+  hace falta tocar la UI. Para apuntar a un back distinto en build
+  time, editar `apps/front/src/environments/environment.prod.ts`
+  antes del push.
+- **Back (NestJS + Postgres + Redis)** NO va en Vercel: usar el
+  `apps/back/Dockerfile` con Fly.io / Render / Railway / k8s. La
+  receta de referencia y `docker-compose` están en
+  [`infra/`](infra/).
+
 ## Branches
 
 Desarrollo en `claude/teleradiology-platform-setup-N8LCt`.
