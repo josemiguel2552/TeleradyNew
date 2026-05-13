@@ -48,6 +48,14 @@ jobs:
           echo "ENCRYPTION_MASTER_KEY=$(openssl rand -hex 32)" >> $GITHUB_ENV
           echo "PSEUDONYM_PEPPER=$(openssl rand -hex 32)" >> $GITHUB_ENV
       - run: npm test
+      - name: OpenAPI drift check
+        run: |
+          npm run export:openapi
+          if ! git diff --quiet -- ../../docs/openapi.json; then
+            echo "::error ::docs/openapi.json drifted. Re-run 'npm --prefix apps/back run export:openapi' and commit the result."
+            git --no-pager diff --stat -- ../../docs/openapi.json
+            exit 1
+          fi
 
   front:
     name: Front — lint + build + test
