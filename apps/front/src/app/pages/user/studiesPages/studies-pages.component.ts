@@ -165,8 +165,8 @@ top: `${rect.top + window.scrollY + offsetY}px`,
     return pages;
   }
 
-  viewStudy(studyUID: string) {
-    const url = this.StudiesService.getViewerUrl(studyUID);
+  async viewStudy(studyUID: string): Promise<void> {
+    const url = await this.StudiesService.getViewerUrl(studyUID);
     window.open(url, '_blank');
   }
 

@@ -49,11 +49,11 @@ import { AdminService, SlaDashboard } from '../services/admin.service';
         </p-card>
 
         <p-card header="By state" class="states">
-          <div class="row"><span>Unreported</span><p-tag severity="warning" [value]="d.counts.unreported"></p-tag></div>
-          <div class="row"><span>Draft</span><p-tag severity="info" [value]="d.counts.draft"></p-tag></div>
-          <div class="row"><span>Finalized</span><p-tag severity="info" [value]="d.counts.finalized"></p-tag></div>
-          <div class="row"><span>Signed</span><p-tag severity="success" [value]="d.counts.signed"></p-tag></div>
-          <div class="row"><span>Sent</span><p-tag severity="secondary" [value]="d.counts.sent"></p-tag></div>
+          <div class="row"><span>Unreported</span><p-tag severity="warn" [value]="d.counts.unreported.toString()"></p-tag></div>
+          <div class="row"><span>Draft</span><p-tag severity="info" [value]="d.counts.draft.toString()"></p-tag></div>
+          <div class="row"><span>Finalized</span><p-tag severity="info" [value]="d.counts.finalized.toString()"></p-tag></div>
+          <div class="row"><span>Signed</span><p-tag severity="success" [value]="d.counts.signed.toString()"></p-tag></div>
+          <div class="row"><span>Sent</span><p-tag severity="secondary" [value]="d.counts.sent.toString()"></p-tag></div>
         </p-card>
       </div>
     </section>

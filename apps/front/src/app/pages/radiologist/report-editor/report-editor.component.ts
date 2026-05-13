@@ -14,7 +14,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { DropdownModule } from 'primeng/dropdown';
-import { InputTextareaModule } from 'primeng/inputtextarea';
+import { InputTextarea } from 'primeng/inputtextarea';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
 import { Subscription, debounceTime, firstValueFrom } from 'rxjs';
@@ -68,7 +68,7 @@ const DEFAULT_SECTIONS: Record<string, ReportSection[]> = {
     ButtonModule,
     CardModule,
     DropdownModule,
-    InputTextareaModule,
+    InputTextarea,
     TagModule,
     SignReportDialogComponent,
   ],
@@ -351,10 +351,10 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
     }
   }
 
-  stateSeverity(): 'info' | 'warning' | 'success' | 'secondary' {
+  stateSeverity(): 'info' | 'warn' | 'success' | 'secondary' {
     switch (this.state()) {
       case 'draft': return 'info';
-      case 'finalized': return 'warning';
+      case 'finalized': return 'warn';
       case 'signed': return 'success';
       case 'sent': return 'secondary';
     }

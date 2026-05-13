@@ -328,24 +328,43 @@ verde, `jest` 161/161.
 - [x] `docs/AI-INTEGRATION.md` documenta el nuevo endpoint y el
   contrato de eventos.
 
-## Deuda técnica abierta
+## Sprint 24 — Migración PrimeNG → 19 + saneo del front (cerrado)
 
-- **Front PrimeNG 19 migration**: el `package.json` pide
-  `^19.0.5` desde Sprint 0, pero el código del front fue escrito
-  contra los `XxxModule` de PrimeNG 17/18 (`InputTextareaModule`,
-  `TableLazyLoadEvent` con tipo distinto, `severity="warning"`,
-  index-signature access estricta…). La instalación real con
-  `node_modules` lo dispara: `ng build --configuration=production`
-  arroja ~15 errores en componentes legacy del editor y la
-  worklist. **No bloquea el back**, pero sí el deploy del front.
-  Se gestiona como sprint dedicado: o downgrade a `^18` o
-  migración a la API standalone (`InputTextarea`, `Textarea`,
-  etc.). Mientras tanto el back sigue verde y los tests Jest
-  pasan.
+Sprint puente disparado al confirmar que `ng build` no había
+producido nunca un bundle válido en este workspace: la instalación
+real de `node_modules` traía PrimeNG 19.0.5 (la versión pinned en
+`package.json` desde Sprint 0) pero el front estaba escrito contra
+la API de PrimeNG 17/18.
+
+- [x] `InputTextareaModule` → `InputTextarea` (standalone) en
+  `report-editor.component.ts` (import + `imports[]`).
+- [x] `severity="warning"` → `severity="warn"` en SLA dashboard y
+  `stateSeverity()` del editor (PrimeNG 19 renombró el valor del
+  union type).
+- [x] `[value]="d.counts.X"` → `[value]="d.counts.X.toString()"` en
+  SLA dashboard (el binding pide `string`, no `number`).
+- [x] `onLazyLoad(event: { rows?: number })` → `rows?: number | null`
+  en `WorklistComponent`, `AssignmentsComponent`, `AuditComponent`
+  (PrimeNG 19 cambió `TableLazyLoadEvent.rows` para incluir `null`).
+- [x] `DEFAULT_SECTIONS.CT` / `DEFAULT_SECTIONS.OTHER` → bracket
+  access (TS 5 strict `noPropertyAccessFromIndexSignature`).
+- [x] `token.interceptor.ts` `refreshedToken$.next(newToken)`:
+  `string | undefined` → `string | null`.
+- [x] `studies-pages.component.ts viewStudy()`: faltaba `await` en
+  `getViewerUrl()` que devuelve `Promise<string>`; el `window.open`
+  recibía la promesa cruda.
+- [x] Tests realineados con el código actual: `token.interceptor.spec`
+  esperaba `/user/login` (Sprint 20 lo cambió a `/login`).
+
+Resultado: `ng build --configuration=production` verde, dist
+generado, `jest` 124/124 (front) + 166/166 (back). El SPA por fin
+arranca y los Sprints 21-23 (RadiogenAI integration + SSE) son
+testeables en navegador.
 
 ## Backlog y futuro
 
-- Migración PrimeNG → 19 (sprint dedicado, ver "Deuda técnica abierta").
+- Activación efectiva de RLS en staging + tests E2E con
+  testcontainers (último Sprint 7 leftover).
 - Modelos IA locales (cuando RadiogenAI deje de ser la opción única).
 - Workflows DICOM avanzados (Modality Performed Procedure Step).
 - App móvil para alertas urgentes.

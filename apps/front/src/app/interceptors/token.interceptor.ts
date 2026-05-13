@@ -75,7 +75,7 @@ export class TokenInterceptor implements HttpInterceptor {
           this.router.navigateByUrl('/login');
           return throwError(() => res);
         }
-        const newToken = res.response.accessToken;
+        const newToken = res.response.accessToken ?? null;
         this.refreshedToken$.next(newToken);
         return next.handle(this.attachToken(request));
       }),

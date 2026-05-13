@@ -102,6 +102,6 @@ describe('TokenInterceptor', () => {
     first.flush({}, { status: 401, statusText: 'Unauthorized' });
 
     expect(tokenServiceMock.clearSession).toHaveBeenCalled();
-    expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/user/login');
+    expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/login');
   });
 });

@@ -121,9 +121,9 @@ export class AdminAuditComponent implements OnInit {
     this.refresh();
   }
 
-  onLazyLoad(event: { first?: number; rows?: number }): void {
+  onLazyLoad(event: { first?: number; rows?: number | null }): void {
     if (event.first !== undefined) this.offset.set(event.first);
-    if (event.rows !== undefined) this.limit.set(event.rows);
+    if (event.rows != null) this.limit.set(event.rows);
     this.refresh();
   }
 
