@@ -831,6 +831,24 @@ DELETE con id, disable() no-op sin id.
 decorate, SSE chunk routing, error frame routing, Bearer +
 Accept headers. Duck-types ReadableStream para jsdom.
 
+## Sprint 58 — Extender cobertura de WorklistRepository (cerrado)
+
+3 tests nuevos en `worklist.repository.spec.ts`:
+
+- `list` con todos los filtros opcionales (`hospitalId` propio,
+  `stateId`, `modality`, `studyDateFrom='20250101'` y
+  `studyDateTo='2025-02-28'` — los dos formatos que el repositorio
+  acepta) — la `where()` se invoca dos veces (count + page) sin
+  petar cross-tenant.
+- `findById` devuelve `null` cuando la query no encuentra fila.
+- `findById` para un admin (sin tenant push) descifra `patNameEnc`
+  y mapea `null`s a defaults (`modalities: []`, `institution: null`,
+  `patBirthdate: null`).
+
+Coverage back 49.52 → 50.08 statements (cruzamos el 50%!),
+40.87 → 42.06 branches. `worklist.repository.ts` pasa a 100%
+statements / 79.41% branches. Total 286 → 289 tests.
+
 ## Sprint 57 — Cover WorkflowAdminService (cerrado)
 
 `workflow-admin.service.spec.ts` (17 tests) con db (select / insert

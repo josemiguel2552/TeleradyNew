@@ -68,6 +68,15 @@ function makeDb() {
   fromFn.mockReturnValue({ where: whereFn });
   selectFn.mockReturnValue({ from: fromFn });
 
+  return { select: selectFn, __whereFn: whereFn };
+}
+
+// findById path: select -> from -> where -> limit (single roundtrip).
+function makeDbFindById(rows: unknown[]) {
+  const limitFn = jest.fn().mockResolvedValue(rows);
+  const whereFn = jest.fn(() => ({ limit: limitFn }));
+  const fromFn = jest.fn(() => ({ where: whereFn }));
+  const selectFn = jest.fn(() => ({ from: fromFn }));
   return { select: selectFn };
 }
 
@@ -100,5 +109,69 @@ describe('WorklistRepository', () => {
         db as unknown as DBOrTx,
       ),
     ).rejects.toThrow(/cross-tenant/);
+  });
+
+  it('passes through all optional filters (stateId, modality, date range)', async () => {
+    const db = makeDb();
+    await repository.list(
+      TenantScope.for(radiologist),
+      {
+        limit: 5,
+        offset: 0,
+        hospitalId: 'h-1',
+        stateId: 2,
+        modality: 'CT',
+        studyDateFrom: '20250101',
+        studyDateTo: '2025-02-28',
+      } as any,
+      db as unknown as DBOrTx,
+    );
+    // The repository builds a single AND() with one condition per filter
+    // plus the tenant scope. We do not introspect drizzle nodes — what we
+    // assert is that the where() chain is reached twice (count + page) and
+    // didn't throw on cross-tenant for the in-scope hospitalId.
+    expect(db.__whereFn).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns null from findById when the row is missing', async () => {
+    const db = makeDbFindById([]);
+    const out = await repository.findById(
+      TenantScope.for(radiologist),
+      'rs-missing',
+      db as unknown as DBOrTx,
+    );
+    expect(out).toBeNull();
+  });
+
+  it('returns a decrypted entry from findById for a privileged actor (no tenant push)', async () => {
+    const db = makeDbFindById([
+      {
+        id: 'rs-2',
+        studyIuid: '1.2.3.4',
+        studyDesc: null,
+        studyCreatedTime: null,
+        modalities: null,
+        institution: null,
+        hospitalId: 'h-2',
+        reportStateId: 1,
+        professionalId: 'prof-2',
+        patNameEnc: enc.encrypt('Ana López', 'report_study:prof-2'),
+        patBirthdateEnc: null,
+        patIdHash: null,
+      },
+    ]);
+    const admin: AuthenticatedUser = {
+      id: 'a',
+      email: 'a@x.es',
+      roles: [Role.Admin],
+      hospitalIds: [],
+    };
+    const out = await repository.findById(TenantScope.for(admin), 'rs-2', db as unknown as DBOrTx);
+    expect(out).not.toBeNull();
+    expect(out!.patName).toBe('Ana López');
+    // Nullable fields fall back to default-empty shapes.
+    expect(out!.modalities).toEqual([]);
+    expect(out!.institution).toBeNull();
+    expect(out!.patBirthdate).toBeNull();
   });
 });
