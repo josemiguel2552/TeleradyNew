@@ -11,7 +11,7 @@ SHELL := /bin/bash
 #   make back       — run the API in the foreground
 #   make front      — run the SPA in the foreground
 
-.PHONY: demo stack down reset install seed back front smoke observability observability-down help
+.PHONY: demo stack down reset install seed seed-push back front smoke observability observability-down help
 
 help:
 	@echo "Telerady — common commands"
@@ -21,6 +21,7 @@ help:
 	@echo "  make reset        Stop and remove volumes (clean slate)"
 	@echo "  make install      npm install for back + front"
 	@echo "  make seed         Run apps/back seed:demo"
+	@echo "  make seed-push    Mount a fake push subscription on pepa@telerady.test"
 	@echo "  make back         Run the NestJS API in the foreground"
 	@echo "  make front        Run the Angular SPA in the foreground"
 
@@ -39,6 +40,9 @@ install:
 
 seed:
 	cd apps/back && npm run seed:demo
+
+seed-push:
+	cd apps/back && npm run seed:push
 
 back:
 	cd apps/back && npm run start:dev

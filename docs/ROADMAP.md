@@ -831,6 +831,28 @@ DELETE con id, disable() no-op sin id.
 decorate, SSE chunk routing, error frame routing, Bearer +
 Accept headers. Duck-types ReadableStream para jsdom.
 
+## Sprint 53 — Dev seed `seed:push` (cerrado)
+
+`apps/back/src/scripts/seed-push.ts` monta una `push_subscription`
+falsa contra el usuario que se le pase por `--email` (default
+`pepa@telerady.test`, creado por `seed:demo`) para poder ejercitar
+`PushService.sendToUser` sin un navegador real:
+
+- `endpoint`: `https://push.example.invalid/wp/dummy-<userId>`. El
+  TLD `.invalid` (RFC 2606) garantiza ENOTFOUND → `failed: 1` en
+  cada envío, sin tráfico saliente real.
+- `p256dh`: clave pública P-256 generada con `node:crypto`
+  (`createECDH('prime256v1')`) y exportada en base64url, en el
+  formato exacto que `web-push` espera para no rechazar la cifra
+  ECDH del payload antes de la entrega.
+- `auth`: 16 bytes random base64url-encoded (el formato Chrome).
+- Upsert por `endpoint` (mismo conflict target que
+  `PushService.subscribe`) → re-ejecutar el seed resucita +
+  refresca, no duplica.
+
+`npm run seed:push` desde `apps/back`, o `make seed-push` desde
+la raíz. Help actualizado en el Makefile.
+
 ## Sprint 52 — Vercel deploy del front + fix NG8107 (cerrado)
 
 - `vercel.json` en la raíz del monorepo:
@@ -856,8 +878,6 @@ Accept headers. Duck-types ReadableStream para jsdom.
 
 - PNG icon set (192/512/maskable) para que Chrome ofrezca
   "Install Telerady" automáticamente.
-- Dev seed `seed:push` que monta un usuario + suscripción para
-  smoke-testing local sin un navegador real.
 - i18n del front (ES por defecto, EN para integración
   internacional).
 - Probar el flujo full E2E (login → ingest → assign → push →
