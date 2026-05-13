@@ -1,0 +1,82 @@
+# Telerady — recommended Prometheus alert rules.
+#
+# Drop this into Prometheus' `rule_files` block (see prometheus.yml).
+# AlertManager wiring is intentionally not bundled — that depends on the
+# operator's channels (PagerDuty / Opsgenie / Slack) and contact policy.
+
+groups:
+  - name: telerady-platform
+    interval: 30s
+    rules:
+
+      - alert: TeleradyApiDown
+        expr: up{job="telerady-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Telerady API is down"
+          description: "Prometheus failed to scrape /metrics for >1m. Check the deployment."
+
+      - alert: TeleradyHttp5xxBurst
+        expr: |
+          sum(rate(telerady_http_requests_total{status=~"5.."}[5m]))
+            / sum(rate(telerady_http_requests_total[5m]))
+            > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "5xx error rate above 5%"
+          description: "The API is returning 5xx on >5% of requests for 5+ minutes."
+
+      - alert: TeleradySlaBacklog
+        expr: telerady_sla_pending_reports > 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Reports stuck > 24 h without signature"
+          description: "{{ $value }} reports are past SLA. Check the radiologist on-call."
+
+      - alert: TeleradyAiDraftErrors
+        expr: |
+          increase(telerady_ai_draft_requests_total{outcome="error"}[10m]) > 5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "AI draft errors > 5 in 10m"
+          description: "RadiogenAI / Ollama / vLLM is dropping requests. Failover via AI_DRAFT_PROVIDER if persistent."
+
+      - alert: TeleradyAiDraftLatencyP95High
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(telerady_ai_draft_latency_seconds_bucket[10m]))
+          ) > 30
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "AI draft p95 > 30 s"
+          description: "p95 latency on AI drafts is above the user-noticeable bound."
+
+      - alert: TeleradyPushReapedSustained
+        expr: |
+          increase(telerady_push_notifications_total{outcome="reaped"}[1h]) > 50
+        for: 1h
+        labels:
+          severity: info
+        annotations:
+          summary: "Push endpoints reaped > 50/h"
+          description: "Many devices the push service forgot. Could indicate a stuck FCM/APNS endpoint."
+
+      - alert: TeleradyMppsDiscontinuedBurst
+        expr: |
+          increase(telerady_mpps_events_total{status="DISCONTINUED"}[10m]) > 3
+        for: 0m
+        labels:
+          severity: info
+        annotations:
+          summary: "Modalities discontinuing studies repeatedly"
+          description: "{{ $value }} DISCONTINUED MPPS events in 10m. Investigate the modality."

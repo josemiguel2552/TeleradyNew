@@ -2,10 +2,13 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
+# Sprint 33: load the recommended alert rules so AlertManager (when
+# wired by the operator) fires on SLA backlog, 5xx burst, AI errors,
+# stuck push endpoints and abnormal MPPS DISCONTINUED rates.
+rule_files:
+  - "/etc/prometheus/telerady-alerts.yml"
+
 scrape_configs:
-  # The API exposes /metrics with default NestJS-pino + custom counters
-  # (Sprint 17 will add a prom-client middleware). Until then we point
-  # Prometheus at the host so dev can already see it being scraped.
   - job_name: telerady-api
     metrics_path: /metrics
     static_configs:

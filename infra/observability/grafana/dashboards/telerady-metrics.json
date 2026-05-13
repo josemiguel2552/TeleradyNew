@@ -1,0 +1,194 @@
+{
+  "title": "Telerady — API metrics",
+  "uid": "telerady-metrics",
+  "tags": ["telerady", "prometheus"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "HTTP requests / second (by method+status)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum by (method, status) (rate(telerady_http_requests_total[1m]))",
+          "refId": "A",
+          "legendFormat": "{{method}} {{status}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP p95 latency by route",
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(telerady_http_request_duration_seconds_bucket[5m])))",
+          "refId": "A",
+          "legendFormat": "{{route}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "Reports signed (last 24 h)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "increase(telerady_report_signed_total[24h])",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 8 }
+    },
+    {
+      "type": "stat",
+      "title": "Reports sent (last 24 h)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "increase(telerady_report_sent_total[24h])",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 8 }
+    },
+    {
+      "type": "stat",
+      "title": "SLA: reports pending > 24 h",
+      "description": "Anything > 0 means a backlog is forming. Wire AlertManager on this.",
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        { "expr": "telerady_sla_pending_reports", "refId": "A" }
+      ],
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 8 }
+    },
+    {
+      "type": "stat",
+      "title": "Audit appended / minute",
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(telerady_audit_appended_total[1m]) * 60", "refId": "A" }
+      ],
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 8 }
+    },
+    {
+      "type": "timeseries",
+      "title": "AI draft requests / minute (by outcome)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum by (outcome) (rate(telerady_ai_draft_requests_total[5m]))",
+          "refId": "A",
+          "legendFormat": "{{outcome}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 }
+    },
+    {
+      "type": "timeseries",
+      "title": "AI draft latency p50 / p95 / p99",
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(telerady_ai_draft_latency_seconds_bucket[5m])))",
+          "refId": "A",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(telerady_ai_draft_latency_seconds_bucket[5m])))",
+          "refId": "B",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(telerady_ai_draft_latency_seconds_bucket[5m])))",
+          "refId": "C",
+          "legendFormat": "p99"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 }
+    },
+    {
+      "type": "timeseries",
+      "title": "MPPS events / minute (by status)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum by (status) (rate(telerady_mpps_events_total[5m]))",
+          "refId": "A",
+          "legendFormat": "{{status}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 22 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Push notifications / minute (by category/outcome)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum by (category, outcome) (rate(telerady_push_notifications_total[5m]))",
+          "refId": "A",
+          "legendFormat": "{{category}} / {{outcome}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 22 }
+    },
+    {
+      "type": "stat",
+      "title": "Push 'reaped' (last 1 h) — alert if > 0 sustained",
+      "description": "Subscriptions the push service forgot. Spikes are normal; sustained > 0 may indicate a stuck endpoint.",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "increase(telerady_push_notifications_total{outcome=\"reaped\"}[1h])",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 30 }
+    },
+    {
+      "type": "stat",
+      "title": "AI errors (last 1 h)",
+      "description": "Anything > 0 means RadiogenAI / Ollama / vLLM dropped a request mid-stream.",
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "increase(telerady_ai_draft_requests_total{outcome=\"error\"}[1h])",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 30 }
+    }
+  ]
+}

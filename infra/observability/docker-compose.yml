@@ -21,6 +21,7 @@ services:
       - "--storage.tsdb.retention.time=15d"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./telerady-alerts.yml:/etc/prometheus/telerady-alerts.yml:ro
       - prometheus-data:/prometheus
     ports:
       - "9090:9090"
