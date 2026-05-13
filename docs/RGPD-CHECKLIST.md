@@ -40,8 +40,12 @@ o procedimiento. Se revisa al cierre de cada sprint.
 - [ ] **Portabilidad** (art. 20): añadir export DICOM zip al JSON
   (Sprint 7).
 - [ ] **Oposición** (art. 21): banner + flag para marketing (Sprint 7).
-- [ ] **Decisiones automatizadas** (art. 22): cuando vuelva la IA,
-  banner explicativo y revisión humana (backlog).
+- [x] **Decisiones automatizadas** (art. 22): la IA de borrador
+  (RadiogenAI) volvió en Sprint 21 como integración externa con triple
+  opt-in (plataforma + hospital + usuario), banner explicativo en el
+  primer uso, revisión humana obligatoria (el radiólogo firma; la IA
+  nunca firma) y auditoría inmutable. Detalle en
+  `docs/AI-INTEGRATION.md`.
 
 ## 4. Seguridad técnica (art. 32)
 

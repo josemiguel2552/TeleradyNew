@@ -26,6 +26,7 @@ import {
   ReportState,
   ReportV2Service,
 } from '../services/report-v2.service';
+import { AiDraftService } from '../services/ai-draft.service';
 import { WorklistService } from '../services/worklist.service';
 import { SignReportDialogComponent } from '../components/sign-report-dialog/sign-report-dialog.component';
 
@@ -99,6 +100,14 @@ const DEFAULT_SECTIONS: Record<string, ReportSection[]> = {
         ></p-dropdown>
         <button
           pButton
+          label="AI draft"
+          severity="secondary"
+          [disabled]="locked() || aiBusy() || !findingsBody()"
+          (click)="askAiDraft()"
+          [title]="'Pide a la IA un borrador a partir de los Hallazgos. Requiere hospital habilitado y consentimiento.'"
+        ></button>
+        <button
+          pButton
           label="Sign"
           [disabled]="locked() || !hasContents()"
           (click)="openSignDialog()"
@@ -156,6 +165,7 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly reports = inject(ReportV2Service);
   private readonly worklist = inject(WorklistService);
+  private readonly ai = inject(AiDraftService);
   private readonly messages = inject(MessageService);
 
   readonly modalities = MODALITIES.map((m) => ({ label: m, value: m }));
@@ -172,6 +182,11 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
   readonly defaultPolicy = signal<'name_collegiate' | 'drawn_hash_tsa'>('name_collegiate');
   readonly locked = computed(() => this.state() === 'signed' || this.state() === 'sent');
   readonly hasContents = computed(() => this.sections().some((s) => s.body.trim().length > 0));
+  readonly findingsBody = computed(
+    () => this.sections().find((s) => s.key === 'findings')?.body.trim() ?? '',
+  );
+  readonly aiBusy = signal(false);
+  readonly aiConsentGiven = signal(false);
 
   private autosave$ = new Subject<void>();
   private sub: Subscription | null = null;
@@ -222,6 +237,66 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
 
   openSignDialog(): void {
     this.signDialogOpen.set(true);
+  }
+
+  async askAiDraft(): Promise<void> {
+    if (this.aiBusy() || !this.findingsBody()) return;
+    if (!this.aiConsentGiven()) {
+      const accepted = window.confirm(
+        'Vamos a enviar el texto de los Hallazgos a RadiogenAI para que sugiera un ' +
+          'borrador del informe. No se envían identificadores de paciente, fechas de ' +
+          'nacimiento ni tags DICOM. ¿Aceptas?',
+      );
+      if (!accepted) return;
+      this.aiConsentGiven.set(true);
+    }
+    this.aiBusy.set(true);
+    try {
+      const result = await this.ai.generate(this.studyId(), {
+        findings: this.findingsBody(),
+        reportTitle: this.modality(),
+        language: 'es',
+        acceptConsent: true,
+      });
+      this.appendDraftToConclusion(result.text);
+      this.messages.add({
+        severity: 'success',
+        summary: 'AI draft inserted',
+        detail: `${result.charCount} chars in ${(result.latencyMs / 1000).toFixed(1)} s`,
+        life: 3000,
+      });
+    } catch (err: any) {
+      const detail =
+        err?.error?.message ??
+        (err?.status === 503 ? 'AI integration disabled or upstream offline' : 'AI draft failed');
+      this.messages.add({ severity: 'error', summary: 'AI draft', detail, life: 4000 });
+    } finally {
+      this.aiBusy.set(false);
+    }
+  }
+
+  /**
+   * Inserts the AI output into the conclusion section without
+   * overwriting whatever the radiologist already wrote there. The AI is
+   * suggestive, not authoritative — the user still signs.
+   */
+  private appendDraftToConclusion(text: string): void {
+    const next = [...this.sections()];
+    const idx = next.findIndex((s) => s.key === 'conclusion');
+    if (idx < 0) {
+      next.push({ key: 'conclusion', title: 'Conclusion', body: text });
+    } else {
+      const existing = next[idx].body.trim();
+      const separator = existing ? '\n\n--- borrador IA ---\n' : '';
+      next[idx] = { ...next[idx], body: `${existing}${separator}${text}` };
+    }
+    this.sections.set(next);
+    // Trigger autosave so the AI draft survives a refresh.
+    this.persistDraftAsync();
+  }
+
+  private persistDraftAsync(): void {
+    void this.persistDraft();
   }
 
   async confirmSign(payload: any): Promise<void> {

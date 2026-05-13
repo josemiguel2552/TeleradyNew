@@ -11,6 +11,8 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Role } from '../../auth/roles';
 import type { AuthenticatedUser } from '../../auth/jwt.strategy';
+import { AiDraftService } from './ai-draft.service';
+import { AiDraftRequestDto, AiDraftResponseDto } from './dto/ai-draft.dto';
 import { SaveReportV2Dto } from './dto/save-report-v2.dto';
 import { SignReportDto } from './dto/sign-report.dto';
 import { ReportResponseDto } from './dto/report-response.dto';
@@ -22,7 +24,10 @@ import { ReportV2Service } from './report-v2.service';
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Roles(Role.Radiologist, Role.Coordinator, Role.Admin)
 export class ReportV2Controller {
-  constructor(private readonly service: ReportV2Service) {}
+  constructor(
+    private readonly service: ReportV2Service,
+    private readonly aiDraft: AiDraftService,
+  ) {}
 
   @Get(':reportStudyId')
   @ApiOperation({ summary: 'Get the structured report (decrypted) for a study' })
@@ -64,5 +69,20 @@ export class ReportV2Controller {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ReportResponseDto> {
     return this.service.send(reportStudyId, user);
+  }
+
+  @Post(':reportStudyId/ai-draft')
+  @Roles(Role.Radiologist, Role.Admin)
+  @ApiOperation({
+    summary:
+      'Generate an AI draft (RadiogenAI). Requires hospital opt-in and user consent.',
+  })
+  @ApiOkResponse({ type: AiDraftResponseDto })
+  aiDraft(
+    @Param('reportStudyId') reportStudyId: string,
+    @Body() body: AiDraftRequestDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<AiDraftResponseDto> {
+    return this.aiDraft.generate(reportStudyId, body, user);
   }
 }
