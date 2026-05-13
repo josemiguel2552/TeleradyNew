@@ -113,7 +113,22 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
+    "coveragePathIgnorePatterns": [
+      "\\.module\\.ts$",
+      "\\.dto\\.ts$",
+      "/dto/",
+      "/scripts/",
+      "/database/schema\\.ts$"
+    ],
     "coverageDirectory": "../coverage",
+    "coverageThreshold": {
+      "global": {
+        "statements": 30,
+        "branches": 25,
+        "functions": 30,
+        "lines": 30
+      }
+    },
     "testEnvironment": "node",
     "maxWorkers": 1
   }
