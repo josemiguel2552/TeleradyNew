@@ -831,6 +831,31 @@ DELETE con id, disable() no-op sin id.
 decorate, SSE chunk routing, error frame routing, Bearer +
 Accept headers. Duck-types ReadableStream para jsdom.
 
+## Sprint 57 — Cover WorkflowAdminService (cerrado)
+
+`workflow-admin.service.spec.ts` (17 tests) con db (select / insert
+/ update / delete / execute) mockeado y `AuditLogService` espía:
+
+- `listRules`: mapea filas a DTO (caso admin sin hospitales).
+- `createRule`: admin puede crear global; non-privileged sin
+  hospitalId → ForbiddenException; hospital_admin sí dentro de su
+  hospital.
+- `deleteRule`: not-found → 404; regla global con non-privileged
+  → 403 sin tocar `db.delete`; happy path con hospital_admin
+  borra + audita.
+- `review` (7 ramas): sin professionalId → 403; study missing,
+  report missing, `requiresReview=false`, state≠finalized/signed,
+  self-review → 403; approved happy (state preservado, version
+  preservada, audit `report.review_approved`); rejected happy
+  (state→`draft`, version++, comments en payload, audit
+  `report.review_rejected`).
+- `escalateBreaches`: non-privileged → 403; happy path audita una
+  fila por estudio devuelto por la query y devuelve `{escalated}`.
+
+Coverage back 47.55 → 49.52 statements, 37.50 → 40.87 branches.
+`workflow-admin.service.ts` pasa a 100% statements / 88.88%
+branches. Total 269 → 286 tests.
+
 ## Sprint 56 — Cover SrPusherService (cerrado)
 
 `sr-pusher.service.spec.ts` (5 tests) con db + dicom-sr-builder
