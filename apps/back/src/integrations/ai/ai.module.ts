@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { AI_DRAFT_PROVIDER, AiDraftProvider } from './ai-draft.provider';
 import { OllamaProvider } from './providers/ollama.provider';
 import { RadiogenAIProvider } from './providers/radiogenai.provider';
+import { VllmProvider } from './providers/vllm.provider';
 
 /**
  * Boot-time factory that picks the concrete provider based on the
@@ -10,8 +11,10 @@ import { RadiogenAIProvider } from './providers/radiogenai.provider';
  * (cheap, just reads env vars) so the operator can hot-swap by
  * flipping the var and rolling the pod without a code change.
  *
- *   AI_DRAFT_PROVIDER=radiogenai   (default — external)
- *   AI_DRAFT_PROVIDER=ollama       (local — no data leaves perimeter)
+ *   AI_DRAFT_PROVIDER=radiogenai   (default — external SaaS)
+ *   AI_DRAFT_PROVIDER=ollama       (local Ollama runtime)
+ *   AI_DRAFT_PROVIDER=vllm         (local OpenAI-compatible runtime —
+ *                                   vLLM, TGI, llama.cpp server …)
  *   AI_DRAFT_PROVIDER=disabled     (or any other value, including
  *                                   unset → returns a provider with
  *                                   configured=false so the
@@ -21,16 +24,22 @@ import { RadiogenAIProvider } from './providers/radiogenai.provider';
   providers: [
     RadiogenAIProvider,
     OllamaProvider,
+    VllmProvider,
     {
       provide: AI_DRAFT_PROVIDER,
-      inject: [ConfigService, RadiogenAIProvider, OllamaProvider],
+      inject: [ConfigService, RadiogenAIProvider, OllamaProvider, VllmProvider],
       useFactory: (
         config: ConfigService,
         radiogenai: RadiogenAIProvider,
         ollama: OllamaProvider,
+        vllm: VllmProvider,
       ): AiDraftProvider => {
         const choice = (config.get<string>('AI_DRAFT_PROVIDER') ?? 'radiogenai').toLowerCase();
         const logger = new Logger('AiModule');
+        if (choice === 'vllm') {
+          logger.log(`AI draft provider: vllm (configured=${vllm.configured})`);
+          return vllm;
+        }
         if (choice === 'ollama') {
           logger.log(`AI draft provider: ollama (configured=${ollama.configured})`);
           return ollama;

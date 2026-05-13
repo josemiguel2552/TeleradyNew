@@ -7,7 +7,8 @@ operador elige cuál usar con `AI_DRAFT_PROVIDER`:
 | Valor | Proveedor | Datos salen de la red | RGPD art. 28 |
 |---|---|---|---|
 | `radiogenai` (default) | Servicio externo RadiogenAI | Sí | Aplica — contrato con el proveedor |
-| `ollama` | Runtime local (Ollama, vLLM o equivalente con `/api/generate`) | No | No aplica — tratamiento de una sola parte |
+| `ollama` | Runtime local Ollama (`/api/generate` NDJSON) | No | No aplica — tratamiento de una sola parte |
+| `vllm` | Runtime local OpenAI-compatible: vLLM, TGI, llama.cpp `server` (`/v1/chat/completions` SSE) | No | No aplica — tratamiento de una sola parte |
 | cualquier otro | desactivado | — | — |
 
 El contrato es el mismo en ambos casos: el back recibe sólo

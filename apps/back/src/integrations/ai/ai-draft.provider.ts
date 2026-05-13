@@ -37,8 +37,8 @@ export interface AiDraftStreamSummary {
 }
 
 export interface AiDraftProvider {
-  /** Stable label for audit / metrics ("radiogenai" | "ollama"). */
-  readonly providerName: 'radiogenai' | 'ollama';
+  /** Stable label for audit / metrics ("radiogenai" | "ollama" | "vllm"). */
+  readonly providerName: 'radiogenai' | 'ollama' | 'vllm';
   /** Whether the impl has the env vars it needs to run. */
   readonly configured: boolean;
   generate(request: AiDraftRequest): Promise<AiDraftResult>;

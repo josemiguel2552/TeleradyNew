@@ -98,10 +98,14 @@ export const envSchema = z.object({
    * exposes /api/generate (no data leaves the perimeter — RGPD art.
    * 28 doesn't apply). Any other value disables drafting.
    */
-  AI_DRAFT_PROVIDER: z.enum(['radiogenai', 'ollama', 'disabled']).default('radiogenai'),
+  AI_DRAFT_PROVIDER: z.enum(['radiogenai', 'ollama', 'vllm', 'disabled']).default('radiogenai'),
   OLLAMA_URL: z.string().url().optional(),
   OLLAMA_MODEL: z.string().min(1).default('llama3.1:8b-instruct'),
   OLLAMA_TIMEOUT_MS: z.coerce.number().int().positive().default(120_000),
+  VLLM_URL: z.string().url().optional(),
+  VLLM_API_KEY: z.string().optional(),
+  VLLM_MODEL: z.string().min(1).default('meta-llama/Meta-Llama-3.1-8B-Instruct'),
+  VLLM_TIMEOUT_MS: z.coerce.number().int().positive().default(120_000),
 
   /**
    * Shared secret presented by inbound integrations (MPPS webhook from

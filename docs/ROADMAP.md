@@ -606,11 +606,39 @@ Resultado: back nest build green, jest 189/189 (44 suites,
 real ya tiene push: cuando un admin reasigna un estudio, el
 nuevo primario lo nota en su navegador / móvil al instante.
 
+## Sprint 31 — VllmProvider (OpenAI-compatible) (cerrado)
+
+Tercer provider IA: vLLM, TGI o llama.cpp `server` en el
+perímetro del operador, hablando el mismo contrato OpenAI Chat
+Completions con SSE.
+
+- [x] `VllmProvider` implementa `AiDraftProvider`. POST a
+  `/v1/chat/completions` con `stream:true`, parsea las líneas
+  `data: {choices:[{delta:{content}}]}` y termina al ver
+  `data: [DONE]`. Authorization Bearer opcional
+  (`VLLM_API_KEY`).
+- [x] Factory en `ai.module.ts` ahora maneja `vllm` como tercera
+  opción de `AI_DRAFT_PROVIDER`.
+- [x] Env: `VLLM_URL`, `VLLM_API_KEY` (opcional), `VLLM_MODEL`,
+  `VLLM_TIMEOUT_MS`. Validados por `env.schema.ts`.
+- [x] Tests (7): providerName/configured flag, 503 sin config,
+  hit a `/v1/chat/completions` con stream y modelo correctos,
+  Bearer condicional, streaming fragmentos ordenados, 5xx
+  mapping, error inline `{"error":{"message":…}}`.
+- [x] `docs/AI-INTEGRATION.md` tabla extendida con la tercera
+  fila (mismo nivel de privacidad que Ollama; data nunca sale
+  del perímetro).
+
+Resultado: nest build green, jest 196/196 (45 suites, +7).
+Backlog IA cerrado: SaaS + dos runtimes locales con dos
+contratos diferentes ya cubren todos los casos típicos.
+
 ## Backlog y futuro
 
-- vLLM / Text Generation Inference como tercer provider IA
-  (mismo contrato, basta con un `VllmProvider` y añadirlo a
-  la factory).
 - Wiring opcional de `study.urgent` y
   `report.review_required` al `PushService` (los hooks
   viven; sólo falta la rule de workflow que dispare "urgent").
+- Observabilidad: dashboards Grafana de las métricas que la
+  plataforma ya expone (push, ai_draft, mpps, http rates).
+- Performance: revisar índices del worklist y de la búsqueda
+  por `patIdHash`.
