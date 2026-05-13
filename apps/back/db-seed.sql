@@ -342,3 +342,19 @@ CREATE TABLE IF NOT EXISTS telerady.mpps_event (
 CREATE INDEX IF NOT EXISTS idx_mpps_event_pps_id     ON telerady.mpps_event(performed_procedure_step_id);
 CREATE INDEX IF NOT EXISTS idx_mpps_event_accession  ON telerady.mpps_event(accession_number);
 CREATE INDEX IF NOT EXISTS idx_mpps_event_study_iuid ON telerady.mpps_event(study_iuid);
+
+-- =====================================================================
+-- Sprint 29 — Web Push subscriptions (radiologists' devices)
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS telerady.push_subscription (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     UUID NOT NULL,
+    endpoint    TEXT NOT NULL,
+    p256dh      VARCHAR(150) NOT NULL,
+    auth        VARCHAR(50) NOT NULL,
+    user_agent  VARCHAR(255),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    revoked_at  TIMESTAMPTZ,
+    CONSTRAINT push_subscription_endpoint_key UNIQUE (endpoint)
+);
+CREATE INDEX IF NOT EXISTS idx_push_subscription_user ON telerady.push_subscription(user_id) WHERE revoked_at IS NULL;

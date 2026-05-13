@@ -71,6 +71,13 @@ export class MetricsService implements OnApplicationBootstrap {
     registers: [this.registry],
   });
 
+  readonly pushNotifications = new Counter({
+    name: 'telerady_push_notifications_total',
+    help: 'Web Push notifications attempted, labeled by category and outcome',
+    labelNames: ['category', 'outcome'],
+    registers: [this.registry],
+  });
+
   readonly aiDraftLatency = new Histogram({
     name: 'telerady_ai_draft_latency_seconds',
     help: 'Time RadiogenAI takes to return a draft, in seconds',

@@ -110,6 +110,16 @@ export const envSchema = z.object({
    */
   INTEGRATION_API_KEY: z.string().min(32).optional(),
 
+  /**
+   * VAPID keys for Web Push (RFC 8292). Generate them once with
+   * `npx web-push generate-vapid-keys`. When the public/private pair
+   * is missing, the push endpoints respond 503 and subscriptions stay
+   * dormant; this is the dev default.
+   */
+  VAPID_PUBLIC_KEY: z.string().min(60).optional(),
+  VAPID_PRIVATE_KEY: z.string().min(40).optional(),
+  VAPID_SUBJECT: z.string().regex(/^(mailto:|https?:)/).default('mailto:ops@telerady.es'),
+
   SWAGGER_USER: z.string().optional(),
   SWAGGER_PASSWORD: z.string().optional(),
 });

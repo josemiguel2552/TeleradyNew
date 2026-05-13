@@ -785,6 +785,19 @@ export const mppsEventInTelerady = telerady.table("mpps_event", {
 	error: text(),
 });
 
+export const pushSubscriptionInTelerady = telerady.table("push_subscription", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	userId: uuid("user_id").notNull(),
+	endpoint: text().notNull(),
+	p256dh: varchar({ length: 150 }).notNull(),
+	auth: varchar({ length: 50 }).notNull(),
+	userAgent: varchar("user_agent", { length: 255 }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	revokedAt: timestamp("revoked_at", { withTimezone: true, mode: 'string' }),
+}, (table) => [
+	unique("push_subscription_endpoint_key").on(table.endpoint),
+]);
+
 export const assignmentRuleInTelerady = telerady.table("assignment_rule", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	hospitalId: uuid("hospital_id"),

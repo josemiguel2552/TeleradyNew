@@ -19,6 +19,7 @@ import { Hl7v2Module } from './integrations/hl7v2/hl7v2.module';
 import { MppsModule } from './integrations/mpps/mpps.module';
 import { NotificationsModule } from './integrations/notifications/notifications.module';
 import { OrthancModule } from './integrations/orthanc/orthanc.module';
+import { PushModule } from './integrations/push/push.module';
 import { StorageModule } from './integrations/storage/storage.module';
 import { ParametersModule } from './parameters/parameters.module';
 import { PersonalDataModule } from './personal-data/personal-data.module';
@@ -103,6 +104,7 @@ const REDACT_PATHS = [
     MppsModule,
     NotificationsModule,
     OrthancModule,
+    PushModule,
     StorageModule,
     UserEventsModule,
     PersonalDataModule,

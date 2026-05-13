@@ -518,8 +518,61 @@ Operativamente: cambiar `AI_DRAFT_PROVIDER=ollama` +
 `OLLAMA_URL=…` y reiniciar el pod basta para sacar los datos del
 encargado externo.
 
+## Sprint 29 — Web Push backend (RFC 8292 VAPID) (cerrado)
+
+Primera pieza para que la PWA / app móvil futura pueda recibir
+alertas urgentes sin polling. La SPA se suscribe con el Service
+Worker, el back guarda la suscripción y envía notificaciones
+firmadas con VAPID.
+
+- [x] Tabla `telerady.push_subscription` (`user_id`, `endpoint`
+  UNIQUE, `p256dh`, `auth`, `user_agent`, `created_at`,
+  `revoked_at`). Índice parcial sobre `user_id WHERE revoked_at
+  IS NULL` para que el lookup en el send sea O(devices).
+- [x] Esquema Drizzle + DDL appendeado a `db-seed.sql`.
+- [x] Env: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,
+  `VAPID_SUBJECT` (validados). Sin las dos primeras, el
+  `PushService` reporta `configured=false`, los endpoints
+  responden 503 y los sends son no-ops (fail-closed).
+- [x] `PushService` (con `web-push` lib):
+    - `subscribe(userId, dto)` upsertea por endpoint (idempotente:
+      el navegador puede re-suscribirse y nosotros refrescamos las
+      keys + `revoked_at = NULL`).
+    - `unsubscribe(userId, id)` soft-delete.
+    - `sendToUser(userId, payload)` reúne las subs activas, envía
+      vía web-push con TTL 600 s, marca como revoked las que
+      respondan 404/410 (push service forgot them), y devuelve
+      `{ delivered, reaped, failed }`.
+    - Audit `push.notification_sent` con
+      `{ category, devices, delivered, reaped, failed }` —
+      `title` / `body` NUNCA en el audit (pueden llevar la
+      descripción del estudio que tratamos como PHI-adjacent).
+- [x] Métricas Prometheus
+  `telerady_push_notifications_total{category,outcome}` con
+  outcomes `delivered|reaped|failed`.
+- [x] Endpoints:
+    - `GET /v1/push/public-key` (público, devuelve la VAPID
+      public para que el SW llame a `PushManager.subscribe()`).
+    - `POST /v1/me/push/subscriptions` (JWT, idempotente).
+    - `DELETE /v1/me/push/subscriptions/:id` (JWT).
+- [x] Tests: 5 (no configurado→noop, init web-push, upsert por
+  endpoint, send con 410-gone reaping + audit sin PHI, 5xx
+  counted as failed sin revocar).
+
+Wiring del consumer queda fuera del alcance: cuando llega un
+estudio urgente o la asignación cambia, basta con un
+`pushService.sendToUser(actor.id, { title, body, category })`
+desde el lugar que ya emite la audit row correspondiente. La
+infra está lista y testeada.
+
+Resultado: nest build green, jest 187/187 (43 suites, +5 from
+Sprint 28's 182).
+
 ## Backlog y futuro
 
-- App móvil para alertas urgentes.
+- App móvil PWA: Service Worker en la SPA + UI de gestión de
+  suscripciones en `/admin/me`.
 - vLLM / Text Generation Inference como tercer provider (mismo
   contrato, basta con un `VllmProvider` y añadirlo a la factory).
+- Wiring del PushService a los disparadores de la app
+  (`study.assigned`, `study.urgent`, `report.signed_by_reviewer`).
