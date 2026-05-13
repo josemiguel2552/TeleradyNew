@@ -240,10 +240,25 @@ preparar producción. Todos ya pusheados.
   los archivos legacy quedan compilando hasta que un sprint posterior
   los elimine físicamente.
 
+## Sprint 21 — IA de borrador (RadiogenAI, integración externa) (cerrado)
+
+- [x] Schema: `hospital.ai_drafting_allowed` + `app_user.ai_consent_at`.
+- [x] `RadiogenAIClient` aislado en `integrations/radiogenai/` con
+  `x-api-key`, AbortController + timeout, parser SSE.
+- [x] `AiDraftService` + `POST /v2/reports/:reportStudyId/ai-draft`
+  con triple opt-in (plataforma / hospital / usuario), validación de
+  scope, audit `report.ai_draft_requested` (nunca el texto) y métricas
+  Prometheus (`telerady_ai_draft_requests_total`,
+  `telerady_ai_draft_latency_seconds`).
+- [x] Front: botón "AI draft" en `ReportEditorComponent`, banner de
+  consentimiento al primer uso, inserción no destructiva en la sección
+  "Conclusion" + autosave inmediato.
+- [x] `docs/AI-INTEGRATION.md` (topología, contrato de privacidad,
+  controles, resiliencia, RGPD art. 22 y 28).
+
 ## Backlog y futuro
 
-- IA de borrador (radiogenia o equivalente) — reincorporable cuando el flujo
-  base esté estable.
-- Workflows DICOM avanzados (Modality Performed Procedure Step,
-  Structured Reports DICOM SR).
+- Streaming SSE del borrador IA back-to-front (la SPA ya tolera el
+  formato `data:`; falta wiring NestJS).
+- Workflows DICOM avanzados (Modality Performed Procedure Step).
 - App móvil para alertas urgentes.
