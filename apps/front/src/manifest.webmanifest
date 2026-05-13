@@ -1,0 +1,35 @@
+{
+  "name": "Telerady",
+  "short_name": "Telerady",
+  "description": "Plataforma de teleradiología — worklist, lectura DICOM, firma de informes.",
+  "start_url": "/login",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#0b5394",
+  "lang": "es-ES",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["medical", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Worklist",
+      "short_name": "Worklist",
+      "url": "/radiologist/worklist",
+      "description": "Lista de estudios pendientes"
+    },
+    {
+      "name": "Mi cuenta",
+      "short_name": "Cuenta",
+      "url": "/admin/me",
+      "description": "Notificaciones push, descarga RGPD, eliminar cuenta"
+    }
+  ]
+}
