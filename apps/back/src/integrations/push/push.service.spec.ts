@@ -27,10 +27,18 @@ jest.mock('../../database/drizzle', () => {
     ),
   };
 
-  const select = jest.fn(() => ({
-    from: jest.fn().mockReturnThis(),
-    where: jest.fn(() => Promise.resolve(limitQueue.shift() ?? [])),
-  }));
+  // `.where()` returns a thenable so both bare `await db.select…where(…)`
+  // and `await db.select…where(…).limit(1)` flow off the same queue.
+  const select = jest.fn(() => {
+    const next = {
+      then: (resolve: any) => resolve(limitQueue.shift() ?? []),
+      limit: jest.fn(() => Promise.resolve(limitQueue.shift() ?? [])),
+    };
+    return {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn(() => next),
+    };
+  });
 
   const updateBuilder = {
     set: jest.fn((v: unknown) => {
@@ -182,5 +190,44 @@ describe('PushService', () => {
     const result = await service.sendToUser('user-x', { title: 't', body: 'b' });
     expect(result).toEqual({ delivered: 0, reaped: 0, failed: 1 });
     expect((db as any).__updates.some((u: any) => u.revokedAt !== undefined)).toBe(false);
+  });
+
+  describe('sendToProfessional (Sprint 30 helper)', () => {
+    it('resolves professional → user and delegates to sendToUser', async () => {
+      // First .where().limit(1) → app_user row; second .where() (no
+      // .limit) → list of push subs.
+      queueRows([
+        [{ id: 'user-77' }], // app_user lookup
+        [{ id: 'sub-a', endpoint: 'https://ok', p256dh: 'p', auth: 'a' }], // subs
+      ]);
+      (webPush.sendNotification as jest.Mock).mockResolvedValue({});
+
+      const mod = await buildModule({
+        VAPID_PUBLIC_KEY: 'B'.repeat(80),
+        VAPID_PRIVATE_KEY: 'p'.repeat(40),
+      });
+      const service = mod.get(PushService);
+      const result = await service.sendToProfessional('prof-1', {
+        title: 'Estudio asignado',
+        body: 'CT cráneo',
+        category: 'study_assigned',
+      });
+      expect(result).toEqual({ delivered: 1, reaped: 0, failed: 0 });
+    });
+
+    it('returns a no-op result when the professional has no app_user row', async () => {
+      queueRows([[]]); // app_user lookup miss
+      const mod = await buildModule({
+        VAPID_PUBLIC_KEY: 'B'.repeat(80),
+        VAPID_PRIVATE_KEY: 'p'.repeat(40),
+      });
+      const service = mod.get(PushService);
+      const result = await service.sendToProfessional('prof-ghost', {
+        title: 't',
+        body: 'b',
+      });
+      expect(result).toEqual({ delivered: 0, reaped: 0, failed: 0 });
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
   });
 });
