@@ -82,3 +82,61 @@ jobs:
       - run: npm install --no-package-lock
       - run: npm run build
       - run: npm test || true
+
+  back-e2e:
+    name: Back — e2e (RLS / testcontainers)
+    runs-on: ubuntu-latest
+    needs: back
+    defaults:
+      run:
+        working-directory: apps/back
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: apps/back/package-lock.json
+      - run: npm ci
+      # Testcontainers needs Docker. GitHub-hosted ubuntu-latest ships
+      # a working daemon out of the box.
+      - name: Generate ephemeral secrets
+        run: |
+          echo "E2E=1" >> $GITHUB_ENV
+          echo "DATABASE_URL=postgres://placeholder@localhost/placeholder" >> $GITHUB_ENV
+          echo "JWT_ACCESS_SECRET=$(openssl rand -hex 32)" >> $GITHUB_ENV
+          echo "JWT_REFRESH_SECRET=$(openssl rand -hex 32)" >> $GITHUB_ENV
+          echo "ENCRYPTION_MASTER_KEY=$(openssl rand -hex 32)" >> $GITHUB_ENV
+          echo "PSEUDONYM_PEPPER=$(openssl rand -hex 32)" >> $GITHUB_ENV
+      - name: Run RLS isolation e2e
+        run: ./node_modules/.bin/jest --config test/e2e/jest.e2e.config.js --runInBand
+
+  docker-images:
+    name: Docker — build images
+    runs-on: ubuntu-latest
+    needs: [back, front]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      # Build (do NOT push) both images on every PR / push. Catches
+      # Dockerfile regressions long before they land on staging.
+      - name: Build back image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/back/Dockerfile
+          push: false
+          tags: telerady-back:ci
+          cache-from: type=gha,scope=back
+          cache-to: type=gha,mode=max,scope=back
+      - name: Build front image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/front/Dockerfile
+          push: false
+          tags: telerady-front:ci
+          cache-from: type=gha,scope=front
+          cache-to: type=gha,mode=max,scope=front

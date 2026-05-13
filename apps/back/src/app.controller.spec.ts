@@ -18,4 +18,10 @@ describe('AppController', () => {
       expect(appController.getHello()).toBe('Back-Telerady server is running');
     });
   });
+
+  describe('healthz', () => {
+    it('responds 200 with { status: "ok" } so the Docker HEALTHCHECK / K8s liveness probe pass', () => {
+      expect(appController.healthz()).toEqual({ status: 'ok' });
+    });
+  });
 });

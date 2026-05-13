@@ -404,6 +404,40 @@ Gating: los E2E necesitan Docker (testcontainers). `npm test` sigue
 no tocándolos (`it.skip` sin `E2E=1`). Build, type-check y suite
 estándar siguen 39/39, 166/166 verdes.
 
+## Sprint 26 — Release engineering: Dockerfiles + CI hardening (cerrado)
+
+Sin imágenes Docker, todo el código bonito de Sprints 21-25 no se
+entrega reproducible. Y el CI lanzaba `npm test` pero nunca corría
+el suite E2E que escribimos en Sprint 25. Cerrado:
+
+- [x] `apps/back/Dockerfile` multi-stage (deps → build → prune →
+  runtime). Runtime Node 22 alpine, UID 1001 no-root, sólo
+  `dist/` + `node_modules` de producción, ~180 MB. HEALTHCHECK
+  apunta a `/healthz`.
+- [x] `/healthz` añadido a `AppController` (fuera del prefix `/v1`
+  para que las probes no rompan al subir versión). Spec del
+  controller cubre la respuesta.
+- [x] `apps/front/Dockerfile` multi-stage (deps → build → runtime).
+  Runtime nginx 1.27-alpine con `apps/front/nginx.conf` (SPA
+  fallback, gzip selectivo, headers de seguridad, cache
+  inmutable para fingerprinted assets, `/healthz` flat 200).
+  Listens 8080 para correr como `nginx` user.
+- [x] `.dockerignore` en ambos: fuera `node_modules`, `dist`,
+  `.env`, `coverage`, `.git`, fixtures.
+- [x] `.github/workflows/ci.yml`:
+    - Nuevo job `back-e2e` que corre la suite Sprint 25 con
+      `E2E=1` contra el Docker daemon que `ubuntu-latest` ya
+      provee (testcontainers se encarga de Postgres). Depende
+      de `back` para no malgastar minutos si el unit suite falla.
+    - Nuevo job `docker-images` que construye ambas imágenes
+      con `docker/build-push-action@v6` y caché GHA (no push:
+      solo verifica que los Dockerfiles compilan en cada PR).
+
+Verificación: nest build green, jest 167/167 (was 166 + 1 nuevo
+healthz spec), ng build --configuration=production green. Los E2E
+siguen gated en `E2E=1` para los devs locales; en CI corren contra
+el daemon real.
+
 ## Backlog y futuro
 
 - Modelos IA locales (cuando RadiogenAI deje de ser la opción única).
