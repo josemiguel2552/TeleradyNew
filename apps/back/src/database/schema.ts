@@ -766,6 +766,25 @@ export const hl7MessageInTelerady = telerady.table("hl7_message", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 });
 
+export const mppsEventInTelerady = telerady.table("mpps_event", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	performedProcedureStepId: varchar("performed_procedure_step_id", { length: 64 }).notNull(),
+	accessionNumber: varchar("accession_number", { length: 64 }),
+	studyIuid: varchar("study_iuid", { length: 150 }),
+	status: varchar({ length: 20 }).notNull(),
+	modality: varchar({ length: 16 }),
+	stationName: varchar("station_name", { length: 64 }),
+	hospitalId: uuid("hospital_id"),
+	mwlEntryId: uuid("mwl_entry_id"),
+	reportStudyId: uuid("report_study_id"),
+	startedAt: timestamp("started_at", { withTimezone: true, mode: 'string' }),
+	endedAt: timestamp("ended_at", { withTimezone: true, mode: 'string' }),
+	rawPayloadEnc: text("raw_payload_enc"),
+	receivedAt: timestamp("received_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	processedAt: timestamp("processed_at", { withTimezone: true, mode: 'string' }),
+	error: text(),
+});
+
 export const assignmentRuleInTelerady = telerady.table("assignment_rule", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	hospitalId: uuid("hospital_id"),

@@ -64,6 +64,13 @@ export class MetricsService implements OnApplicationBootstrap {
     registers: [this.registry],
   });
 
+  readonly mppsEvents = new Counter({
+    name: 'telerady_mpps_events_total',
+    help: 'Modality Performed Procedure Step events ingested, labeled by status',
+    labelNames: ['status'],
+    registers: [this.registry],
+  });
+
   readonly aiDraftLatency = new Histogram({
     name: 'telerady_ai_draft_latency_seconds',
     help: 'Time RadiogenAI takes to return a draft, in seconds',

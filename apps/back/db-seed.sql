@@ -317,3 +317,28 @@ ALTER TABLE telerady.hospital
     ADD COLUMN ai_drafting_allowed BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE telerady.app_user
     ADD COLUMN ai_consent_at TIMESTAMPTZ;
+
+-- =====================================================================
+-- Sprint 27 — MPPS (DICOM Modality Performed Procedure Step) receiver
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS telerady.mpps_event (
+    id                              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    performed_procedure_step_id     VARCHAR(64) NOT NULL,
+    accession_number                VARCHAR(64),
+    study_iuid                      VARCHAR(150),
+    status                          VARCHAR(20) NOT NULL,
+    modality                        VARCHAR(16),
+    station_name                    VARCHAR(64),
+    hospital_id                     UUID,
+    mwl_entry_id                    UUID,
+    report_study_id                 UUID,
+    started_at                      TIMESTAMPTZ,
+    ended_at                        TIMESTAMPTZ,
+    raw_payload_enc                 TEXT,
+    received_at                     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    processed_at                    TIMESTAMPTZ,
+    error                           TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_mpps_event_pps_id     ON telerady.mpps_event(performed_procedure_step_id);
+CREATE INDEX IF NOT EXISTS idx_mpps_event_accession  ON telerady.mpps_event(accession_number);
+CREATE INDEX IF NOT EXISTS idx_mpps_event_study_iuid ON telerady.mpps_event(study_iuid);

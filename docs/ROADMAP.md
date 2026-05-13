@@ -438,8 +438,46 @@ healthz spec), ng build --configuration=production green. Los E2E
 siguen gated en `E2E=1` para los devs locales; en CI corren contra
 el daemon real.
 
+## Sprint 27 — DICOM MPPS receiver (cerrado)
+
+Cubre Modality Performed Procedure Step: las modalidades emiten
+N-CREATE cuando arrancan el procedimiento y N-SET cuando lo
+terminan. Un Lua script en Orthanc parsea los DICOM y los reenvía
+al back vía webhook.
+
+- [x] Tabla `telerady.mpps_event` (id, performed_procedure_step_id,
+  accession_number, study_iuid, status, modality, station_name,
+  hospital_id, mwl_entry_id, report_study_id, started_at, ended_at,
+  raw_payload_enc, received_at, processed_at, error). Índices sobre
+  pps_id, accession_number y study_iuid.
+- [x] Esquema Drizzle (`mppsEventInTelerady`) y DDL appendeado a
+  `db-seed.sql`.
+- [x] `ApiKeyGuard` reusable en `src/common/auth/`: lee
+  `INTEGRATION_API_KEY` del env, compara con `timingSafeEqual`,
+  fail-closed si la env no está (503).
+- [x] `MppsService.ingest(dto)` en una sola transacción:
+    1) Busca el `mwl_entry` por accessionNumber (si viene).
+    2) Busca el `report_study` por studyInstanceUid (si viene).
+    3) Upsert del evento por `performed_procedure_step_id` (mismo
+       PPS = misma fila; N-SET actualiza N-CREATE).
+    4) Avanza `mwl_entry.state` mirroreando el status MPPS, sin
+       retroceder desde `completed`.
+    5) Audit `pacs.mpps_received` + métrica
+       `telerady_mpps_events_total{status}`.
+- [x] `POST /v1/integrations/orthanc/mpps` protegido por
+  `ApiKeyGuard`. DTO valida estados (`IN PROGRESS | COMPLETED |
+  DISCONTINUED`), longitudes y formato ISO8601.
+- [x] Env: `INTEGRATION_API_KEY` (≥32 chars, opcional para dev;
+  endpoint responde 503 si falta).
+- [x] Tests: 5 en `mpps.service.spec` (caso sin matches, join MWL,
+  join report_study, upsert por PPS id, métrica labelada por
+  status) + 5 en `api-key.guard.spec` (503 sin env, sin header,
+  key incorrecta, longitud distinta, OK).
+
+Resultado: nest build green, jest 177/177 (41 suites). No requiere
+front (es webhook server-to-server desde Orthanc al back).
+
 ## Backlog y futuro
 
 - Modelos IA locales (cuando RadiogenAI deje de ser la opción única).
-- Workflows DICOM avanzados (Modality Performed Procedure Step).
 - App móvil para alertas urgentes.

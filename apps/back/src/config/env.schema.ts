@@ -92,6 +92,13 @@ export const envSchema = z.object({
   RADIOGENAI_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
   RADIOGENAI_DEFAULT_LANGUAGE: z.enum(['es', 'en']).default('es'),
 
+  /**
+   * Shared secret presented by inbound integrations (MPPS webhook from
+   * Orthanc, HL7 ack scripts, …) in the `x-api-key` header. When unset
+   * the integration endpoints respond 503 — fail closed.
+   */
+  INTEGRATION_API_KEY: z.string().min(32).optional(),
+
   SWAGGER_USER: z.string().optional(),
   SWAGGER_PASSWORD: z.string().optional(),
 });

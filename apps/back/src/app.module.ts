@@ -16,6 +16,7 @@ import { MeModule } from './me/me.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { FhirModule } from './integrations/fhir/fhir.module';
 import { Hl7v2Module } from './integrations/hl7v2/hl7v2.module';
+import { MppsModule } from './integrations/mpps/mpps.module';
 import { NotificationsModule } from './integrations/notifications/notifications.module';
 import { OrthancModule } from './integrations/orthanc/orthanc.module';
 import { StorageModule } from './integrations/storage/storage.module';
@@ -99,6 +100,7 @@ const REDACT_PATHS = [
     I18nModule,
     FhirModule,
     Hl7v2Module,
+    MppsModule,
     NotificationsModule,
     OrthancModule,
     StorageModule,
