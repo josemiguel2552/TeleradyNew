@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
+import { AiModule } from '../../integrations/ai/ai.module';
 import { OrthancModule } from '../../integrations/orthanc/orthanc.module';
-import { RadiogenAIModule } from '../../integrations/radiogenai/radiogenai.module';
 import { AiDraftService } from './ai-draft.service';
 import { PdfService } from './pdf.service';
 import { ReportV2Controller } from './report-v2.controller';
@@ -11,7 +11,7 @@ import { SrPusherService } from './sr-pusher.service';
 import { TsaService } from './tsa.service';
 
 @Module({
-  imports: [OrthancModule, RadiogenAIModule],
+  imports: [OrthancModule, AiModule],
   controllers: [ReportV2Controller],
   providers: [
     ReportV2Service,

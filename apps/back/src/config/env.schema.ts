@@ -93,6 +93,17 @@ export const envSchema = z.object({
   RADIOGENAI_DEFAULT_LANGUAGE: z.enum(['es', 'en']).default('es'),
 
   /**
+   * Which AI draft provider the platform speaks to. Default is the
+   * external RadiogenAI. `ollama` switches to a local runtime that
+   * exposes /api/generate (no data leaves the perimeter — RGPD art.
+   * 28 doesn't apply). Any other value disables drafting.
+   */
+  AI_DRAFT_PROVIDER: z.enum(['radiogenai', 'ollama', 'disabled']).default('radiogenai'),
+  OLLAMA_URL: z.string().url().optional(),
+  OLLAMA_MODEL: z.string().min(1).default('llama3.1:8b-instruct'),
+  OLLAMA_TIMEOUT_MS: z.coerce.number().int().positive().default(120_000),
+
+  /**
    * Shared secret presented by inbound integrations (MPPS webhook from
    * Orthanc, HL7 ack scripts, …) in the `x-api-key` header. When unset
    * the integration endpoints respond 503 — fail closed.

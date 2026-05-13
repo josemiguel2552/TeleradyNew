@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AiDraftService } from './ai-draft.service';
 import { AuditLogService } from '../../common/audit/audit-log.service';
 import { MetricsService } from '../../metrics/metrics.service';
-import { RadiogenAIClient } from '../../integrations/radiogenai/radiogenai.client';
+import { AI_DRAFT_PROVIDER, AiDraftProvider } from '../../integrations/ai/ai-draft.provider';
 import { Role } from '../../auth/roles';
 import { db } from '../../database/drizzle';
 
@@ -52,16 +52,17 @@ function queueRows(rows: unknown[][]) {
 
 describe('AiDraftService', () => {
   let service: AiDraftService;
-  let client: jest.Mocked<RadiogenAIClient>;
+  let client: jest.Mocked<AiDraftProvider>;
   let audit: jest.Mocked<AuditLogService>;
   let metrics: MetricsService;
 
   beforeEach(async () => {
     client = {
+      providerName: 'radiogenai',
       configured: true,
       generate: jest.fn(),
       generateStream: jest.fn(),
-    } as unknown as jest.Mocked<RadiogenAIClient>;
+    } as unknown as jest.Mocked<AiDraftProvider>;
     audit = { append: jest.fn().mockResolvedValue(undefined) } as any;
     metrics = {
       aiDraftRequests: { labels: jest.fn().mockReturnValue({ inc: jest.fn() }) },
@@ -71,7 +72,7 @@ describe('AiDraftService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AiDraftService,
-        { provide: RadiogenAIClient, useValue: client },
+        { provide: AI_DRAFT_PROVIDER, useValue: client },
         { provide: AuditLogService, useValue: audit },
         { provide: MetricsService, useValue: metrics },
       ],

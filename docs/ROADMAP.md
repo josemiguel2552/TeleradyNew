@@ -477,7 +477,49 @@ al back vía webhook.
 Resultado: nest build green, jest 177/177 (41 suites). No requiere
 front (es webhook server-to-server desde Orthanc al back).
 
+## Sprint 28 — Provider abstraction + Ollama local (cerrado)
+
+RadiogenAI deja de ser el único proveedor. Refactor + segunda impl:
+
+- [x] Interface `AiDraftProvider` con tipos compartidos
+  (`AiDraftRequest`, `AiDraftResult`, `AiDraftStreamChunk`,
+  `AiDraftStreamSummary`) y token DI `AI_DRAFT_PROVIDER` en
+  `src/integrations/ai/ai-draft.provider.ts`. Misma surface que el
+  cliente antiguo: `configured`, `generate(req)`, `generateStream(req,
+  onClose)`.
+- [x] `RadiogenAIProvider` (renombrado desde `RadiogenAIClient`,
+  movido a `src/integrations/ai/providers/`). Comportamiento
+  idéntico: `x-api-key`, SSE `data:` parser, timeout.
+- [x] `OllamaProvider` nueva, habla `/api/generate` NDJSON.
+  System prompt bilingüe (ES/EN), modelo configurable
+  (`OLLAMA_MODEL`, default `llama3.1:8b-instruct`), timeout
+  separado (default 120 s — los modelos locales son más lentos).
+- [x] `AiModule` con `useFactory` que selecciona impl según
+  `AI_DRAFT_PROVIDER` env. Cualquier valor no reconocido devuelve
+  un provider stub con `configured=false` así el endpoint
+  responde 503.
+- [x] `AiDraftService` ahora inyecta `@Inject(AI_DRAFT_PROVIDER)
+  client: AiDraftProvider`. El audit log usa
+  `client.providerName` para que las consultas RGPD del paciente
+  puedan distinguir entre "este borrador se generó internamente"
+  vs "este se envió a RadiogenAI".
+- [x] Módulo legacy `src/integrations/radiogenai/` eliminado;
+  imports actualizados.
+- [x] Tests: 5 en `radiogenai.provider.spec`, 7 en
+  `ollama.provider.spec` (configured flag, generate accumula
+  NDJSON, streaming respeta fragmentos vacíos, mapeo 5xx, error
+  inline, prompt bilingüe). `ai-draft.service.spec` actualizado al
+  nuevo token DI.
+- [x] `docs/AI-INTEGRATION.md` rewriteado con tabla de
+  proveedores + procedimiento de switch en caliente.
+
+Resultado: nest build green, jest 182/182 (42 suites).
+Operativamente: cambiar `AI_DRAFT_PROVIDER=ollama` +
+`OLLAMA_URL=…` y reiniciar el pod basta para sacar los datos del
+encargado externo.
+
 ## Backlog y futuro
 
-- Modelos IA locales (cuando RadiogenAI deje de ser la opción única).
 - App móvil para alertas urgentes.
+- vLLM / Text Generation Inference como tercer provider (mismo
+  contrato, basta con un `VllmProvider` y añadirlo a la factory).

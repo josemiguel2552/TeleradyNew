@@ -1,8 +1,18 @@
-# Integración con RadiogenAI
+# Integración IA de borrador
 
-La generación asistida de borradores de informe vive **fuera** de Telerady,
-en una API externa propia de RadiogenAI con su propio rate limiting y
-tracking de uso. Telerady la consume como un cliente más.
+La generación asistida de borradores de informe vive detrás de una
+abstracción (`AiDraftProvider`). Hay **dos implementaciones** y el
+operador elige cuál usar con `AI_DRAFT_PROVIDER`:
+
+| Valor | Proveedor | Datos salen de la red | RGPD art. 28 |
+|---|---|---|---|
+| `radiogenai` (default) | Servicio externo RadiogenAI | Sí | Aplica — contrato con el proveedor |
+| `ollama` | Runtime local (Ollama, vLLM o equivalente con `/api/generate`) | No | No aplica — tratamiento de una sola parte |
+| cualquier otro | desactivado | — | — |
+
+El contrato es el mismo en ambos casos: el back recibe sólo
+`findings` + `reportTitle` + `language`, jamás identificadores de
+paciente o tags DICOM. Lo único que cambia es el destino del fetch.
 
 Este documento describe cómo está atada la integración, qué se envía y
 qué no, y los controles que el operador / DPO / usuario pueden activar
@@ -153,9 +163,31 @@ el outcome y el char count realmente recibido, así operations puede
 diferenciar entre "el borrador completó" y "el upstream se cortó a
 mitad".
 
+## Cambiar de proveedor en caliente
+
+Con `AI_DRAFT_PROVIDER=ollama` + `OLLAMA_URL=http://ollama:11434`
+en el env y un reinicio del pod, la plataforma deja de hablar con
+RadiogenAI. La SPA no necesita cambios — el endpoint
+`/v2/reports/:id/ai-draft[/stream]` sigue siendo el mismo. El
+audit log refleja el cambio: el campo `provider` pasa de
+`"radiogenai"` a `"ollama"`.
+
+Pasos operativos:
+
+1. Provisionar el runtime Ollama (helm chart o `docker run
+   ollama/ollama`).
+2. Pre-pull del modelo en el host: `ollama pull
+   llama3.1:8b-instruct`.
+3. Apuntar `OLLAMA_URL` a su Service de Kubernetes / hostname.
+4. Flippear `AI_DRAFT_PROVIDER=ollama` en el env del back.
+5. Restart del pod. La primera request mostrará en `pino`:
+   `AI draft provider: ollama (configured=true)`.
+
+Rollback: invertir los pasos 4 y 5. El proveedor se elige al
+arrancar, así que un rollback es solo otro restart.
+
 ## Cambios futuros
 
-- **Modelos locales**: si en algún momento se decide alojar la IA
-  en infraestructura propia, el cliente se sustituye sin tocar el
-  resto del back; el contrato (`generate / generateStream`) queda
-  igual.
+- **vLLM / TGI** como proveedor adicional, mismo contrato — basta
+  con un `VllmProvider` que implemente la misma interface y
+  añadirlo a la factory.

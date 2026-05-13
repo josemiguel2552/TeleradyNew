@@ -1,5 +1,6 @@
 import {
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
   ServiceUnavailableException,
@@ -16,10 +17,11 @@ import { TenantScope } from '../../common/tenant/tenant-scope';
 import { MetricsService } from '../../metrics/metrics.service';
 import type { AuthenticatedUser } from '../../auth/jwt.strategy';
 import {
+  AI_DRAFT_PROVIDER,
+  AiDraftProvider,
   AiDraftStreamChunk,
   AiDraftStreamSummary,
-  RadiogenAIClient,
-} from '../../integrations/radiogenai/radiogenai.client';
+} from '../../integrations/ai/ai-draft.provider';
 import type { AiDraftRequestDto, AiDraftResponseDto } from './dto/ai-draft.dto';
 
 interface ResolvedTarget {
@@ -45,7 +47,7 @@ interface ResolvedTarget {
 @Injectable()
 export class AiDraftService {
   constructor(
-    private readonly client: RadiogenAIClient,
+    @Inject(AI_DRAFT_PROVIDER) private readonly client: AiDraftProvider,
     private readonly audit: AuditLogService,
     private readonly metrics: MetricsService,
   ) {}
@@ -198,7 +200,7 @@ export class AiDraftService {
         findingsChars: dto.findings.length,
         responseChars: summary.charCount,
         latencyMs: summary.latencyMs,
-        provider: 'radiogenai',
+        provider: this.client.providerName,
         outcome,
       },
     });
