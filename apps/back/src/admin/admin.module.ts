@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
+import { PushModule } from '../integrations/push/push.module';
 import { AdminController } from './v1/admin.controller';
 import { AdminQueryRepository } from './v1/admin-query.repository';
 import { AdminRepository } from './v1/admin.repository';
 import { AdminService } from './v1/admin.service';
 
 @Module({
+  imports: [PushModule],
   controllers: [AdminController],
   providers: [AdminService, AdminRepository, AdminQueryRepository],
 })

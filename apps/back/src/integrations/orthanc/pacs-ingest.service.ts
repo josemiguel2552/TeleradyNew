@@ -13,6 +13,7 @@ import { TenantScope } from '../../common/tenant/tenant-scope';
 import { Role } from '../../auth/roles';
 import type { AuthenticatedUser } from '../../auth/jwt.strategy';
 import { WorkflowEngine } from '../../workflows/v1/workflow-engine.service';
+import { PushService } from '../push/push.service';
 import { OrthancClient, type OrthancStudy } from './orthanc-client.service';
 
 const DEFAULT_PENDING_STATE_ID = 1;
@@ -43,6 +44,7 @@ export class PacsIngestService {
     private readonly enc: ColumnEncryptionService,
     private readonly audit: AuditLogService,
     private readonly workflow: WorkflowEngine,
+    private readonly push: PushService,
   ) {}
 
   async sync(actor: AuthenticatedUser, input: SyncStudyInput): Promise<SyncStudyResult> {
@@ -117,6 +119,7 @@ export class PacsIngestService {
       // ingest so a manual reassignment via /v1/admin/studies/:id/assign
       // survives re-syncs.
       let appliedRuleId: string | null = null;
+      let assignedProfessionalId: string | null = null;
       if (action === 'created' && hospitalId) {
         const decision = await this.workflow.applyToStudy(tx, reportStudyId, {
           hospitalId,
@@ -124,6 +127,7 @@ export class PacsIngestService {
           subspecialtyId: null,
         });
         appliedRuleId = decision.matchedRuleId;
+        assignedProfessionalId = decision.professionalId;
       }
 
       await this.audit.append(
@@ -144,6 +148,21 @@ export class PacsIngestService {
         },
         tx,
       );
+
+      // Notify the matched primary out-of-band. The push is fire &
+      // forget — it never blocks the ingest transaction and a missing
+      // device just leaves the worklist as the canonical surface.
+      if (assignedProfessionalId) {
+        void this.push
+          .sendToProfessional(assignedProfessionalId, {
+            title: 'Estudio nuevo',
+            body: `Modalidad ${dicomFields.modalities.join('/') || '—'} en tu worklist.`,
+            url: `/radiologist/study/${reportStudyId}`,
+            tag: `study-ingested-${reportStudyId}`,
+            category: 'study_ingested',
+          })
+          .catch(() => undefined);
+      }
 
       return {
         reportStudyId,

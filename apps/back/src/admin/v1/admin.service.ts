@@ -8,6 +8,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../../database/drizzle';
 import { professionalInTelerady, reportStudyInTelerady } from '../../database/schema';
 import { AuditLogService } from '../../common/audit/audit-log.service';
+import { PushService } from '../../integrations/push/push.service';
 import { TenantScope } from '../../common/tenant/tenant-scope';
 import type { AuthenticatedUser } from '../../auth/jwt.strategy';
 import { AdminRepository } from './admin.repository';
@@ -19,6 +20,7 @@ export class AdminService {
   constructor(
     private readonly repo: AdminRepository,
     private readonly audit: AuditLogService,
+    private readonly push: PushService,
   ) {}
 
   async assignStudy(
@@ -73,6 +75,18 @@ export class AdminService {
         tx,
       );
     });
+
+    // Notify the new primary radiologist out-of-band; never blocks the
+    // assign response and never aborts on failure (push is best-effort).
+    void this.push
+      .sendToProfessional(dto.professionalId, {
+        title: 'Estudio asignado',
+        body: 'Tienes un estudio nuevo en tu worklist.',
+        url: `/radiologist/study/${study.id}`,
+        tag: `study-assigned-${study.id}`,
+        category: 'study_assigned',
+      })
+      .catch(() => undefined);
 
     return {
       reportStudyId: study.id,

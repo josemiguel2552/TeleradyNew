@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import webPush, { type PushSubscription as WPSubscription } from 'web-push';
 import { db } from '../../database/drizzle';
-import { pushSubscriptionInTelerady } from '../../database/schema';
+import { appUserInTelerady, pushSubscriptionInTelerady } from '../../database/schema';
 import { AuditLogService } from '../../common/audit/audit-log.service';
 import { MetricsService } from '../../metrics/metrics.service';
 import type { CreatePushSubscriptionDto } from './dto/push-subscription.dto';
@@ -188,6 +188,25 @@ export class PushService {
     });
 
     return { delivered, reaped, failed };
+  }
+
+  /**
+   * Resolve `professional_id → app_user.id` and forward to
+   * `sendToUser`. Best-effort: returns `{ delivered: 0, … }` if no
+   * user maps to the professional (typical for synthetic accounts in
+   * tests / seed scripts).
+   */
+  async sendToProfessional(
+    professionalId: string,
+    payload: PushPayload,
+  ): Promise<SendResult> {
+    const rows = await db
+      .select({ id: appUserInTelerady.id })
+      .from(appUserInTelerady)
+      .where(eq(appUserInTelerady.professionalId, professionalId))
+      .limit(1);
+    if (!rows[0]) return { delivered: 0, reaped: 0, failed: 0 };
+    return this.sendToUser(rows[0].id, payload);
   }
 
   private async markRevoked(id: string): Promise<void> {
