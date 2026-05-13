@@ -152,6 +152,10 @@ export class AuthController {
   @ApiBearerAuth()
   @Post('mfa/confirm')
   @HttpCode(204)
+  // TOTP is six digits, so absent throttling it's a ~17 minute brute
+  // force at 1 req/sec. Cap at 10/min — generous for an honest user
+  // mistyping, hostile for everything else.
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiOperation({ summary: 'Activate MFA by confirming the first TOTP code' })
   async mfaConfirm(
     @Body() body: MfaTokenDto,
