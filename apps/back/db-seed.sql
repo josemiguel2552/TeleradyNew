@@ -309,3 +309,11 @@ CREATE TABLE telerady.hl7_message (
 );
 CREATE INDEX hl7_hospital_idx ON telerady.hl7_message (hospital_id);
 CREATE INDEX hl7_control_idx ON telerady.hl7_message (control_id);
+
+-- =====================================================================
+-- Sprint 21 — RadiogenAI integration (opt-in per hospital and per user)
+-- =====================================================================
+ALTER TABLE telerady.hospital
+    ADD COLUMN ai_drafting_allowed BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE telerady.app_user
+    ADD COLUMN ai_consent_at TIMESTAMPTZ;

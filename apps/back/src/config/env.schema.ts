@@ -87,6 +87,11 @@ export const envSchema = z.object({
     .default('false'),
   HL7_MLLP_PORT: z.coerce.number().int().positive().default(2575),
 
+  RADIOGENAI_URL: z.string().url().optional(),
+  RADIOGENAI_API_KEY: z.string().min(20).optional(),
+  RADIOGENAI_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+  RADIOGENAI_DEFAULT_LANGUAGE: z.enum(['es', 'en']).default('es'),
+
   SWAGGER_USER: z.string().optional(),
   SWAGGER_PASSWORD: z.string().optional(),
 });

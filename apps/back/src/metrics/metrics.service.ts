@@ -57,6 +57,20 @@ export class MetricsService implements OnApplicationBootstrap {
     registers: [this.registry],
   });
 
+  readonly aiDraftRequests = new Counter({
+    name: 'telerady_ai_draft_requests_total',
+    help: 'AI-draft calls to RadiogenAI, labeled by outcome (ok|error)',
+    labelNames: ['outcome'],
+    registers: [this.registry],
+  });
+
+  readonly aiDraftLatency = new Histogram({
+    name: 'telerady_ai_draft_latency_seconds',
+    help: 'Time RadiogenAI takes to return a draft, in seconds',
+    buckets: [0.5, 1, 2, 5, 10, 20, 40, 80],
+    registers: [this.registry],
+  });
+
   onApplicationBootstrap(): void {
     collectDefaultMetrics({ register: this.registry });
   }

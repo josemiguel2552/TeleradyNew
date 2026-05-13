@@ -651,6 +651,7 @@ export const hospitalInTelerady = telerady.table("hospital", {
 	signaturePolicy: varchar("signature_policy", { length: 40 }).default('name_collegiate').notNull(),
 	retentionDays: integer("retention_days").default(3650).notNull(),
 	active: boolean().default(true).notNull(),
+	aiDraftingAllowed: boolean("ai_drafting_allowed").default(false).notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
@@ -668,6 +669,7 @@ export const appUserInTelerady = telerady.table("app_user", {
 	lockedUntil: timestamp("locked_until", { withTimezone: true, mode: 'string' }),
 	lastLoginAt: timestamp("last_login_at", { withTimezone: true, mode: 'string' }),
 	processingRestricted: boolean("processing_restricted").default(false).notNull(),
+	aiConsentAt: timestamp("ai_consent_at", { withTimezone: true, mode: 'string' }),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
