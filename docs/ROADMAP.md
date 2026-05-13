@@ -831,6 +831,29 @@ DELETE con id, disable() no-op sin id.
 decorate, SSE chunk routing, error frame routing, Bearer +
 Accept headers. Duck-types ReadableStream para jsdom.
 
+## Sprint 54 — Cover TsaService + SignatureService (cerrado)
+
+Dos suites nuevas en `apps/back/src/reports/v2/`:
+
+- `tsa.service.spec.ts` (5 tests): hash sha256 estable
+  para `string` y `Buffer` con el mismo plaintext; ts en ISO 8601;
+  token = `sha256(provider|hash|ts)` (recomputado por el test);
+  token rota entre llamadas con el mismo payload por avance de
+  reloj.
+- `signature.service.spec.ts` (6 tests): rechazo de policy
+  cruzada vs hospitalPolicy; rechazo si professional no tiene
+  name+collegiate y el DTO no los override; happy-path
+  `name_collegiate` con `contentsDigest` (sha256 de los
+  contents); override desde DTO; rechazo `drawn_hash_tsa` sin
+  payload `drawn`; happy-path drawn que sube PNG vía
+  `storage.put`, llama `tsa.stamp` y devuelve `signatureData`
+  con `drawingBucket/Key`, `tsa.token` y `signedAt` heredado del
+  stamp. `database/drizzle` mockeado para que el módulo cargue
+  sin DATABASE_URL.
+
+Coverage backend 43.55 → 44.92 statements; 33.95 → 35.30
+branches. Ambos services bajo prueba pasan a 100% statements.
+
 ## Sprint 53 — Dev seed `seed:push` (cerrado)
 
 `apps/back/src/scripts/seed-push.ts` monta una `push_subscription`
