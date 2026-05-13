@@ -15,7 +15,9 @@ Tres roles principales:
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │                          NAVEGADOR / EDGE                          │
-│  Angular 19  (portal profesional, hospital, admin)                 │
+│  Angular 19  (PWA, manifest + Service Worker)                      │
+│      ├── push handler (RFC 8292 VAPID)                             │
+│      ├── editor + AI draft (SSE consumer)                          │
 │      └── iframe OHIF (visor DICOM, comunicación PostMessage)       │
 └─────────────────────────────┬──────────────────────────────────────┘
                               │ TLS 1.3
@@ -23,10 +25,14 @@ Tres roles principales:
 ┌────────────────────────────────────────────────────────────────────┐
 │                         API GATEWAY / BFF                          │
 │  NestJS 11                                                         │
-│  ├── REST                  (módulos por dominio)                   │
-│  ├── DICOMweb proxy        (proxy autenticado a Orthanc)           │
-│  ├── BullMQ                (workers: audit, retención, S3 sync)    │
-│  └── pino logger + audit                                           │
+│  ├── REST + SSE             (módulos por dominio)                  │
+│  ├── DICOMweb proxy         (proxy autenticado a Orthanc)          │
+│  ├── HL7 v2 MLLP server     (ORM inbound, ORU outbound)            │
+│  ├── MPPS webhook receiver  (Orthanc Lua → POST /v1/integrations…) │
+│  ├── BullMQ workers         (audit verify, ORU sender, push, …)    │
+│  ├── Web Push sender        (web-push, VAPID)                      │
+│  ├── AI draft provider      (RadiogenAI | Ollama | vLLM)           │
+│  └── pino logger + audit hash chain                                │
 └──┬───────────┬──────────────┬────────────────┬─────────────────────┘
    │           │              │                │
    ▼           ▼              ▼                ▼
@@ -110,12 +116,51 @@ Verificable de forma independiente. Backup periódico off-site con sello de tiem
 - Job nocturno aplica políticas: borrado lógico → físico → purga S3.
 - Excepciones legales se marcan con `legal_hold = true`.
 
-## 9. Desarrollo local
+## 9. IA de borrador (provider abstraction)
 
-`infra/docker-compose.dev.yml` levanta Postgres, Redis, MinIO, Orthanc y Vault.
-Front y back se ejecutan directamente con `npm start` para hot reload.
+`AiDraftProvider` (`apps/back/src/integrations/ai/`) abstrae tres
+implementaciones intercambiables por `AI_DRAFT_PROVIDER`:
 
-## 10. Despliegue (objetivo)
+| Valor | Wire format | Datos salen del perímetro |
+|---|---|---|
+| `radiogenai` | `POST /genreport` SSE `data:` lines + `x-api-key` | Sí — RGPD art. 28 aplica |
+| `ollama` | `POST /api/generate` NDJSON | No |
+| `vllm` | `POST /v1/chat/completions` OpenAI SSE `data: {…}` + opcional Bearer | No |
+
+Todos hablan el mismo contrato (`generate`, `generateStream`,
+`configured`, `providerName`) — el `AiDraftService` que orquesta
+ignora cuál tiene detrás. El audit log graba `providerName` para
+trazabilidad RGPD.
+
+## 10. Notificaciones push
+
+`PushService` (`apps/back/src/integrations/push/`) usa Web Push
+(RFC 8292) con VAPID:
+
+- Suscripción por dispositivo (`telerady.push_subscription`,
+  `endpoint` UNIQUE, soft-delete via `revoked_at`).
+- `sendToProfessional(professionalId, payload)` resuelve
+  `app_user.professional_id` → `app_user.id` y delega a
+  `sendToUser`.
+- Cuando el push service responde 404/410, la suscripción se marca
+  revocada automáticamente para que el siguiente envío no la
+  reintente.
+- Disparadores en producción: `study.assigned` (admin reasigna o
+  workflow auto-asigna) y `study.urgent` (priority STAT/URGENT
+  heredada del HL7 ORM via MWL).
+
+## 11. Desarrollo local
+
+`infra/docker-compose.dev.yml` levanta Postgres, Redis, MinIO,
+Orthanc y Vault. `infra/observability/docker-compose.yml` añade
+Prometheus + Loki + Promtail + Grafana con dos dashboards
+provisionados (logs + métricas).
+
+Front y back se ejecutan directamente con `npm start` para hot
+reload. Para PWA install local, Angular + manifest + sw.js viven
+en el bundle root.
+
+## 12. Despliegue (objetivo)
 
 Proveedor soberano español (Stackscale / Arsys / Jotelulu) con:
 - Postgres gestionado o instancia dedicada con backups cifrados off-site.
@@ -124,3 +169,9 @@ Proveedor soberano español (Stackscale / Arsys / Jotelulu) con:
 - Vault HA.
 - Reverse proxy con TLS terminado y headers de seguridad.
 - Observabilidad: Loki / Grafana, alertas en PagerDuty/Opsgenie equivalente.
+
+Imágenes Docker en `apps/back/Dockerfile` (multi-stage Node 22
+alpine, non-root UID 1001, ~180 MB) y `apps/front/Dockerfile`
+(multi-stage Angular + nginx 1.27 alpine, ~50 MB, sirve la SPA
++ /healthz). Ambos construidos en CI por el job `docker-images`
+(no push: sólo verificación que los Dockerfiles compilan).
