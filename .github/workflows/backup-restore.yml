@@ -1,0 +1,116 @@
+name: Backup / Restore drill
+
+# Exercises the DR plan end-to-end on every PR that touches the
+# backup tooling, the seed, or the migration scripts, plus a weekly
+# scheduled run so silent breakage shows up before a real incident.
+
+on:
+  pull_request:
+    paths:
+      - "scripts/backup.sh"
+      - "scripts/restore.sh"
+      - "scripts/smoke.sh"
+      - "apps/back/db-seed.sql"
+      - "infra/migrations/**"
+      - ".github/workflows/backup-restore.yml"
+  schedule:
+    # Sunday 04:00 UTC — out-of-band with the daily prod backup so a
+    # weekly drift can never go unnoticed for more than 7 days.
+    - cron: "0 4 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drill:
+    name: Seed → backup → restore → smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres-src:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: telerady
+          POSTGRES_PASSWORD: telerady
+          POSTGRES_DB: telerady
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U telerady -d telerady"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      postgres-dst:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: telerady
+          POSTGRES_PASSWORD: telerady
+          POSTGRES_DB: telerady
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U telerady -d telerady"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pg_dump / pg_restore (Postgres 16 client)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client gnupg
+
+      - name: Generate a throw-away GPG keypair (drill only)
+        run: |
+          mkdir -p ~/.gnupg
+          chmod 700 ~/.gnupg
+          cat >/tmp/key.batch <<'EOF'
+%no-protection
+Key-Type: RSA
+Key-Length: 3072
+Name-Real: Telerady Drill
+Name-Email: drill@telerady.local
+Expire-Date: 1d
+%commit
+EOF
+          gpg --batch --generate-key /tmp/key.batch
+          echo "BACKUP_GPG_RECIPIENT=$(gpg --list-keys --with-colons drill@telerady.local | awk -F: '/^fpr/ { print $10; exit }')" >> $GITHUB_ENV
+
+      - name: Apply seed + RLS migration to the source DB
+        run: |
+          psql "postgres://telerady:telerady@localhost:5432/telerady" -v ON_ERROR_STOP=1 -f apps/back/db-seed.sql
+          psql "postgres://telerady:telerady@localhost:5432/telerady" -v ON_ERROR_STOP=1 -f infra/migrations/001-enable-rls.sql || true
+          psql "postgres://telerady:telerady@localhost:5432/telerady" -v ON_ERROR_STOP=1 -f infra/migrations/003-priority-propagation.sql
+
+      - name: Backup (skip S3 upload, write to /tmp)
+        env:
+          DATABASE_URL: postgres://telerady:telerady@localhost:5432/telerady
+        run: |
+          DATE=$(date +%F)
+          OUT=/tmp/dump.sql.gpg
+          pg_dump --no-owner --no-acl --format=custom "$DATABASE_URL" \
+            | gpg --batch --yes --trust-model always --encrypt -r "$BACKUP_GPG_RECIPIENT" -o "$OUT"
+          sha256sum "$OUT" | tee /tmp/dump.sha256
+          ls -lh "$OUT"
+
+      - name: Restore into the destination DB
+        env:
+          DEST_URL: postgres://telerady:telerady@localhost:5433/telerady
+        run: |
+          gpg --batch --yes --decrypt /tmp/dump.sql.gpg \
+            | pg_restore --no-owner --no-acl --clean --if-exists --dbname="$DEST_URL"
+
+      - name: Row-count parity check (source vs destination)
+        run: |
+          SRC=postgres://telerady:telerady@localhost:5432/telerady
+          DST=postgres://telerady:telerady@localhost:5433/telerady
+          for T in telerady.hospital telerady.app_user telerady.audit_log; do
+            S=$(psql "$SRC" -At -c "select count(*) from $T")
+            D=$(psql "$DST" -At -c "select count(*) from $T")
+            echo "$T: source=$S dest=$D"
+            test "$S" = "$D" || { echo "Row count drift on $T" >&2; exit 1; }
+          done

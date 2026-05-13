@@ -99,7 +99,12 @@ GitHub Actions ejecuta un test que:
 - Llama a `restore.sh` contra una BD limpia.
 - Verifica que los datos coinciden fila a fila.
 
-(Workflow en `.github/workflows/backup-restore.yml` — pendiente).
+Workflow en `.github/workflows/backup-restore.yml` (Sprint 43):
+ejecuta seed → pg_dump → GPG encrypt → pg_restore → row-count
+parity en cada PR que toque los scripts de DR, la seed o las
+migraciones, además de un cron semanal (domingo 04:00 UTC).
+Cualquier silencio de >7 días en producción se detecta antes de
+necesitar el plan en serio.
 
 ## Contactos
 
