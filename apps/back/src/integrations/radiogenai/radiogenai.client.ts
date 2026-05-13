@@ -18,6 +18,16 @@ export interface AiDraftResult {
   charCount: number;
 }
 
+export interface AiDraftStreamChunk {
+  /** Plain text segment ready to append to the editor. */
+  text: string;
+}
+
+export interface AiDraftStreamSummary {
+  latencyMs: number;
+  charCount: number;
+}
+
 /**
  * Thin wrapper around the RadiogenAI external API.
  *
@@ -56,12 +66,47 @@ export class RadiogenAIClient {
   }
 
   async generate(request: AiDraftRequest): Promise<AiDraftResult> {
+    const started = Date.now();
+    let text = '';
+    for await (const chunk of this.iterChunks(request)) text += chunk.text;
+    return {
+      text: text.trim(),
+      latencyMs: Date.now() - started,
+      charCount: text.trim().length,
+    };
+  }
+
+  /**
+   * Streaming counterpart to `generate()` — yields each `data: …` line
+   * the upstream emits as a `{ text }` chunk so the SPA can paint the
+   * draft as it arrives. The summary is reported via the `onClose`
+   * callback once the upstream finishes (so the orchestrator can write
+   * the audit log entry with the final char count + latency).
+   */
+  async *generateStream(
+    request: AiDraftRequest,
+    onClose?: (summary: AiDraftStreamSummary) => void,
+  ): AsyncGenerator<AiDraftStreamChunk, void, unknown> {
+    const started = Date.now();
+    let totalChars = 0;
+    try {
+      for await (const chunk of this.iterChunks(request)) {
+        totalChars += chunk.text.length;
+        yield chunk;
+      }
+    } finally {
+      onClose?.({ latencyMs: Date.now() - started, charCount: totalChars });
+    }
+  }
+
+  private async *iterChunks(
+    request: AiDraftRequest,
+  ): AsyncGenerator<AiDraftStreamChunk, void, unknown> {
     if (!this.configured) {
       throw new ServiceUnavailableException('AI integration not configured');
     }
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), this.timeoutMs);
-    const started = Date.now();
     try {
       const res = await fetch(`${this.url!.replace(/\/$/, '')}/genreport`, {
         method: 'POST',
@@ -83,17 +128,41 @@ export class RadiogenAIClient {
           `RadiogenAI upstream returned ${res.status}: ${detail.slice(0, 200)}`,
         );
       }
-
-      // The upstream is SSE / chunked text; we accumulate the whole
-      // response and ship it back as a single string. Streaming directly
-      // to the SPA is a Sprint-23 nice-to-have once the workflow is
-      // stable.
-      const text = await this.readBody(res);
-      return {
-        text,
-        latencyMs: Date.now() - started,
-        charCount: text.length,
+      if (!res.body) {
+        const text = await res.text();
+        if (text) yield { text };
+        return;
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let pending = '';
+      let firstEmitted = false;
+      const emit = function* (line: string): Generator<AiDraftStreamChunk> {
+        const cleaned = line.replace(/^data:\s?/, '');
+        if (!cleaned) return;
+        // Re-introduce the line break the producer placed between
+        // chunks, except for the very first emission (avoids a
+        // leading blank line in the editor).
+        const text = firstEmitted ? `\n${cleaned}` : cleaned;
+        firstEmitted = true;
+        yield { text };
       };
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        pending += decoder.decode(value, { stream: true });
+        let nl = pending.indexOf('\n');
+        while (nl !== -1) {
+          const rawLine = pending.slice(0, nl).replace(/\r$/, '');
+          pending = pending.slice(nl + 1);
+          for (const c of emit(rawLine)) yield c;
+          nl = pending.indexOf('\n');
+        }
+      }
+      pending += decoder.decode();
+      if (pending.length > 0) {
+        for (const c of emit(pending)) yield c;
+      }
     } catch (err) {
       if ((err as Error).name === 'AbortError') {
         throw new ServiceUnavailableException(`RadiogenAI timed out after ${this.timeoutMs}ms`);
@@ -103,25 +172,5 @@ export class RadiogenAIClient {
     } finally {
       clearTimeout(t);
     }
-  }
-
-  private async readBody(res: Response): Promise<string> {
-    if (!res.body) return await res.text();
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let out = '';
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      out += decoder.decode(value, { stream: true });
-    }
-    out += decoder.decode();
-    // The upstream sometimes prefixes SSE chunks with `data: `; strip them
-    // so the consumer gets a clean markdown string.
-    return out
-      .split(/\r?\n/)
-      .map((l) => l.replace(/^data:\s?/, ''))
-      .join('\n')
-      .trim();
   }
 }

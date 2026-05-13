@@ -209,7 +209,7 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
     } catch (err: any) {
       if (err?.status === 404) {
         // No report yet → start blank with the default modality sections.
-        this.sections.set(structuredClone(DEFAULT_SECTIONS.CT));
+        this.sections.set(structuredClone(DEFAULT_SECTIONS['CT']));
       } else {
         this.error.set(err?.error?.message ?? 'Failed to load report');
       }
@@ -230,7 +230,7 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
   onModalityChange(modality: string): void {
     this.modality.set(modality);
     if (!this.hasContents()) {
-      this.sections.set(structuredClone(DEFAULT_SECTIONS[modality] ?? DEFAULT_SECTIONS.OTHER));
+      this.sections.set(structuredClone(DEFAULT_SECTIONS[modality] ?? DEFAULT_SECTIONS['OTHER']));
     }
     this.autosave$.next();
   }
@@ -251,23 +251,44 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
       this.aiConsentGiven.set(true);
     }
     this.aiBusy.set(true);
+    const started = Date.now();
+    let chars = 0;
+    let streamErr: { status: number; message: string } | null = null;
+    const captureErr = (err: { status: number; message: string }) => {
+      streamErr = err;
+    };
     try {
-      const result = await this.ai.generate(this.studyId(), {
-        findings: this.findingsBody(),
-        reportTitle: this.modality(),
-        language: 'es',
-        acceptConsent: true,
-      });
-      this.appendDraftToConclusion(result.text);
+      const startIdx = this.openConclusionForAiInsert();
+      await this.ai.generateStream(
+        this.studyId(),
+        {
+          findings: this.findingsBody(),
+          reportTitle: this.modality(),
+          language: 'es',
+          acceptConsent: true,
+        },
+        {
+          onChunk: (text) => {
+            chars += text.length;
+            this.appendToConclusion(startIdx, text);
+          },
+          onError: captureErr,
+        },
+      );
+      const captured = streamErr as { status: number; message: string } | null;
+      if (captured) {
+        throw Object.assign(new Error(captured.message), { status: captured.status });
+      }
+      this.persistDraftAsync();
       this.messages.add({
         severity: 'success',
         summary: 'AI draft inserted',
-        detail: `${result.charCount} chars in ${(result.latencyMs / 1000).toFixed(1)} s`,
+        detail: `${chars} chars in ${((Date.now() - started) / 1000).toFixed(1)} s`,
         life: 3000,
       });
     } catch (err: any) {
       const detail =
-        err?.error?.message ??
+        err?.message ??
         (err?.status === 503 ? 'AI integration disabled or upstream offline' : 'AI draft failed');
       this.messages.add({ severity: 'error', summary: 'AI draft', detail, life: 4000 });
     } finally {
@@ -276,23 +297,32 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Inserts the AI output into the conclusion section without
-   * overwriting whatever the radiologist already wrote there. The AI is
+   * Ensures a `conclusion` section exists, appends a separator when the
+   * radiologist already had content there, and returns the index of the
+   * section so subsequent chunks land in the right place. The AI is
    * suggestive, not authoritative — the user still signs.
    */
-  private appendDraftToConclusion(text: string): void {
+  private openConclusionForAiInsert(): number {
     const next = [...this.sections()];
-    const idx = next.findIndex((s) => s.key === 'conclusion');
+    let idx = next.findIndex((s) => s.key === 'conclusion');
     if (idx < 0) {
-      next.push({ key: 'conclusion', title: 'Conclusion', body: text });
+      next.push({ key: 'conclusion', title: 'Conclusion', body: '' });
+      idx = next.length - 1;
     } else {
       const existing = next[idx].body.trim();
       const separator = existing ? '\n\n--- borrador IA ---\n' : '';
-      next[idx] = { ...next[idx], body: `${existing}${separator}${text}` };
+      next[idx] = { ...next[idx], body: `${existing}${separator}` };
     }
     this.sections.set(next);
-    // Trigger autosave so the AI draft survives a refresh.
-    this.persistDraftAsync();
+    return idx;
+  }
+
+  private appendToConclusion(idx: number, text: string): void {
+    const current = this.sections();
+    if (idx < 0 || idx >= current.length) return;
+    const next = [...current];
+    next[idx] = { ...next[idx], body: `${next[idx].body}${text}` };
+    this.sections.set(next);
   }
 
   private persistDraftAsync(): void {
@@ -358,7 +388,7 @@ export class ReportEditorComponent implements OnInit, OnDestroy {
       this.modality.set(report.contents.modality ?? 'CT');
       this.sections.set(report.contents.sections ?? []);
     } else {
-      this.sections.set(structuredClone(DEFAULT_SECTIONS.CT));
+      this.sections.set(structuredClone(DEFAULT_SECTIONS['CT']));
     }
   }
 }

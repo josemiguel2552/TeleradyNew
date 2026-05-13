@@ -15,8 +15,17 @@ import { AuditLogService } from '../../common/audit/audit-log.service';
 import { TenantScope } from '../../common/tenant/tenant-scope';
 import { MetricsService } from '../../metrics/metrics.service';
 import type { AuthenticatedUser } from '../../auth/jwt.strategy';
-import { RadiogenAIClient } from '../../integrations/radiogenai/radiogenai.client';
+import {
+  AiDraftStreamChunk,
+  AiDraftStreamSummary,
+  RadiogenAIClient,
+} from '../../integrations/radiogenai/radiogenai.client';
 import type { AiDraftRequestDto, AiDraftResponseDto } from './dto/ai-draft.dto';
+
+interface ResolvedTarget {
+  reportStudyId: string;
+  hospitalId: string;
+}
 
 /**
  * Orchestrates a single AI-draft call against RadiogenAI.
@@ -46,6 +55,73 @@ export class AiDraftService {
     dto: AiDraftRequestDto,
     user: AuthenticatedUser,
   ): Promise<AiDraftResponseDto> {
+    const target = await this.assertCanGenerate(reportStudyId, dto, user);
+    try {
+      const result = await this.client.generate({
+        findings: dto.findings,
+        reportTitle: dto.reportTitle,
+        language: dto.language,
+      });
+      this.metrics.aiDraftRequests.labels('ok').inc();
+      this.metrics.aiDraftLatency.observe(result.latencyMs / 1000);
+      await this.recordAudit(user, target, dto, {
+        latencyMs: result.latencyMs,
+        charCount: result.charCount,
+      });
+      return result;
+    } catch (err) {
+      this.metrics.aiDraftRequests.labels('error').inc();
+      throw err;
+    }
+  }
+
+  /**
+   * Streaming variant — runs the same precondition gate, then yields
+   * each `data: …` line the upstream emits as a `{ text }` chunk so the
+   * SPA can paint the draft live. Audit + metrics are written once the
+   * generator is closed (success or upstream error), so the operator
+   * sees latency and char counts whether the stream completed or got
+   * cut short.
+   */
+  async *generateStream(
+    reportStudyId: string,
+    dto: AiDraftRequestDto,
+    user: AuthenticatedUser,
+  ): AsyncGenerator<AiDraftStreamChunk, void, unknown> {
+    const target = await this.assertCanGenerate(reportStudyId, dto, user);
+    let summary: AiDraftStreamSummary = { latencyMs: 0, charCount: 0 };
+    let outcome: 'ok' | 'error' = 'ok';
+    try {
+      yield* this.client.generateStream(
+        {
+          findings: dto.findings,
+          reportTitle: dto.reportTitle,
+          language: dto.language,
+        },
+        (s) => {
+          summary = s;
+        },
+      );
+    } catch (err) {
+      outcome = 'error';
+      throw err;
+    } finally {
+      this.metrics.aiDraftRequests.labels(outcome).inc();
+      if (summary.charCount > 0) {
+        this.metrics.aiDraftLatency.observe(summary.latencyMs / 1000);
+      }
+      // Always audit, even on error: the operator needs to see that the
+      // call was attempted, with whatever the upstream managed to emit
+      // before failing.
+      await this.recordAudit(user, target, dto, summary, outcome).catch(() => undefined);
+    }
+  }
+
+  private async assertCanGenerate(
+    reportStudyId: string,
+    dto: AiDraftRequestDto,
+    user: AuthenticatedUser,
+  ): Promise<ResolvedTarget> {
     if (!this.client.configured) {
       throw new ServiceUnavailableException('AI integration not configured');
     }
@@ -100,34 +176,31 @@ export class AiDraftService {
         .where(eq(appUserInTelerady.id, user.id));
     }
 
-    try {
-      const result = await this.client.generate({
-        findings: dto.findings,
-        reportTitle: dto.reportTitle,
-        language: dto.language,
-      });
-      this.metrics.aiDraftRequests.labels('ok').inc();
-      this.metrics.aiDraftLatency.observe(result.latencyMs / 1000);
+    return { reportStudyId, hospitalId: study.hospitalId };
+  }
 
-      await this.audit.append({
-        actorId: user.id,
-        actorRole: user.roles[0] ?? null,
-        hospitalId: study.hospitalId,
-        action: 'report.ai_draft_requested',
-        targetKind: 'Report',
-        targetId: reportStudyId,
-        payload: {
-          language: dto.language ?? null,
-          findingsChars: dto.findings.length,
-          responseChars: result.charCount,
-          latencyMs: result.latencyMs,
-          provider: 'radiogenai',
-        },
-      });
-      return result;
-    } catch (err) {
-      this.metrics.aiDraftRequests.labels('error').inc();
-      throw err;
-    }
+  private recordAudit(
+    user: AuthenticatedUser,
+    target: ResolvedTarget,
+    dto: AiDraftRequestDto,
+    summary: AiDraftStreamSummary,
+    outcome: 'ok' | 'error' = 'ok',
+  ): Promise<unknown> {
+    return this.audit.append({
+      actorId: user.id,
+      actorRole: user.roles[0] ?? null,
+      hospitalId: target.hospitalId,
+      action: 'report.ai_draft_requested',
+      targetKind: 'Report',
+      targetId: target.reportStudyId,
+      payload: {
+        language: dto.language ?? null,
+        findingsChars: dto.findings.length,
+        responseChars: summary.charCount,
+        latencyMs: summary.latencyMs,
+        provider: 'radiogenai',
+        outcome,
+      },
+    });
   }
 }

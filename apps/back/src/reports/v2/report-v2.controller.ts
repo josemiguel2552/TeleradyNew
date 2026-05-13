@@ -1,11 +1,24 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  HttpCode,
+  Param,
+  Post,
+  Put,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
+  ApiProduces,
   ApiTags,
 } from '@nestjs/swagger';
+import { Response } from 'express';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -84,5 +97,64 @@ export class ReportV2Controller {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<AiDraftResponseDto> {
     return this.aiDraftService.generate(reportStudyId, body, user);
+  }
+
+  /**
+   * SSE counterpart of /ai-draft. Same precondition gate; the body is
+   * streamed back as `data: …` lines so the editor paints the draft as
+   * it arrives. The stream ends with an `event: done` frame; mid-stream
+   * upstream failures land as `event: error` with a JSON payload.
+   *
+   * EventSource cannot send a body, so we keep this as POST and the
+   * SPA consumes the response via fetch + ReadableStream. We do NOT
+   * decorate this endpoint with `@Header` — that would commit
+   * `text/event-stream` to 4xx responses too, confusing the SPA. We
+   * write the SSE headers manually only once the precondition gate
+   * passed (i.e. once we have a first chunk in hand).
+   */
+  @Post(':reportStudyId/ai-draft/stream')
+  @Roles(Role.Radiologist, Role.Admin)
+  @ApiOperation({
+    summary:
+      'Streaming AI draft (RadiogenAI). Same gate as /ai-draft; emits SSE chunks.',
+  })
+  @ApiProduces('text/event-stream')
+  async aiDraftStream(
+    @Param('reportStudyId') reportStudyId: string,
+    @Body() body: AiDraftRequestDto,
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() response: Response,
+  ): Promise<void> {
+    const generator = this.aiDraftService.generateStream(reportStudyId, body, user);
+
+    // Pull the first chunk before flipping to SSE: if the gate or the
+    // upstream rejects, the exception bubbles up and Nest turns it into
+    // a normal 4xx/5xx JSON response.
+    const first = await generator.next();
+    response.status(200);
+    response.setHeader('Content-Type', 'text/event-stream');
+    response.setHeader('Cache-Control', 'no-cache, no-transform');
+    response.setHeader('Connection', 'keep-alive');
+    response.setHeader('X-Accel-Buffering', 'no');
+    response.flushHeaders?.();
+
+    const sendEvent = (event: string, data: string) => {
+      const encoded = data.replace(/\r?\n/g, '\ndata: ');
+      response.write(`event: ${event}\ndata: ${encoded}\n\n`);
+    };
+
+    try {
+      if (!first.done) sendEvent('chunk', first.value.text);
+      for await (const chunk of generator) {
+        sendEvent('chunk', chunk.text);
+      }
+      sendEvent('done', '{}');
+    } catch (err) {
+      const status = (err as { status?: number })?.status ?? 500;
+      const message = (err as Error)?.message ?? 'Unknown error';
+      sendEvent('error', JSON.stringify({ status, message }));
+    } finally {
+      response.end();
+    }
   }
 }

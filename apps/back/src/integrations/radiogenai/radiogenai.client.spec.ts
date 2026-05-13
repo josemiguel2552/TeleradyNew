@@ -95,6 +95,58 @@ describe('RadiogenAIClient', () => {
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 
+  it('streams chunks line-by-line and reports the summary on close', async () => {
+    (global as any).fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: streamFrom('data: hola\ndata: \ndata: mundo\n'),
+      text: async () => '',
+    });
+    const client = makeClient({
+      RADIOGENAI_URL: 'https://radiogenai.example.com',
+      RADIOGENAI_API_KEY: 'a'.repeat(40),
+    });
+
+    const chunks: string[] = [];
+    let summary: { latencyMs: number; charCount: number } | null = null;
+    for await (const c of client.generateStream(
+      { findings: 'x', reportTitle: 'CT' },
+      (s) => {
+        summary = s;
+      },
+    )) {
+      chunks.push(c.text);
+    }
+
+    expect(chunks).toEqual(['hola', '\nmundo']);
+    expect(summary).not.toBeNull();
+    expect(summary!.charCount).toBe('hola'.length + '\nmundo'.length);
+    expect(summary!.latencyMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it('streaming surfaces 5xx upstream errors as ServiceUnavailableException', async () => {
+    (global as any).fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 502,
+      text: async () => 'upstream broken',
+    });
+    const client = makeClient({
+      RADIOGENAI_URL: 'https://radiogenai.example.com',
+      RADIOGENAI_API_KEY: 'a'.repeat(40),
+    });
+    let summary: { latencyMs: number; charCount: number } | null = null;
+    const iter = client.generateStream(
+      { findings: 'x', reportTitle: 'CT' },
+      (s) => {
+        summary = s;
+      },
+    );
+    await expect(iter.next()).rejects.toBeInstanceOf(ServiceUnavailableException);
+    // onClose still fires so the orchestrator can audit
+    expect(summary).not.toBeNull();
+    expect(summary!.charCount).toBe(0);
+  });
+
   it('respects the configured language override on the request body', async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,

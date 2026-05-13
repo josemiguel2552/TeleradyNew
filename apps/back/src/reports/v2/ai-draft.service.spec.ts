@@ -60,6 +60,7 @@ describe('AiDraftService', () => {
     client = {
       configured: true,
       generate: jest.fn(),
+      generateStream: jest.fn(),
     } as unknown as jest.Mocked<RadiogenAIClient>;
     audit = { append: jest.fn().mockResolvedValue(undefined) } as any;
     metrics = {
@@ -196,5 +197,98 @@ describe('AiDraftService', () => {
         user,
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  describe('generateStream', () => {
+    it('rejects on the gate before opening the stream', async () => {
+      queueRows([
+        [STUDY_ROW],
+        [{ aiDraftingAllowed: false }], // hospital opt-out
+      ]);
+      const iter = service.generateStream(
+        'study-1',
+        { findings: 'enough findings text here', reportTitle: 'CT' },
+        user,
+      );
+      await expect(iter.next()).rejects.toBeInstanceOf(ForbiddenException);
+      expect(client.generateStream).not.toHaveBeenCalled();
+      expect(audit.append).not.toHaveBeenCalled();
+    });
+
+    it('streams chunks and audits with the final summary on success', async () => {
+      queueRows([
+        [STUDY_ROW],
+        [{ aiDraftingAllowed: true }],
+        [{ aiConsentAt: '2026-01-01T00:00:00Z' }],
+      ]);
+      // Simulate the client emitting two chunks then closing.
+      (client.generateStream as jest.Mock).mockImplementation(
+        async function* (_req: unknown, onClose: any) {
+          yield { text: 'hola' };
+          yield { text: '\nmundo' };
+          onClose({ latencyMs: 250, charCount: 10 });
+        },
+      );
+
+      const chunks: string[] = [];
+      for await (const c of service.generateStream(
+        'study-1',
+        { findings: 'enough findings text here', reportTitle: 'CT' },
+        user,
+      )) {
+        chunks.push(c.text);
+      }
+      expect(chunks).toEqual(['hola', '\nmundo']);
+      expect(audit.append).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'report.ai_draft_requested',
+          payload: expect.objectContaining({
+            provider: 'radiogenai',
+            outcome: 'ok',
+            responseChars: 10,
+            latencyMs: 250,
+          }),
+        }),
+      );
+      expect(metrics.aiDraftRequests.labels).toHaveBeenCalledWith('ok');
+    });
+
+    it('audits with outcome=error when the upstream fails mid-stream', async () => {
+      queueRows([
+        [STUDY_ROW],
+        [{ aiDraftingAllowed: true }],
+        [{ aiConsentAt: '2026-01-01T00:00:00Z' }],
+      ]);
+      (client.generateStream as jest.Mock).mockImplementation(
+        async function* (_req: unknown, onClose: any) {
+          yield { text: 'hola' };
+          onClose({ latencyMs: 30, charCount: 4 });
+          throw new Error('connection lost');
+        },
+      );
+
+      await expect(
+        (async () => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          for await (const _ of service.generateStream(
+            'study-1',
+            { findings: 'enough findings text here', reportTitle: 'CT' },
+            user,
+          )) {
+            /* drain */
+          }
+        })(),
+      ).rejects.toThrow(/connection lost/);
+
+      expect(audit.append).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payload: expect.objectContaining({
+            outcome: 'error',
+            responseChars: 4,
+          }),
+        }),
+      );
+      expect(metrics.aiDraftRequests.labels).toHaveBeenCalledWith('error');
+    });
   });
 });

@@ -109,13 +109,53 @@ trazabilidad completa de qué borradores se generaron.
 - La SPA muestra "AI integration disabled or upstream offline" cuando
   el back devuelve 503; el flujo de firma sigue funcionando sin IA.
 
+## Streaming SSE (Sprint 23)
+
+A partir de Sprint 23 hay una variante streaming del endpoint:
+
+```
+POST /v2/reports/:reportStudyId/ai-draft/stream
+Accept: text/event-stream
+Authorization: Bearer …
+Body: { findings, reportTitle, language?, acceptConsent? }
+```
+
+El gate (configured / scope / hospital opt-in / consent) se evalúa
+**antes** de flippear a SSE: si falla, la respuesta es un 4xx/5xx
+JSON normal (Nest filter) y no se abre stream. Cuando el primer chunk
+llega, el back manda los headers SSE y emite frames:
+
+```
+event: chunk
+data: <texto>
+
+event: chunk
+data: <texto>
+
+event: done
+data: {}
+```
+
+Si el upstream falla a mitad de generación, el back emite
+`event: error\ndata: {"status":..., "message":...}\n\n` y cierra. La
+SPA siempre escribe la salida en la sección `Conclusion` (sin
+sobrescribir lo que el radiólogo ya tenía: separador
+`--- borrador IA ---`) y dispara autosave al final.
+
+EventSource no permite cuerpo en la petición, así que la SPA consume
+el stream con `fetch` + `body.getReader()` (ver
+`apps/front/.../services/ai-draft.service.ts`). El método no-stream
+sigue disponible y se usa como fallback si el operador desactiva la
+SSE en el reverse proxy.
+
+La auditoría se escribe **al cerrar el generador** (éxito o error) con
+el outcome y el char count realmente recibido, así operations puede
+diferenciar entre "el borrador completó" y "el upstream se cortó a
+mitad".
+
 ## Cambios futuros
 
-- **Streaming**: cuando el upstream esté estable, conectar SSE
-  back-to-front para que el radiólogo vea el borrador llegando token
-  a token. El cliente ya parsea las líneas `data:`; falta wiring en
-  Nest (Sse() controller).
 - **Modelos locales**: si en algún momento se decide alojar la IA
   en infraestructura propia, el cliente se sustituye sin tocar el
-  resto del back; el contrato (`generate({findings, reportTitle,
-  language})`) queda igual.
+  resto del back; el contrato (`generate / generateStream`) queda
+  igual.

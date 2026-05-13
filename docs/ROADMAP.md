@@ -304,9 +304,48 @@ sin dependencias instaladas:
 Resultado: `nest build` verde, `ng build --configuration=production`
 verde, `jest` 161/161.
 
+## Sprint 23 — Streaming SSE del borrador IA (cerrado)
+
+- [x] `RadiogenAIClient.iterChunks(request)` como primitiva
+  asíncrona; `generate()` y `generateStream(request, onClose)` la
+  envuelven (acumular vs. yield).
+- [x] `AiDraftService.generateStream(reportStudyId, dto, user)` con
+  el mismo gate que `generate` extraído en
+  `assertCanGenerate()`. Auditoría se escribe al cerrar el generador
+  (éxito o error) con `outcome` y char count realmente recibido.
+- [x] `POST /v2/reports/:reportStudyId/ai-draft/stream` que
+  pre-evalúa el gate (4xx/5xx normal si falla) y, en cuanto hay
+  primer chunk, escribe los headers SSE y emite frames
+  `event: chunk` + `event: done` (o `event: error`).
+- [x] Front: `AiDraftService.generateStream` con `fetch +
+  ReadableStream.getReader()` y SSE parser por frames. Editor
+  inserta texto en vivo en la sección `Conclusion`, autosave al
+  final, fallback al método no-stream si el operador apaga SSE.
+- [x] Tests Jest: 5 nuevos en `radiogenai.client.spec` (chunking,
+  cierre con summary, error mid-stream) y 3 en
+  `ai-draft.service.spec` (gate antes de stream, auditoría con
+  outcome=ok, auditoría con outcome=error).
+- [x] `docs/AI-INTEGRATION.md` documenta el nuevo endpoint y el
+  contrato de eventos.
+
+## Deuda técnica abierta
+
+- **Front PrimeNG 19 migration**: el `package.json` pide
+  `^19.0.5` desde Sprint 0, pero el código del front fue escrito
+  contra los `XxxModule` de PrimeNG 17/18 (`InputTextareaModule`,
+  `TableLazyLoadEvent` con tipo distinto, `severity="warning"`,
+  index-signature access estricta…). La instalación real con
+  `node_modules` lo dispara: `ng build --configuration=production`
+  arroja ~15 errores en componentes legacy del editor y la
+  worklist. **No bloquea el back**, pero sí el deploy del front.
+  Se gestiona como sprint dedicado: o downgrade a `^18` o
+  migración a la API standalone (`InputTextarea`, `Textarea`,
+  etc.). Mientras tanto el back sigue verde y los tests Jest
+  pasan.
+
 ## Backlog y futuro
 
-- Streaming SSE del borrador IA back-to-front (la SPA ya tolera el
-  formato `data:`; falta wiring NestJS).
+- Migración PrimeNG → 19 (sprint dedicado, ver "Deuda técnica abierta").
+- Modelos IA locales (cuando RadiogenAI deje de ser la opción única).
 - Workflows DICOM avanzados (Modality Performed Procedure Step).
 - App móvil para alertas urgentes.
