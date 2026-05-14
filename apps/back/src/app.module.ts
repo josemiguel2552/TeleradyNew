@@ -87,12 +87,23 @@ const REDACT_PATHS = [
     }),
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => [
-        {
-          ttl: (config.get<number>('THROTTLE_TTL') ?? 60) * 1000,
-          limit: config.get<number>('THROTTLE_LIMIT') ?? 120,
-        },
-      ],
+      useFactory: (config: ConfigService) => {
+        // In development the dev server, HMR clients and tooling can
+        // burst dozens of requests per second on a single page load.
+        // The throttler protects production from credential-stuffing
+        // and scraping — it is not load-shedding. Effectively disable
+        // it in dev so a fresh clone does not greet the operator with
+        // a 429 on /v1/worklist.
+        const isDev = config.get<string>('NODE_ENV') !== 'production';
+        return [
+          {
+            ttl: (config.get<number>('THROTTLE_TTL') ?? 60) * 1000,
+            limit: isDev
+              ? 100_000
+              : (config.get<number>('THROTTLE_LIMIT') ?? 120),
+          },
+        ];
+      },
     }),
     CryptoModule,
     MetricsModule,

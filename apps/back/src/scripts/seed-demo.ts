@@ -19,7 +19,7 @@
  */
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { createHmac, createCipheriv, randomBytes } from 'node:crypto';
 import * as argon2 from 'argon2';
 import {
@@ -64,6 +64,23 @@ async function main() {
     process.exit(1);
   }
   const db = drizzle(dbUrl);
+
+  // Apply idempotent DDL migrations that were added after the initial
+  // db-seed.sql snapshot. If the postgres container was first booted
+  // against an older db-seed.sql, or the init script aborted partway,
+  // these statements close the gap so the rest of the seeder can rely
+  // on the latest schema. All statements are ADD/CREATE IF NOT EXISTS,
+  // so re-running is a no-op on an already up-to-date database.
+  console.log('Applying idempotent schema migrations…');
+  await db.execute(sql`
+    ALTER TABLE telerady.mwl_entry
+      ADD COLUMN IF NOT EXISTS priority VARCHAR(16);
+    ALTER TABLE telerady.report_study
+      ADD COLUMN IF NOT EXISTS accession_number VARCHAR(64),
+      ADD COLUMN IF NOT EXISTS priority VARCHAR(16);
+    CREATE INDEX IF NOT EXISTS report_study_accession_idx
+      ON telerady.report_study (accession_number);
+  `);
 
   console.log('Seeding demo data…');
 
