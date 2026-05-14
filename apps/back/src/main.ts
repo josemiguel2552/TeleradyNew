@@ -1,3 +1,10 @@
+// Load .env before any module-top-level code reads process.env. NestJS'
+// ConfigModule does this too, but database/drizzle.ts builds the pg pool
+// at import time (before AppModule resolves), so it needs DATABASE_URL
+// in place already. In production the orchestrator provides env vars
+// directly and dotenv simply no-ops when the file is absent.
+import 'dotenv/config';
+
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { Logger as PinoLogger } from 'nestjs-pino';
