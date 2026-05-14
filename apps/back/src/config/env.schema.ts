@@ -6,6 +6,13 @@ const hexBytes = (bytes: number) =>
     .regex(/^[0-9a-fA-F]+$/, 'must be hex')
     .length(bytes * 2, `must be ${bytes} bytes (${bytes * 2} hex chars)`);
 
+// dotenv / process.env never represent "missing" as undefined — an empty
+// line in .env still lands as "". For optional fields we want the empty
+// string to behave like absence so the inner validator (e.g. .url(),
+// .min(N)) doesn't fire on a placeholder the operator left blank.
+const optional = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((v) => (v === '' ? undefined : v), schema.optional());
+
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
@@ -87,8 +94,8 @@ export const envSchema = z.object({
     .default('false'),
   HL7_MLLP_PORT: z.coerce.number().int().positive().default(2575),
 
-  RADIOGENAI_URL: z.string().url().optional(),
-  RADIOGENAI_API_KEY: z.string().min(20).optional(),
+  RADIOGENAI_URL: optional(z.string().url()),
+  RADIOGENAI_API_KEY: optional(z.string().min(20)),
   RADIOGENAI_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
   RADIOGENAI_DEFAULT_LANGUAGE: z.enum(['es', 'en']).default('es'),
 
@@ -99,10 +106,10 @@ export const envSchema = z.object({
    * 28 doesn't apply). Any other value disables drafting.
    */
   AI_DRAFT_PROVIDER: z.enum(['radiogenai', 'ollama', 'vllm', 'disabled']).default('radiogenai'),
-  OLLAMA_URL: z.string().url().optional(),
+  OLLAMA_URL: optional(z.string().url()),
   OLLAMA_MODEL: z.string().min(1).default('llama3.1:8b-instruct'),
   OLLAMA_TIMEOUT_MS: z.coerce.number().int().positive().default(120_000),
-  VLLM_URL: z.string().url().optional(),
+  VLLM_URL: optional(z.string().url()),
   VLLM_API_KEY: z.string().optional(),
   VLLM_MODEL: z.string().min(1).default('meta-llama/Meta-Llama-3.1-8B-Instruct'),
   VLLM_TIMEOUT_MS: z.coerce.number().int().positive().default(120_000),
@@ -112,7 +119,7 @@ export const envSchema = z.object({
    * Orthanc, HL7 ack scripts, …) in the `x-api-key` header. When unset
    * the integration endpoints respond 503 — fail closed.
    */
-  INTEGRATION_API_KEY: z.string().min(32).optional(),
+  INTEGRATION_API_KEY: optional(z.string().min(32)),
 
   /**
    * VAPID keys for Web Push (RFC 8292). Generate them once with
@@ -120,8 +127,8 @@ export const envSchema = z.object({
    * is missing, the push endpoints respond 503 and subscriptions stay
    * dormant; this is the dev default.
    */
-  VAPID_PUBLIC_KEY: z.string().min(60).optional(),
-  VAPID_PRIVATE_KEY: z.string().min(40).optional(),
+  VAPID_PUBLIC_KEY: optional(z.string().min(60)),
+  VAPID_PRIVATE_KEY: optional(z.string().min(40)),
   VAPID_SUBJECT: z.string().regex(/^(mailto:|https?:)/).default('mailto:ops@telerady.es'),
 
   SWAGGER_USER: z.string().optional(),
