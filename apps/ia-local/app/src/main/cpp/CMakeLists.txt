@@ -29,8 +29,7 @@ if(LLAMA_SRC_DIR)
 else()
     include(FetchContent)
     FetchContent_Declare(llama_cpp
-        URL https://github.com/ggml-org/llama.cpp/archive/refs/tags/${LLAMA_CPP_TAG}.tar.gz
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+        URL https://github.com/ggml-org/llama.cpp/archive/refs/tags/${LLAMA_CPP_TAG}.tar.gz)
     FetchContent_MakeAvailable(llama_cpp)
 endif()
 
