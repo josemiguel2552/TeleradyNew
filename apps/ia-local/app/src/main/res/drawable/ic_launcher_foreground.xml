@@ -1,0 +1,9 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Burbuja de chat con una chispa -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M34,36h40a6,6 0,0 1,6 6v22a6,6 0,0 1,-6 6H50l-10,9v-9h-6a6,6 0,0 1,-6 -6V42a6,6 0,0 1,6 -6z"/>
+    <path android:fillColor="#3D5AFE"
+        android:pathData="M54,43l2.6,6.4L63,52l-6.4,2.6L54,61l-2.6,-6.4L45,52l6.4,-2.6z"/>
+</vector>
